@@ -1,0 +1,1 @@
+document.getElementById('app').innerHTML = '<p>Tracker logic goes here.</p>';
