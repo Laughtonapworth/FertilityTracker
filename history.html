@@ -1,0 +1,81 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cycle History</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #fffafc;
+      padding: 1em;
+    }
+    h1 {
+      text-align: center;
+      color: #444;
+    }
+    .entry {
+      background: white;
+      margin-bottom: 1em;
+      padding: 1em;
+      border-radius: 12px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+    .entry h3 {
+      margin-top: 0;
+    }
+    .entry table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 0.5em;
+    }
+    .entry th, .entry td {
+      border: 1px solid #eee;
+      padding: 0.5em;
+      text-align: left;
+      font-size: 0.9em;
+    }
+  </style>
+</head>
+<body>
+  <h1>Cycle History</h1>
+  <div id="history"></div>
+
+  <script>
+    const db = firebase.firestore();
+    async function loadHistory() {
+      const container = document.getElementById("history");
+      const snapshot = await db.collection("entries").orderBy("date").get();
+      const entries = [];
+      snapshot.forEach(doc => entries.push(doc.data()));
+      entries.forEach(entry => {
+        const div = document.createElement("div");
+        div.className = "entry";
+        div.innerHTML = \`
+          <h3>\${entry.date} — CD \${entry.cycleDay || "?"} | DPO \${entry.dpo || "?"}</h3>
+          <table>
+            <tr><th>Phase</th><td>\${entry.phase || ""}</td></tr>
+            <tr><th>BBT</th><td>\${entry.bbt || ""}</td></tr>
+            <tr><th>Cervical Mucus</th><td>\${entry.cm || ""}</td></tr>
+            <tr><th>OPK</th><td>\${entry.opk || ""}</td></tr>
+            <tr><th>Sex</th><td>\${entry.sex || ""}</td></tr>
+            <tr><th>Mood</th><td>\${entry.mood || ""}</td></tr>
+            <tr><th>Spotting</th><td>\${entry.spotting || ""}</td></tr>
+            <tr><th>Cramps</th><td>\${entry.cramps || ""}</td></tr>
+            <tr><th>Pregnancy Test</th><td>\${entry.pregnancyResult || ""}</td></tr>
+          </table>\`;
+        container.appendChild(div);
+      });
+    }
+    window.onload = () => {
+      if (typeof firebase === 'undefined') {
+        document.getElementById("history").innerHTML = "<p>Firebase not loaded.</p>";
+      } else {
+        loadHistory();
+      }
+    };
+  </script>
+</body>
+</html>
