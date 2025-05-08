@@ -1,0 +1,54 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cycle Summary</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #fffafc;
+      padding: 1em;
+    }
+    h1 {
+      text-align: center;
+      color: #444;
+    }
+    .summary {
+      background: white;
+      padding: 1.2em;
+      margin: 1em 0;
+      border-radius: 12px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+    .summary h2 {
+      font-size: 1.1em;
+      color: #666;
+      margin-bottom: 0.5em;
+    }
+    .summary ul {
+      list-style: none;
+      padding-left: 0;
+    }
+    .summary li {
+      padding: 0.3em 0;
+      border-bottom: 1px solid #eee;
+    }
+  </style>
+</head>
+<body>
+  <h1>Cycle Summary</h1>
+  <div class="summary">
+    <h2>Most Recent Cycle Insights</h2>
+    <ul>
+      <li><strong>Total Cycle Length:</strong> <span id="cycleLength">—</span> days</li>
+      <li><strong>Ovulation Day (CD):</strong> <span id="ovulationCD">—</span></li>
+      <li><strong>Luteal Phase Length:</strong> <span id="lutealLength">—</span> days</li>
+      <li><strong>Most Common CM:</strong> <span id="commonCM">—</span></li>
+      <li><strong>Most Logged Mood:</strong> <span id="commonMood">—</span></li>
+    </ul>
+  </div>
+</body>
+</html>
