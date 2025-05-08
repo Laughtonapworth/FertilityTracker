@@ -1,0 +1,140 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cycle Summary</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #fffafc;
+      color: #333;
+      padding: 1em;
+    }
+    h1, h2 {
+      text-align: center;
+      color: #444;
+    }
+    .section {
+      background: white;
+      border-radius: 12px;
+      padding: 1.2em;
+      margin-bottom: 1.5em;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+    .responsive-table {
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1em;
+      font-size: 0.95em;
+      min-width: 600px;
+    }
+    th, td {
+      border: 1px solid #eee;
+      padding: 0.6em;
+      text-align: left;
+    }
+    canvas {
+      margin-top: 1em;
+      max-width: 100%;
+    }
+    .nav-button {
+      display: block;
+      width: 100%;
+      max-width: 240px;
+      margin: 1em auto;
+      text-align: center;
+      padding: 0.8em;
+      background: linear-gradient(to right, #eeb7c2, #c4d7b2);
+      color: white;
+      font-weight: bold;
+      border: none;
+      border-radius: 24px;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>Cycle Summary</h1>
+  <a class="nav-button" href="index.html">← Back to Home</a>
+
+  <div class="section">
+    <h2>Current Cycle</h2>
+    <p><strong>Cycle Day:</strong> <span id="currentCycleDay">—</span></p>
+    <p><strong>DPO:</strong> <span id="currentDPO">—</span></p>
+    <div class="responsive-table">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th><th>CD</th><th>DPO</th><th>Phase</th><th>CM</th><th>BBT</th><th>OPK</th><th>Mood</th><th>Spotting</th><th>Cramps</th>
+          </tr>
+        </thead>
+        <tbody id="currentCycleTable">
+          <tr><td colspan="10" style="text-align:center;">No data yet</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Combined Cycle Overview</h2>
+    <ul>
+      <li><strong>Average Cycle Length:</strong> <span id="avgCycle">—</span></li>
+      <li><strong>Average Luteal Phase:</strong> <span id="avgLuteal">—</span></li>
+      <li><strong>Average Ovulation Day (CD):</strong> <span id="avgOvDay">—</span></li>
+      <li><strong>Most Common CM:</strong> <span id="commonCM">—</span></li>
+      <li><strong>Most Common Mood:</strong> <span id="commonMood">—</span></li>
+    </ul>
+
+    <canvas id="cycleLengthChart"></canvas>
+    <canvas id="opkChart"></canvas>
+    <canvas id="symptomChart"></canvas>
+  </div>
+
+  <script>
+    new Chart(document.getElementById('cycleLengthChart').getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: [],
+        datasets: [{
+          label: 'Cycle Length (days)',
+          data: [],
+          backgroundColor: '#eeb7c2'
+        }]
+      }
+    });
+
+    new Chart(document.getElementById('opkChart').getContext('2d'), {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [{
+          label: 'OPK Results',
+          data: [],
+          backgroundColor: 'rgba(196, 215, 178, 0.4)',
+          borderColor: '#c4d7b2',
+          fill: true
+        }]
+      }
+    });
+
+    new Chart(document.getElementById('symptomChart').getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: [],
+        datasets: [{
+          label: 'Symptom Frequency',
+          data: [],
+          backgroundColor: '#a6bfa1'
+        }]
+      }
+    });
+  </script>
+</body>
+</html>
