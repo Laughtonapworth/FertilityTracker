@@ -1,0 +1,117 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Log Entry</title>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background: #fffafc; padding: 1em; }
+    h1 { text-align: center; }
+    .form-group { margin-bottom: 1em; }
+    label { display: block; margin-bottom: 0.3em; }
+    input, select, button {
+      width: 100%;
+      padding: 0.6em;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+    button {
+      background: #c4d7b2;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .hidden { display: none; }
+    .nav-button {
+      display: block;
+      margin: 1em auto;
+      text-align: center;
+      background: #eeb7c2;
+      color: white;
+      padding: 0.6em 1em;
+      border-radius: 20px;
+      text-decoration: none;
+      max-width: 200px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Log Entry</h1>
+  <a class="nav-button" href="index.html">← Back to Home</a>
+
+  <form id="entryForm">
+    <div class="form-group">
+      <label>Date</label>
+      <input type="date" id="date">
+    </div>
+    <div class="form-group">
+      <label>Phase</label>
+      <select id="phase">
+        <option value="period">Period</option>
+        <option value="pre-ovulation">Pre-Ovulation</option>
+        <option value="ovulation">Ovulation</option>
+        <option value="post-ovulation">Post-Ovulation</option>
+      </select>
+    </div>
+    <div class="form-group" id="bbtGroup"><label>BBT (°C)</label><input type="number" step="0.01" id="bbt"></div>
+    <div class="form-group" id="cmGroup"><label>Cervical Mucus</label>
+      <select id="cm"><option>Dry</option><option>Sticky</option><option>Creamy</option><option>Watery</option><option>Egg white</option></select>
+    </div>
+    <div class="form-group" id="opkGroup"><label>OPK</label>
+      <select id="opk"><option>Blank circle</option><option>Flashing face</option><option>Solid face</option></select>
+    </div>
+    <div class="form-group" id="moodGroup"><label>Mood</label>
+      <select id="mood"><option>Calm</option><option>Happy</option><option>Irritable</option><option>Low</option></select>
+    </div>
+    <div class="form-group" id="spottingGroup"><label>Spotting</label>
+      <select id="spotting"><option>None</option><option>Pink</option><option>Brown</option><option>Red</option></select>
+    </div>
+    <div class="form-group" id="crampsGroup"><label>Cramps</label>
+      <select id="cramps"><option>None</option><option>Mild</option><option>Moderate</option><option>Strong</option></select>
+    </div>
+    <div class="form-group" id="pregnancyResultGroup"><label>Pregnancy Result</label>
+      <select id="pregnancyResult"><option>Negative</option><option>Faint Line</option><option>Positive</option></select>
+    </div>
+    <button type="submit">Save Entry</button>
+  </form>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyByvnVx2aZEldUfqS2c6VNC6UJRIOPvGws",
+      authDomain: "fertility-tracker-c35ff.firebaseapp.com",
+      projectId: "fertility-tracker-c35ff"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    document.getElementById('date').valueAsDate = new Date();
+
+    function updateVisibility() {
+      const phase = document.getElementById('phase').value;
+      const show = (id, visible) => document.getElementById(id).classList.toggle('hidden', !visible);
+      show('bbtGroup', phase !== 'period');
+      show('cmGroup', phase !== 'period');
+      show('opkGroup', phase === 'pre-ovulation');
+      show('moodGroup', phase === 'post-ovulation');
+      show('spottingGroup', phase === 'post-ovulation');
+      show('crampsGroup', phase === 'post-ovulation');
+      show('pregnancyResultGroup', phase === 'post-ovulation');
+    }
+
+    document.getElementById('phase').addEventListener('change', updateVisibility);
+    updateVisibility();
+
+    document.getElementById('entryForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fields = ['date','phase','bbt','cm','opk','mood','spotting','cramps','pregnancyResult'];
+      const entry = {};
+      fields.forEach(id => entry[id] = document.getElementById(id)?.value || '');
+      if (!entry.date) return alert("Date is required");
+      await db.collection("entries").doc(entry.date).set(entry);
+      alert("Saved!");
+    });
+  </script>
+</body>
+</html>
