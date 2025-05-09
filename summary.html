@@ -5,11 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Cycle Summary</title>
 
-  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
-  <!-- Firebase Config -->
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyByvnVx2aZEldUfqS2c6VNC6UJRIOPvGws",
@@ -37,19 +35,6 @@
       text-decoration: none;
       max-width: 250px;
     }
-    .calendar-grid {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 6px;
-      margin: 1em 0;
-    }
-    .day-box {
-      padding: 0.8em 0;
-      border-radius: 6px;
-      background: #eee;
-      font-size: 0.85em;
-      text-align: center;
-    }
     .calendar-title {
       text-align: center;
       font-weight: bold;
@@ -57,11 +42,11 @@
       font-size: 1.1em;
     }
     .legend {
-      margin-top: 0.5em;
       display: flex;
       flex-wrap: wrap;
       gap: 0.5em;
       justify-content: center;
+      margin-bottom: 1em;
     }
     .legend span {
       display: inline-block;
@@ -69,15 +54,33 @@
       border-radius: 5px;
       font-size: 0.75em;
     }
-    .red { background: #f6b1b7; }
     .deep-red { background: #e76f8a; color: white; }
+    .red { background: #f6b1b7; }
     .blue { background: #b7d7f6; }
     .bold-blue { background: #5f9ed1; color: white; }
     .green { background: #c8e6c9; }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 5px;
+      margin-bottom: 1.5em;
+    }
+    .weekday {
+      font-weight: bold;
+      text-align: center;
+    }
+    .day-box {
+      padding: 0.6em 0;
+      border-radius: 6px;
+      background: #eee;
+      text-align: center;
+      font-size: 0.85em;
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 1em;
       font-size: 1em;
     }
     th, td {
@@ -102,6 +105,15 @@
     <span class="blue">Fertile (Flashing)</span>
     <span class="bold-blue">Ovulation (Solid)</span>
     <span class="green">Post Ovulation</span>
+  </div>
+  <div class="calendar-grid" id="calendarWeekdays">
+    <div class="weekday">Mon</div>
+    <div class="weekday">Tue</div>
+    <div class="weekday">Wed</div>
+    <div class="weekday">Thu</div>
+    <div class="weekday">Fri</div>
+    <div class="weekday">Sat</div>
+    <div class="weekday">Sun</div>
   </div>
   <div class="calendar-grid" id="calendarGrid"></div>
 
@@ -161,7 +173,6 @@
           </tr>
         `);
 
-        // Calendar color logic
         let className = "";
         if (e.phase === "day1-period") className = "deep-red";
         else if (e.phase === "period") className = "red";
@@ -169,19 +180,28 @@
         else if (e.opk === "Solid face") className = "bold-blue";
         else if (lastOvulationDate && date > lastOvulationDate) className = "green";
 
-        calendarData[dateStr] = { label: new Date(dateStr).getDate(), className };
+        calendarData[dateStr] = { day: date.getDate(), className };
       }
 
       const calendarGrid = document.getElementById("calendarGrid");
       if (lastCD1) {
         const today = new Date();
-        for (let d = new Date(lastCD1); d <= today; d.setDate(d.getDate() + 1)) {
+        let d = new Date(lastCD1);
+
+        const offset = (d.getDay() + 6) % 7; // Monday=0 ... Sunday=6
+        for (let i = 0; i < offset; i++) {
+          const empty = document.createElement("div");
+          calendarGrid.appendChild(empty);
+        }
+
+        while (d <= today) {
           const key = d.toISOString().split("T")[0];
-          const cell = document.createElement("div");
-          const val = calendarData[key];
-          cell.className = "day-box " + (val ? val.className : "");
-          cell.textContent = d.getDate();
-          calendarGrid.appendChild(cell);
+          const box = document.createElement("div");
+          const entry = calendarData[key];
+          box.className = "day-box " + (entry?.className || "");
+          box.textContent = d.getDate();
+          calendarGrid.appendChild(box);
+          d.setDate(d.getDate() + 1);
         }
       }
 
