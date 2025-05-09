@@ -1,0 +1,72 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>LLP Fertility Tracker</title>
+  <link rel="manifest" href="manifest.json" />
+  <script>
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      document.getElementById('installBtn').style.display = 'block';
+    });
+    function installPWA() {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then(() => {
+          deferredPrompt = null;
+          document.getElementById('installBtn').style.display = 'none';
+        });
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: "Segoe UI", sans-serif;
+      background-color: #fce9f1;
+      margin: 0;
+      padding: 2em 1em;
+      text-align: center;
+    }
+    .logo {
+      font-size: 2.2em;
+      font-weight: bold;
+      color: #88a58d;
+      margin-bottom: 0.5em;
+    }
+    h1 {
+      font-size: 1.8em;
+      color: #444;
+      margin-bottom: 2em;
+    }
+    .btn {
+      display: block;
+      background: #88a58d;
+      color: white;
+      font-weight: bold;
+      padding: 1em;
+      margin: 1em auto;
+      border-radius: 14px;
+      text-decoration: none;
+      width: 90%;
+      max-width: 300px;
+      font-size: 1em;
+      transition: background 0.3s;
+    }
+    .btn:hover {
+      background: #779e7e;
+    }
+  </style>
+</head>
+<body>
+  <div class="logo">LLP</div>
+  <h1>Fertility Tracker</h1>
+  <a class="btn" href="tracker.html">Log Entry</a>
+  <a class="btn" href="summary.html">Cycle Summary</a>
+  <a class="btn" href="history.html">Cycle History</a>
+  <button id="installBtn" class="btn" style="display:none;" onclick="installPWA()">Install App</button>
+</body>
+</html>
