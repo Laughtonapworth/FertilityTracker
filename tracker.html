@@ -3,14 +3,25 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Log Entry</title>
+  <title>LLP Fertility Tracker</title>
 
-  <!-- Firebase Scripts -->
+  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
-  <!-- Load Firebase Config BEFORE any Firebase code -->
-  <script src="firebase-config.js"></script>
+  <!-- Firebase Config -->
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyByvnVx2aZEldUfqS2c6VNC6UJRIOPvGws",
+      authDomain: "fertility-tracker-c35ff.firebaseapp.com",
+      projectId: "fertility-tracker-c35ff",
+      storageBucket: "fertility-tracker-c35ff.appspot.com",
+      messagingSenderId: "775022478214",
+      appId: "1:775022478214:web:107ba4f9e0043bee75a207",
+      measurementId: "G-E6DVNWZNKQ"
+    };
+    firebase.initializeApp(firebaseConfig);
+  </script>
 
   <style>
     body { font-family: 'Segoe UI', sans-serif; background: #fffafc; padding: 1em; }
