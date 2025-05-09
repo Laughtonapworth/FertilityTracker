@@ -138,6 +138,15 @@
       </select>
     </div>
 
+    <div class="form-group" id="sexGroup">
+      <label>Sex</label>
+      <select id="sex">
+        <option value="">-- Select --</option>
+        <option>Yes</option>
+        <option>No</option>
+      </select>
+    </div>
+
     <button type="submit">Save Entry</button>
   </form>
 
@@ -151,8 +160,12 @@
         spottingGroup: false,
         crampsGroup: false,
         breastGroup: false,
-        pregnancyGroup: false
+        pregnancyGroup: false,
+        sexGroup: false
       };
+      if (["pre-ovulation", "ovulation", "post-ovulation"].includes(phase)) {
+        groups.sexGroup = true;
+      }
       if (phase === "pre-ovulation") {
         groups.opkGroup = true;
         groups.cmGroup = true;
@@ -192,6 +205,7 @@
           cramps: document.getElementById("cramps").value,
           breastChanges: document.getElementById("breastChanges").value,
           pregnancyResult: document.getElementById("pregnancyResult").value,
+          sex: document.getElementById("sex").value,
           timestamp: firebase.firestore.FieldValue.serverTimestamp()
         });
         alert("Entry saved!");
@@ -203,3 +217,4 @@
   </script>
 </body>
 </html>
+
