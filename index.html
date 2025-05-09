@@ -1,87 +1,72 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LLP Tracker Dashboard</title>
-  <link rel="stylesheet" href="css/styles.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>LLP Fertility Tracker</title>
+  <link rel="manifest" href="manifest.json" />
+  <script>
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      document.getElementById('installBtn').style.display = 'block';
+    });
+    function installPWA() {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then(() => {
+          deferredPrompt = null;
+          document.getElementById('installBtn').style.display = 'none';
+        });
+      }
+    }
+  </script>
   <style>
     body {
+      font-family: "Segoe UI", sans-serif;
+      background-color: #fce9f1;
       margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background: #fffafc;
-      color: #333;
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-    }
-    header {
-      background: #eeb7c2;
-      padding: 1em;
+      padding: 2em 1em;
       text-align: center;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
-    header img {
-      height: 40px;
-      vertical-align: middle;
+    .logo {
+      font-size: 2.2em;
+      font-weight: bold;
+      color: #88a58d;
+      margin-bottom: 0.5em;
     }
-    header span {
-      font-size: 1.4em;
-      margin-left: 0.5em;
-      vertical-align: middle;
-      color: white;
-    }
-    main {
-      padding: 1.5em;
-      flex: 1;
-    }
-    .card {
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-      margin-bottom: 1.2em;
-      text-align: center;
-      padding: 1.2em;
-    }
-    .card h2 {
-      font-size: 1.1em;
-      margin-bottom: 0.8em;
-      color: #555;
+    h1 {
+      font-size: 1.8em;
+      color: #444;
+      margin-bottom: 2em;
     }
     .btn {
-      background: linear-gradient(to right, #eeb7c2, #c4d7b2);
-      border: none;
-      border-radius: 24px;
-      padding: 0.9em 1.5em;
-      font-size: 1em;
-      font-weight: bold;
+      display: block;
+      background: #88a58d;
       color: white;
-      cursor: pointer;
-      transition: background 0.3s ease;
+      font-weight: bold;
+      padding: 1em;
+      margin: 1em auto;
+      border-radius: 14px;
+      text-decoration: none;
+      width: 90%;
+      max-width: 300px;
+      font-size: 1em;
+      transition: background 0.3s;
     }
     .btn:hover {
-      background: linear-gradient(to right, #d49cae, #a5c096);
+      background: #779e7e;
     }
   </style>
 </head>
 <body>
-  <header>
-    <img src="LLP_logo.svg" alt="LLP Logo" />
-    <span>LLP Tracker</span>
-  </header>
-  <main>
-    <div class="card">
-      <h2>Today's Entry</h2>
-      <a href="tracker.html"><button class="btn">Log Symptoms</button></a>
-    </div>
-    <div class="card">
-      <h2>Cycle Summary</h2>
-      <a href="summary.html"><button class="btn">View Summary</button></a>
-    </div>
-    <div class="card">
-      <h2>Cycle History</h2>
-      <a href="history.html"><button class="btn">Browse Entries</button></a>
-    </div>
-  </main>
+  <div class="logo">LLP</div>
+  <h1>Fertility Tracker</h1>
+  <a class="btn" href="tracker.html">Log Entry</a>
+  <a class="btn" href="summary.html">Cycle Summary</a>
+  <a class="btn" href="history.html">Cycle History</a>
+  <button id="installBtn" class="btn" style="display:none;" onclick="installPWA()">Install App</button>
 </body>
 </html>
