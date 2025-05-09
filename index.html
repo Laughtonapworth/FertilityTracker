@@ -3,186 +3,53 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Log Entry</title>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-  <script src="firebase-config.js"></script>
+  <title>LLP Fertility Tracker</title>
+  <link rel="stylesheet" href="styles.css" />
   <style>
-    body { font-family: 'Segoe UI', sans-serif; background: #fffafc; padding: 1em; }
-    h1 { text-align: center; }
-    .form-group { margin-bottom: 1em; }
-    label { display: block; margin-bottom: 0.3em; }
-    input, select, button {
-      width: 100%;
-      padding: 0.6em;
-      border: 1px solid #ccc;
-      border-radius: 8px;
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #fffafc;
+      padding: 2em;
+      text-align: center;
     }
-    button {
-      background: #c4d7b2;
-      font-weight: bold;
-      cursor: pointer;
+    h1 {
+      font-size: 1.8em;
+      margin-bottom: 0.5em;
+    }
+    .logo {
+      width: 120px;
+      margin-bottom: 1em;
     }
     .nav-button {
       display: block;
       margin: 1em auto;
-      text-align: center;
-      background: #eeb7c2;
+      padding: 0.8em 1.2em;
+      background-color: #eeb7c2;
       color: white;
-      padding: 0.6em 1em;
+      font-weight: bold;
+      border: none;
       border-radius: 20px;
       text-decoration: none;
-      max-width: 200px;
+      max-width: 250px;
     }
   </style>
 </head>
 <body>
-  <h1>Log Entry</h1>
-  <a class="nav-button" href="index.html">← Back to Home</a>
+  <img src="LLP_logo.svg" alt="LLP Logo" class="logo" />
+  <h1>LLP Fertility Tracker</h1>
 
-  <form id="entryForm">
-    <div class="form-group">
-      <label>Date</label>
-      <input type="date" id="date">
-    </div>
-    <div class="form-group">
-      <label>Phase</label>
-      <select id="phase">
-        <option value="">-- Select Phase --</option>
-        <option value="day1-period">Day 1 Period</option>
-        <option value="period">Period</option>
-        <option value="pre-ovulation">Pre-Ovulation</option>
-        <option value="ovulation">Ovulation</option>
-        <option value="post-ovulation">Post-Ovulation</option>
-      </select>
-    </div>
-
-    <div class="form-group" id="bbtGroup">
-      <label>BBT (°C)</label>
-      <input type="number" step="0.01" id="bbt">
-    </div>
-
-    <div class="form-group" id="cmGroup">
-      <label>Cervical Mucus</label>
-      <select id="cm">
-        <option value="">-- Select Cervical Mucus --</option>
-        <option>Dry</option><option>Sticky</option><option>Creamy</option><option>Watery</option><option>Egg white</option>
-      </select>
-    </div>
-
-    <div class="form-group" id="opkGroup">
-      <label>OPK</label>
-      <select id="opk">
-        <option value="">-- Select OPK Result --</option>
-        <option>Blank circle</option><option>Flashing face</option><option>Solid face</option>
-      </select>
-    </div>
-
-    <div class="form-group" id="moodGroup">
-      <label>Mood</label>
-      <select id="mood">
-        <option value="">-- Select Mood --</option>
-        <option>Calm</option><option>Happy</option><option>Irritable</option><option>Low</option>
-      </select>
-    </div>
-
-    <div class="form-group" id="spottingGroup">
-      <label>Spotting</label>
-      <select id="spotting">
-        <option>None</option><option>Pink</option><option>Brown</option><option>Red</option>
-      </select>
-    </div>
-
-    <div class="form-group" id="crampsGroup">
-      <label>Cramps</label>
-      <select id="cramps">
-        <option>None</option><option>Mild</option><option>Moderate</option><option>Strong</option>
-      </select>
-    </div>
-
-    <div class="form-group" id="breastGroup">
-      <label>Breast Changes</label>
-      <select id="breastChanges">
-        <option value="">-- Select --</option>
-        <option>Tender Breasts</option>
-        <option>Tender Nipples</option>
-        <option>Color Change</option>
-        <option>Shape Change</option>
-        <option>None</option>
-      </select>
-    </div>
-
-    <div class="form-group" id="pregnancyGroup">
-      <label>Pregnancy Result</label>
-      <select id="pregnancyResult">
-        <option value="">-- Select --</option>
-        <option>Negative</option>
-        <option>Faint Line</option>
-        <option>Positive</option>
-      </select>
-    </div>
-
-    <button type="submit">Save Entry</button>
-  </form>
+  <a class="nav-button" href="tracker.html">Log Today's Entry</a>
+  <a class="nav-button" href="summary.html">Current Cycle Summary</a>
+  <a class="nav-button" href="history.html">Cycle History & Averages</a>
 
   <script>
-    function updateVisibility() {
-      const phase = document.getElementById('phase').value;
-      const groups = {
-        opkGroup: false,
-        cmGroup: false,
-        moodGroup: false,
-        spottingGroup: false,
-        crampsGroup: false,
-        breastGroup: false,
-        pregnancyGroup: false
-      };
-      if (phase === "pre-ovulation") {
-        groups.opkGroup = true;
-        groups.cmGroup = true;
-      } else if (phase === "ovulation") {
-        groups.cmGroup = true;
-      } else if (phase === "post-ovulation") {
-        groups.cmGroup = true;
-        groups.moodGroup = true;
-        groups.spottingGroup = true;
-        groups.crampsGroup = true;
-        groups.breastGroup = true;
-        groups.pregnancyGroup = true;
-      }
-      for (const id in groups) {
-        const el = document.getElementById(id);
-        if (el) el.style.display = groups[id] ? "block" : "none";
-      }
-    }
-
-    document.addEventListener("DOMContentLoaded", () => {
-      document.getElementById("date").value = new Date().toISOString().split("T")[0];
-      updateVisibility();
-      document.getElementById("phase").addEventListener("change", updateVisibility);
-    });
-
-    document.getElementById("entryForm").addEventListener("submit", async function (e) {
+    window.addEventListener("beforeinstallprompt", (e) => {
       e.preventDefault();
-      try {
-        await firebase.firestore().collection("entries").add({
-          entryDate: document.getElementById("date").value,
-          phase: document.getElementById("phase").value,
-          bbt: document.getElementById("bbt").value,
-          cm: document.getElementById("cm").value,
-          opk: document.getElementById("opk").value,
-          mood: document.getElementById("mood").value,
-          spotting: document.getElementById("spotting").value,
-          cramps: document.getElementById("cramps").value,
-          breastChanges: document.getElementById("breastChanges").value,
-          pregnancyResult: document.getElementById("pregnancyResult").value,
-          timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        alert("Entry saved!");
-      } catch (error) {
-        console.error("Error saving entry:", error);
-        alert("Failed to save entry. See console.");
-      }
+      const installBtn = document.createElement("button");
+      installBtn.textContent = "Install App";
+      installBtn.className = "nav-button";
+      installBtn.onclick = () => e.prompt();
+      document.body.appendChild(installBtn);
     });
   </script>
 </body>
