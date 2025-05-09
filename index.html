@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,19 +6,21 @@
   <title>LLP Fertility Tracker</title>
   <link rel="manifest" href="manifest.json" />
   <script>
-    let deferredPrompt;
+    let deferredPrompt = null;
+
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       deferredPrompt = e;
-      document.getElementById('installBtn').style.display = 'block';
     });
+
     function installPWA() {
       if (deferredPrompt) {
         deferredPrompt.prompt();
         deferredPrompt.userChoice.then(() => {
           deferredPrompt = null;
-          document.getElementById('installBtn').style.display = 'none';
         });
+      } else {
+        alert("Install not available. You may have already installed it, or your browser doesn't support installation.");
       }
     }
   </script>
@@ -64,9 +65,12 @@
 <body>
   <div class="logo">LLP</div>
   <h1>Fertility Tracker</h1>
+
   <a class="btn" href="tracker.html">Log Entry</a>
   <a class="btn" href="summary.html">Cycle Summary</a>
   <a class="btn" href="history.html">Cycle History</a>
-  <button id="installBtn" class="btn" style="display:none;" onclick="installPWA()">Install App</button>
+  <button class="btn" onclick="installPWA()">Install App</button>
+
 </body>
 </html>
+
