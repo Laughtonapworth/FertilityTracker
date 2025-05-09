@@ -1,0 +1,129 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Cycle Summary</title>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+  <!-- Firebase Config -->
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyByvnVx2aZEldUfqS2c6VNC6UJRIOPvGws",
+      authDomain: "fertility-tracker-c35ff.firebaseapp.com",
+      projectId: "fertility-tracker-c35ff",
+      storageBucket: "fertility-tracker-c35ff.appspot.com",
+      messagingSenderId: "775022478214",
+      appId: "1:775022478214:web:107ba4f9e0043bee75a207",
+      measurementId: "G-E6DVNWZNKQ"
+    };
+    firebase.initializeApp(firebaseConfig);
+  </script>
+
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background: #fffafc; padding: 1em; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1em; font-size: 0.95em; }
+    th, td { padding: 0.6em; border: 1px solid #ccc; text-align: center; }
+    th { background: #eeb7c2; color: white; }
+    h1 { text-align: center; }
+    .nav-button {
+      display: block;
+      margin: 1em auto;
+      text-align: center;
+      background: #c4d7b2;
+      color: white;
+      padding: 0.6em 1.2em;
+      border-radius: 20px;
+      text-decoration: none;
+      max-width: 250px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Cycle Summary</h1>
+  <a class="nav-button" href="index.html">← Back to Home</a>
+
+  <table id="summaryTable">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>CD</th>
+        <th>DPO</th>
+        <th>Phase</th>
+        <th>BBT</th>
+        <th>CM</th>
+        <th>OPK</th>
+        <th>Sex</th>
+        <th>Mood</th>
+        <th>Spotting</th>
+        <th>Cramps</th>
+        <th>Breast</th>
+        <th>Pregnancy</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    async function loadAndDisplayEntries() {
+      const db = firebase.firestore();
+      const snapshot = await db.collection("entries").orderBy("entryDate").get();
+      const entries = snapshot.docs.map(doc => doc.data());
+
+      // Identify latest Day 1 Period
+      let lastCD1 = null;
+      let lastOvulationDate = null;
+      const rows = [];
+
+      for (let i = 0; i < entries.length; i++) {
+        const e = entries[i];
+        const date = new Date(e.entryDate);
+        if (e.phase === "day1-period") {
+          lastCD1 = new Date(e.entryDate);
+          lastOvulationDate = null;
+        }
+        if (e.opk === "Solid face") {
+          lastOvulationDate = new Date(date);
+        }
+
+        let cd = "-";
+        if (lastCD1) {
+          cd = Math.floor((date - lastCD1) / (1000 * 60 * 60 * 24)) + 1;
+        }
+
+        let dpo = "-";
+        if (lastOvulationDate) {
+          const diff = Math.floor((date - lastOvulationDate) / (1000 * 60 * 60 * 24));
+          dpo = diff >= 1 ? diff : "-";
+        }
+
+        rows.push(`
+          <tr>
+            <td>${e.entryDate}</td>
+            <td>${cd}</td>
+            <td>${dpo}</td>
+            <td>${e.phase || ""}</td>
+            <td>${e.bbt || ""}</td>
+            <td>${e.cm || ""}</td>
+            <td>${e.opk || ""}</td>
+            <td>${e.sex || ""}</td>
+            <td>${e.mood || ""}</td>
+            <td>${e.spotting || ""}</td>
+            <td>${e.cramps || ""}</td>
+            <td>${e.breastChanges || ""}</td>
+            <td>${e.pregnancyResult || ""}</td>
+          </tr>
+        `);
+      }
+
+      document.querySelector("#summaryTable tbody").innerHTML = rows.reverse().join("");
+    }
+
+    loadAndDisplayEntries();
+  </script>
+</body>
+</html>
