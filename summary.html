@@ -37,16 +37,11 @@
       text-decoration: none;
       max-width: 250px;
     }
-    .table-scroll {
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-    }
     table {
       width: 100%;
-      min-width: 1000px;
       border-collapse: collapse;
       margin-top: 1em;
-      font-size: 0.95em;
+      font-size: 1em;
     }
     th, td {
       padding: 0.6em;
@@ -63,28 +58,17 @@
   <h1>Cycle Summary</h1>
   <a class="nav-button" href="index.html">← Back to Home</a>
 
-  <div class="table-scroll">
-    <table id="summaryTable">
-      <thead>
-        <tr>
-          <th>Date</th>
-          <th>CD</th>
-          <th>DPO</th>
-          <th>Phase</th>
-          <th>BBT</th>
-          <th>CM</th>
-          <th>OPK</th>
-          <th>Sex</th>
-          <th>Mood</th>
-          <th>Spotting</th>
-          <th>Cramps</th>
-          <th>Breast</th>
-          <th>Pregnancy</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
+  <table id="summaryTable">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>CD</th>
+        <th>Phase</th>
+        <th>DPO</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
 
   <script>
     async function loadAndDisplayEntries() {
@@ -122,17 +106,8 @@
           <tr>
             <td>${e.entryDate}</td>
             <td>${cd}</td>
-            <td>${dpo}</td>
             <td>${e.phase || ""}</td>
-            <td>${e.bbt || ""}</td>
-            <td>${e.cm || ""}</td>
-            <td>${e.opk || ""}</td>
-            <td>${e.sex || ""}</td>
-            <td>${e.mood || ""}</td>
-            <td>${e.spotting || ""}</td>
-            <td>${e.cramps || ""}</td>
-            <td>${e.breastChanges || ""}</td>
-            <td>${e.pregnancyResult || ""}</td>
+            <td>${dpo}</td>
           </tr>
         `);
       }
