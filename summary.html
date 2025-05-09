@@ -37,6 +37,43 @@
       text-decoration: none;
       max-width: 250px;
     }
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+      margin: 1em 0;
+    }
+    .day-box {
+      padding: 0.8em 0;
+      border-radius: 6px;
+      background: #eee;
+      font-size: 0.85em;
+      text-align: center;
+    }
+    .calendar-title {
+      text-align: center;
+      font-weight: bold;
+      margin-top: 1em;
+      font-size: 1.1em;
+    }
+    .legend {
+      margin-top: 0.5em;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5em;
+      justify-content: center;
+    }
+    .legend span {
+      display: inline-block;
+      padding: 0.4em 0.8em;
+      border-radius: 5px;
+      font-size: 0.75em;
+    }
+    .red { background: #f6b1b7; }
+    .deep-red { background: #e76f8a; color: white; }
+    .blue { background: #b7d7f6; }
+    .bold-blue { background: #5f9ed1; color: white; }
+    .green { background: #c8e6c9; }
     table {
       width: 100%;
       border-collapse: collapse;
@@ -58,6 +95,16 @@
   <h1>Cycle Summary</h1>
   <a class="nav-button" href="index.html">← Back to Home</a>
 
+  <div class="calendar-title">Cycle Calendar</div>
+  <div class="legend">
+    <span class="deep-red">Day 1 Period</span>
+    <span class="red">Period</span>
+    <span class="blue">Fertile (Flashing)</span>
+    <span class="bold-blue">Ovulation (Solid)</span>
+    <span class="green">Post Ovulation</span>
+  </div>
+  <div class="calendar-grid" id="calendarGrid"></div>
+
   <table id="summaryTable">
     <thead>
       <tr>
@@ -78,17 +125,20 @@
 
       let lastCD1 = null;
       let lastOvulationDate = null;
-      const rows = [];
+      const calendarData = {};
+      const tableRows = [];
 
       for (let i = 0; i < entries.length; i++) {
         const e = entries[i];
-        const date = new Date(e.entryDate);
+        const dateStr = e.entryDate;
+        const date = new Date(dateStr);
+
         if (e.phase === "day1-period") {
-          lastCD1 = new Date(e.entryDate);
+          lastCD1 = new Date(dateStr);
           lastOvulationDate = null;
         }
         if (e.opk === "Solid face") {
-          lastOvulationDate = new Date(date);
+          lastOvulationDate = new Date(dateStr);
         }
 
         let cd = "-";
@@ -102,17 +152,40 @@
           dpo = diff >= 1 ? diff : "-";
         }
 
-        rows.push(`
+        tableRows.push(`
           <tr>
-            <td>${e.entryDate}</td>
+            <td>${dateStr}</td>
             <td>${cd}</td>
             <td>${e.phase || ""}</td>
             <td>${dpo}</td>
           </tr>
         `);
+
+        // Calendar color logic
+        let className = "";
+        if (e.phase === "day1-period") className = "deep-red";
+        else if (e.phase === "period") className = "red";
+        else if (e.opk === "Flashing face") className = "blue";
+        else if (e.opk === "Solid face") className = "bold-blue";
+        else if (lastOvulationDate && date > lastOvulationDate) className = "green";
+
+        calendarData[dateStr] = { label: new Date(dateStr).getDate(), className };
       }
 
-      document.querySelector("#summaryTable tbody").innerHTML = rows.reverse().join("");
+      const calendarGrid = document.getElementById("calendarGrid");
+      if (lastCD1) {
+        const today = new Date();
+        for (let d = new Date(lastCD1); d <= today; d.setDate(d.getDate() + 1)) {
+          const key = d.toISOString().split("T")[0];
+          const cell = document.createElement("div");
+          const val = calendarData[key];
+          cell.className = "day-box " + (val ? val.className : "");
+          cell.textContent = d.getDate();
+          calendarGrid.appendChild(cell);
+        }
+      }
+
+      document.querySelector("#summaryTable tbody").innerHTML = tableRows.reverse().join("");
     }
 
     loadAndDisplayEntries();
