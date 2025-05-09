@@ -7,6 +7,7 @@
   <title>Log Entry</title>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <script src="firebase-config.js"></script>
   <style>
     body { font-family: 'Segoe UI', sans-serif; background: #fffafc; padding: 1em; }
     h1 { text-align: center; }
@@ -160,8 +161,29 @@
     }
 
     document.addEventListener("DOMContentLoaded", () => {
+      // Auto-fill today's date
+      document.getElementById("date").value = new Date().toISOString().split("T")[0];
       updateVisibility();
       document.getElementById("phase").addEventListener("change", updateVisibility);
+    });
+
+    document.getElementById("entryForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
+      const db = firebase.firestore();
+      await db.collection("entries").add({
+        entryDate: document.getElementById("date").value,
+        phase: document.getElementById("phase").value,
+        bbt: document.getElementById("bbt").value,
+        cm: document.getElementById("cm").value,
+        opk: document.getElementById("opk").value,
+        mood: document.getElementById("mood").value,
+        spotting: document.getElementById("spotting").value,
+        cramps: document.getElementById("cramps").value,
+        breastChanges: document.getElementById("breastChanges").value,
+        pregnancyResult: document.getElementById("pregnancyResult").value,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      alert("Entry saved.");
     });
   </script>
 </body>
