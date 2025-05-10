@@ -73,7 +73,7 @@
     .day-box {
       padding: 0.6em 0;
       border-radius: 6px;
-      background: #eee;
+      background: #f0f0f0;
       text-align: center;
       font-size: 0.85em;
     }
@@ -182,8 +182,10 @@
         else if (e.opk === "Solid face") className = "bold-blue";
         else if (lastOvulationDate && date > lastOvulationDate) className = "green";
 
-        calendarData[dateStr] = { day: date.getDate(), className };
+        calendarData[dateStr] = { className };
       }
+
+      console.log("Calendar Data:", calendarData);
 
       const calendarGrid = document.getElementById("calendarGrid");
       if (lastCD1) {
@@ -197,8 +199,10 @@
         while (d <= today) {
           const key = d.toISOString().split("T")[0];
           const cell = document.createElement("div");
-          const val = calendarData[key];
-          cell.className = "day-box " + (val?.className || "");
+          cell.className = "day-box";
+          if (calendarData[key]) {
+            cell.classList.add(calendarData[key].className);
+          }
           cell.textContent = d.getDate();
           calendarGrid.appendChild(cell);
           d.setDate(d.getDate() + 1);
