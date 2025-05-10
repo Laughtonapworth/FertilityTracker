@@ -140,15 +140,17 @@
       const calendarData = {};
       const tableRows = [];
 
-      for (let i = 0; i < entries.length; i++) {
-        const e = entries[i];
+      for (const e of entries) {
+        if (e.phase === "day1-period" && e.entryDate) {
+          const dt = new Date(e.entryDate);
+          if (!lastCD1 || dt < lastCD1) lastCD1 = dt;
+        }
+      }
+
+      for (const e of entries) {
         const dateStr = e.entryDate;
         const date = new Date(dateStr);
 
-        if (e.phase === "day1-period") {
-          lastCD1 = new Date(dateStr);
-          lastOvulationDate = null;
-        }
         if (e.opk === "Solid face") {
           lastOvulationDate = new Date(dateStr);
         }
@@ -187,20 +189,18 @@
       if (lastCD1) {
         const today = new Date();
         let d = new Date(lastCD1);
-
-        const offset = (d.getDay() + 6) % 7; // Monday=0 ... Sunday=6
+        const offset = (d.getDay() + 6) % 7;
         for (let i = 0; i < offset; i++) {
           const empty = document.createElement("div");
           calendarGrid.appendChild(empty);
         }
-
         while (d <= today) {
           const key = d.toISOString().split("T")[0];
-          const box = document.createElement("div");
-          const entry = calendarData[key];
-          box.className = "day-box " + (entry?.className || "");
-          box.textContent = d.getDate();
-          calendarGrid.appendChild(box);
+          const cell = document.createElement("div");
+          const val = calendarData[key];
+          cell.className = "day-box " + (val?.className || "");
+          cell.textContent = d.getDate();
+          calendarGrid.appendChild(cell);
           d.setDate(d.getDate() + 1);
         }
       }
