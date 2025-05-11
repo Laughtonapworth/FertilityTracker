@@ -140,9 +140,9 @@ function renderCalendar(entries, month, year) {
       else if (opk === 'flashing face') box.classList.add('blue');
       else if (p === 'ovulation' || opk === 'solid face') box.classList.add('bold-blue');
       else if (p === 'post-ovulation') box.classList.add('green');
-      if ((e.sex || '').toLowerCase() === 'yes') box.appendChild(Object.assign(document.createElement('span'), {textContent: '💖', style: emojiStyle}));
-      if ((e.breastChanges || '').toLowerCase() !== 'none') box.appendChild(Object.assign(document.createElement('span'), {textContent: '🫶', style: emojiStyle}));
-      if ((e.digestive || '').toLowerCase() !== 'none') box.appendChild(Object.assign(document.createElement('span'), {textContent: '🫃', style: emojiStyle}));
+      if (e.sex && e.sex.toLowerCase() === 'yes') box.appendChild(Object.assign(document.createElement('span'), {textContent: '💖', style: emojiStyle}));
+      if (e.breastChanges && e.breastChanges.toLowerCase() !== 'none') box.appendChild(Object.assign(document.createElement('span'), {textContent: '🫶', style: emojiStyle}));
+      if (e.digestive && e.digestive.toLowerCase() !== 'none') box.appendChild(Object.assign(document.createElement('span'), {textContent: '🫃', style: emojiStyle}));
     }
     grid.appendChild(box);
   }
