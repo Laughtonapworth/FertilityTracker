@@ -54,11 +54,13 @@
       border-radius: 5px;
       font-size: 0.75em;
     }
-    .deep-red { background: #e76f8a; color: white; }
-    .red { background: #f6b1b7; }
-    .blue { background: #b7d7f6; }
-    .bold-blue { background: #5f9ed1; color: white; }
-    .green { background: #c8e6c9; }
+
+    /* Only apply styles if it's a day-box with a matching class */
+    .day-box.deep-red { background: #e76f8a; color: white; }
+    .day-box.red { background: #f6b1b7; }
+    .day-box.blue { background: #b7d7f6; }
+    .day-box.bold-blue { background: #5f9ed1; color: white; }
+    .day-box.green { background: #c8e6c9; }
 
     .calendar-grid {
       display: grid;
@@ -141,7 +143,7 @@
 
       for (const e of entries) {
         if (e.entryDate) {
-          const normalizedDate = e.entryDate; // use exactly as saved in Firebase
+          const normalizedDate = e.entryDate; // use exactly as saved
           entryMap[normalizedDate] = e;
 
           const date = new Date(e.entryDate);
