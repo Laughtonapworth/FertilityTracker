@@ -145,10 +145,10 @@
           entryMap[normalizedDate] = e;
 
           const date = new Date(normalizedDate);
-          if (e.phase === "day1-period") {
+          if ((e.phase || "").toLowerCase() === "day1-period") {
             if (!lastCD1 || date > lastCD1) lastCD1 = date;
           }
-          if (e.opk === "Solid face") {
+          if ((e.opk || "").toLowerCase() === "solid face") {
             if (!lastOvulation || date > lastOvulation) lastOvulation = date;
           }
         }
@@ -179,14 +179,20 @@
         cell.textContent = d.getDate();
 
         if (entry) {
+          const phase = (entry.phase || "").toLowerCase();
+          const opk = (entry.opk || "").toLowerCase();
+
           let className = "";
-          if (entry.phase === "day1-period") className = "deep-red";
-          else if (entry.phase === "period") className = "red";
-          else if (entry.opk === "Flashing face") className = "blue";
-          else if (entry.opk === "Solid face") className = "bold-blue";
+          if (phase === "day1-period") className = "deep-red";
+          else if (phase === "period") className = "red";
+          else if (opk === "flashing face") className = "blue";
+          else if (opk === "solid face") className = "bold-blue";
           else if (lastOvulation && d > lastOvulation) className = "green";
 
-          if (className) cell.classList.add(className);
+          if (className) {
+            console.log(`Marking ${key} with class ${className}`);
+            cell.classList.add(className);
+          }
 
           let cd = "-";
           if (lastCD1) {
@@ -219,5 +225,6 @@
   </script>
 </body>
 </html>
+
 
 
