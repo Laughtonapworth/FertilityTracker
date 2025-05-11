@@ -24,6 +24,9 @@
       display: inline-block; padding: 0.4em 0.8em;
       border-radius: 5px; font-size: 0.75em;
     }
+    .calendar-nav {
+      display: flex; justify-content: center; gap: 1em; margin: 0.5em 0;
+    }
     .calendar-grid {
       display: grid; grid-template-columns: repeat(7, 1fr);
       gap: 5px; margin-bottom: 1.5em;
@@ -45,6 +48,9 @@
       padding: 0.6em; border: 1px solid #ccc; text-align: center;
     }
     th { background: #eeb7c2; color: white; }
+    .chart-container {
+      margin: 2em auto; max-width: 900px;
+    }
   </style>
 </head>
 <body>
@@ -62,6 +68,11 @@
     <span style="background:#fff0f5;">🫃 Digestive</span>
   </div>
 
+  <div class="calendar-nav">
+    <button onclick="changeMonth(-1)">◀</button>
+    <span id="monthLabel"></span>
+    <button onclick="changeMonth(1)">▶</button>
+  </div>
   <div class="calendar-grid" id="calendarWeekdays"></div>
   <div class="calendar-grid" id="calendarGrid"></div>
 
@@ -69,6 +80,19 @@
     <thead><tr><th>Date</th><th>CD</th><th>Phase</th><th>DPO</th></tr></thead>
     <tbody></tbody>
   </table>
+
+  <div class="chart-container">
+    <h2>BBT Over Time</h2>
+    <canvas id="bbtChart"></canvas>
+  </div>
+  <div class="chart-container">
+    <h2>CM Pattern</h2>
+    <canvas id="cmChart"></canvas>
+  </div>
+  <div class="chart-container">
+    <h2>Symptoms Summary</h2>
+    <canvas id="symptomsChart"></canvas>
+  </div>
 
   <script>
     const firebaseConfig = {
@@ -93,14 +117,13 @@
       return sorted.slice(0, startIndex + 1).reverse();
     }
 
-    function renderCalendar(entries) {
-      const weekdays = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-      document.getElementById("calendarWeekdays").innerHTML = weekdays.map(d => `<div class="weekday">${d}</div>`).join('');
+    function renderCalendar(entries, month, year) {
+      document.getElementById("calendarWeekdays").innerHTML = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']
+        .map(d => `<div class="weekday">${d}</div>`).join('');
       const grid = document.getElementById("calendarGrid");
       grid.innerHTML = "";
-      const today = new Date();
-      const start = new Date(today.getFullYear(), today.getMonth(), 1);
-      const end = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      const start = new Date(year, month, 1);
+      const end = new Date(year, month + 1, 0);
       const offset = (start.getDay() + 6) % 7;
       for (let i = 0; i < offset; i++) grid.appendChild(document.createElement("div"));
       const map = Object.fromEntries(entries.map(e => [e.entryDate, e]));
@@ -125,6 +148,14 @@
         }
         grid.appendChild(box);
       }
+      document.getElementById("monthLabel").textContent = new Date(year, month).toLocaleString('default', { month: 'long', year: 'numeric' });
+      viewMonth = month;
+      viewYear = year;
+    }
+
+    function changeMonth(offset) {
+      const newDate = new Date(viewYear, viewMonth + offset);
+      renderCalendar(allEntries, newDate.getMonth(), newDate.getFullYear());
     }
 
     function renderTable(entries) {
@@ -139,22 +170,59 @@
       const d = new Date(todayEntry.entryDate);
       const cd = Math.floor((d - cd1) / 86400000) + 1;
       const dpo = ov ? Math.max(Math.floor((d - new Date(ov.entryDate)) / 86400000), 0) : "-";
-      row.innerHTML = `<td>${todayEntry.entryDate}</td><td>${cd}</td><td>${todayEntry.phase || ''}</td><td>${dpo}</td>`;
+      row.innerHTML = `<td>${todayEntry.entryDate}</td><td>${cd}</td><td>${todayEntry.phase || '-'}</td><td>${dpo}</td>`;
       tbody.appendChild(row);
+    }
+
+    function renderCharts(entries) {
+      const labels = entries.map(e => e.entryDate);
+      const bbtData = entries.map(e => parseFloat(e.bbt)).filter(x => !isNaN(x));
+      const cmTypes = ['dry', 'sticky', 'creamy', 'watery', 'egg white'];
+      const cmData = entries.map(e => cmTypes.indexOf((e.cm || '').toLowerCase())).filter(x => x >= 0);
+      const symptoms = { cramps: [], spotting: [], breast: [], digestive: [] };
+      entries.forEach(e => {
+        symptoms.cramps.push((e.cramps || '').toLowerCase() !== 'none' ? 1 : 0);
+        symptoms.spotting.push((e.spotting || '').toLowerCase() !== 'none' ? 1 : 0);
+        symptoms.breast.push((e.breastChanges || '').toLowerCase() !== 'none' ? 1 : 0);
+        symptoms.digestive.push((e.digestive || '').toLowerCase() !== 'none' ? 1 : 0);
+      });
+      new Chart(document.getElementById("bbtChart"), {
+        type: 'line',
+        data: { labels, datasets: [{ label: 'BBT (°C)', data: bbtData, borderColor: 'purple', tension: 0.3 }] },
+        options: { responsive: true }
+      });
+      new Chart(document.getElementById("cmChart"), {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{ label: 'Cervical Mucus', data: cmData, backgroundColor: '#8ecae6' }]
+        },
+        options: { responsive: true, scales: { y: { ticks: { callback: val => cmTypes[val] || '' } } } }
+      });
+      new Chart(document.getElementById("symptomsChart"), {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [
+            { label: 'Cramps', data: symptoms.cramps, backgroundColor: '#f28e8e' },
+            { label: 'Spotting', data: symptoms.spotting, backgroundColor: '#f2c28e' },
+            { label: 'Breast Changes', data: symptoms.breast, backgroundColor: '#c3aed6' },
+            { label: 'Digestive', data: symptoms.digestive, backgroundColor: '#a0d9b4' }
+          ]
+        },
+        options: { responsive: true, scales: { x: { stacked: true }, y: { stacked: true } } }
+      });
     }
 
     async function run() {
       allEntries = await loadEntries();
       const currentCycle = getCurrentCycle(allEntries);
-      renderCalendar(currentCycle);
+      const today = new Date();
+      renderCalendar(currentCycle, today.getMonth(), today.getFullYear());
       renderTable(currentCycle);
+      renderCharts(currentCycle);
     }
     run();
   </script>
 </body>
 </html>
-
-
-
-
-
