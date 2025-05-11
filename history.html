@@ -1,5 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -24,53 +23,44 @@
     table { width: 100%; border-collapse: collapse; margin: 1em 0; font-size: 0.95em; }
     th, td { padding: 0.5em; border: 1px solid #ccc; text-align: center; }
     th { background: #eeb7c2; color: white; }
-    .chart-container { margin: 2em auto; max-width: 900px; }
+    .chart-container { margin: 2em auto; max-width: 900px; }.calendar-title { text-align: center; font-weight: bold; margin-top: 1em; font-size: 1.1em; }
+.calendar-nav { display: flex; justify-content: center; gap: 1em; margin: 0.5em 0; }
+.calendar-nav button { padding: 0.4em 1em; border: none; border-radius: 5px; background: #d6d6d6; cursor: pointer; }
 
-    .calendar-title { text-align: center; font-weight: bold; margin-top: 1em; font-size: 1.1em; }
-    .calendar-nav { display: flex; justify-content: center; gap: 1em; margin: 0.5em 0; }
-    .calendar-nav button { padding: 0.4em 1em; border: none; border-radius: 5px; background: #d6d6d6; cursor: pointer; }
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 5px;
+  margin-bottom: 1.5em;
+}
+.weekday { font-weight: bold; text-align: center; }
+.day-box {
+  padding: 0.6em 0;
+  border-radius: 6px;
+  background: #f0f0f0;
+  text-align: center;
+  font-size: 0.85em;
+}
+.deep-red { background: #e76f8a !important; color: white !important; }
+.red { background: #f6b1b7 !important; }
+.blue { background: #b7d7f6 !important; }
+.bold-blue { background: #5f9ed1 !important; color: white !important; }
+.green { background: #c8e6c9 !important; }
 
-    .calendar-grid {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 5px;
-      margin-bottom: 1.5em;
-    }
-    .weekday { font-weight: bold; text-align: center; }
-    .day-box {
-      padding: 0.6em 0;
-      border-radius: 6px;
-      background: #f0f0f0;
-      text-align: center;
-      font-size: 0.85em;
-    }
-    .day-box.deep-red { background: #e76f8a; color: white; }
-    .day-box.red { background: #f6b1b7; }
-    .day-box.blue { background: #b7d7f6; }
-    .day-box.bold-blue { background: #5f9ed1; color: white; }
-    .day-box.green { background: #c8e6c9; }
   </style>
 </head>
 <body>
   <h1>Cycle History</h1>
-  <a class="nav-button" href="index.html">← Back to Home</a>
-
-  <h2>Cycle Averages</h2>
+  <a class="nav-button" href="index.html">← Back to Home</a>  <div id="cycleCalendars"></div>  <h2>Cycle Averages</h2>
   <table>
     <thead>
       <tr><th>Avg. Cycle Length</th><th>Avg. Luteal Phase</th><th>Avg. Period Length</th></tr>
     </thead>
     <tbody><tr id="averagesRow"><td>–</td><td>–</td><td>–</td></tr></tbody>
-  </table>
-
-  <div class="chart-container">
+  </table>  <div class="chart-container">
     <h2>BBT by Cycle</h2>
     <canvas id="bbtChart"></canvas>
-  </div>
-
-  <div id="cycleCalendars"></div>
-
-  <script>
+  </div>  <script>
     const firebaseConfig = {
       apiKey: "AIzaSyByvnVx2aZEldUfqS2c6VNC6UJRIOPvGws",
       authDomain: "fertility-tracker-c35ff.firebaseapp.com",
@@ -85,16 +75,14 @@
     }
 
     function groupCycles(entries) {
-      const cycles = [];
-      let current = [];
+      const cycles = [], current = [];
       for (let i = 0; i < entries.length; i++) {
         const e = entries[i];
         if ((e.phase || '').toLowerCase() === 'day1-period') {
-          if (current.length) cycles.push(current);
-          current = [e];
-        } else {
-          current.push(e);
+          if (current.length) cycles.push([...current]);
+          current.length = 0;
         }
+        current.push(e);
       }
       if (current.length) cycles.push(current);
       return cycles;
@@ -204,6 +192,5 @@
     }
 
     run();
-  </script>
-</body>
+  </script></body>
 </html>
