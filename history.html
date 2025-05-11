@@ -188,18 +188,20 @@
         box.title = '';
         const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
         const entry = entryMap[key];
+        let phase;
         if (entry) {
+          phase = (entry.phase || '').toLowerCase();
+          
+          
+          
+          
+          
+          
+          
+          
+          
           const emojiStyle = 'font-size: 0.8em; display: block;';
-          const mood = (entry.mood || '');
-          const cramps = (entry.cramps || '').toLowerCase();
-          const spotting = (entry.spotting || '').toLowerCase();
-          const bbt = (entry.bbt || '');
-          const opk = (entry.opk || '').toLowerCase();
-          const sex = (entry.sex || '').toLowerCase();
-          const breast = (entry.breastChanges || '').toLowerCase();
-          const digestive = (entry.digestive || '').toLowerCase();
-          const emojiStyle = 'font-size: 0.8em; display: block;';
-          const phase = (entry.phase || '').toLowerCase();
+          
           
           const mood = (entry.mood || '');
           const cramps = (entry.cramps || '').toLowerCase();
@@ -240,19 +242,19 @@
           
           
         }
-        if (entry && mood) if (entry && mood) box.title += 'Mood: ' + mood + '
+        if (entry && mood) box.title += 'Mood: ' + mood + '
 ';
-        if (entry && cramps && cramps !== 'none') if (entry && cramps && cramps !== 'none') box.title += 'Cramps: ' + cramps + '
+        if (entry && cramps && cramps !== 'none') box.title += 'Cramps: ' + cramps + '
 ';
-        if (entry && spotting && spotting !== 'none') if (entry && spotting && spotting !== 'none') box.title += 'Spotting: ' + spotting + '
+        if (entry && spotting && spotting !== 'none') box.title += 'Spotting: ' + spotting + '
 ';
-        if (entry && sex === 'yes') if (entry && sex === 'yes') box.title += 'Sex: Yes
+        if (entry && sex === 'yes') box.title += 'Sex: Yes
 ';
-        if (entry && bbt) if (entry && bbt) box.title += 'BBT: ' + bbt + '
+        if (entry && bbt) box.title += 'BBT: ' + bbt + '
 ';
-        if (entry && breast && breast !== 'none') if (entry && breast && breast !== 'none') box.title += 'Breast Changes
+        if (entry && breast && breast !== 'none') box.title += 'Breast Changes
 ';
-        if (entry && digestive && digestive !== 'none') if (entry && digestive && digestive !== 'none') box.title += 'Digestive Symptoms
+        if (entry && digestive && digestive !== 'none') box.title += 'Digestive Symptoms
 ';
                   if (mood) box.title += 'Mood: ' + mood + '
 ';
