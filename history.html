@@ -140,7 +140,7 @@
         const box = document.createElement("div");
         box.className = "day-box";
         box.textContent = d.getDate();
-        const key = d.toISOString().split('T')[0];
+        const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
         const entry = entryMap[key];
         if (entry) {
           const phase = (entry.phase || '').toLowerCase();
@@ -229,3 +229,4 @@
   </script>
 </body>
 </html>
+
