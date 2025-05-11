@@ -1,3 +1,6 @@
+
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -68,8 +71,18 @@
   <div class="calendar-grid" id="calendarGrid"></div>
 
   <div class="chart-container">
-    <h2>BBT by Cycle</h2>
+    <h2>BBT Chart</h2>
     <canvas id="bbtChart"></canvas>
+  </div>
+
+  <div class="chart-container">
+    <h2>CM Pattern</h2>
+    <canvas id="cmChart"></canvas>
+  </div>
+
+  <div class="chart-container">
+    <h2>Average Symptoms</h2>
+    <canvas id="symptomsChart"></canvas>
   </div>
 
   <script>
@@ -127,11 +140,20 @@
         if (entry) {
           const phase = (entry.phase || '').toLowerCase();
           const opk = (entry.opk || '').toLowerCase();
+          const sex = (entry.sex || '').toLowerCase();
           if (phase === 'day1-period') box.classList.add('deep-red');
           else if (phase === 'period') box.classList.add('red');
           else if (opk === 'flashing face') box.classList.add('blue');
           else if (phase === 'ovulation' || opk === 'solid face') box.classList.add('bold-blue');
           else if (phase === 'post-ovulation') box.classList.add('green');
+
+          if (sex === 'yes') {
+            const emoji = document.createElement('span');
+            emoji.textContent = '💖';
+            emoji.style.fontSize = '0.8em';
+            emoji.style.display = 'block';
+            box.appendChild(emoji);
+          }
         }
         calendarGrid.appendChild(box);
       }
@@ -159,17 +181,33 @@
       return cycles;
     }
 
-    function renderBBTChart(cycles) {
-      const datasets = cycles.map((cycle, index) => {
-        const bbt = cycle.map(e => parseFloat(e.bbt)).filter(v => !isNaN(v));
-        if (!bbt.length) return null;
-        const label = new Date(cycle[0].entryDate).toLocaleString('default', { month: 'short', year: 'numeric' });
-        return { label, data: bbt, borderColor: `hsl(${index * 60}, 70%, 50%)`, fill: false, tension: 0.3 };
-      }).filter(Boolean);
+    function renderCharts(cycles) {
+      const all = cycles.flat();
+      const bbtData = all.map(e => parseFloat(e.bbt)).filter(x => !isNaN(x));
+      const cmTypes = ['dry', 'sticky', 'creamy', 'watery', 'egg white'];
+      const cmData = all.map(e => cmTypes.indexOf((e.cm || '').toLowerCase())).filter(x => x >= 0);
+
+      const symptoms = { cramps: 0, spotting: 0, mood: 0, breast: 0 };
+      all.forEach(e => {
+        if ((e.cramps || '').toLowerCase() !== 'none') symptoms.cramps++;
+        if ((e.spotting || '').toLowerCase() !== 'none') symptoms.spotting++;
+        if ((e.mood || '') !== '') symptoms.mood++;
+        if ((e.breastChanges || '').toLowerCase() !== 'none') symptoms.breast++;
+      });
+
       new Chart(document.getElementById("bbtChart"), {
-        type: 'line',
-        data: { labels: [], datasets },
-        options: { responsive: true, scales: { x: { display: false } } }
+        type: 'line', data: { labels: bbtData.map((_, i) => i + 1), datasets: [{ label: "BBT", data: bbtData, borderColor: 'purple' }] }, options: { responsive: true }
+      });
+
+      new Chart(document.getElementById("cmChart"), {
+        type: 'line', data: { labels: cmData.map((_, i) => i + 1), datasets: [{ label: "CM", data: cmData, borderColor: 'teal' }] }, options: { responsive: true, scales: { y: { ticks: { callback: val => cmTypes[val] } } } }
+      });
+
+      new Chart(document.getElementById("symptomsChart"), {
+        type: 'bar', data: {
+          labels: Object.keys(symptoms),
+          datasets: [{ label: "Average Occurrence", data: Object.values(symptoms), backgroundColor: ['#f28e8e', '#f2c28e', '#a8d0e6', '#c3aed6'] }]
+        }, options: { responsive: true }
       });
     }
 
@@ -179,11 +217,10 @@
       calculateAverages(cycles);
       const today = new Date();
       renderCalendar(today.getMonth(), today.getFullYear());
-      renderBBTChart(cycles);
+      renderCharts(cycles);
     }
 
     run();
   </script>
 </body>
 </html>
-
