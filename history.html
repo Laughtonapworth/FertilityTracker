@@ -4,7 +4,18 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cycle History</title>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js">function downloadPDF() {
+  const element = document.body;
+  const opt = {
+    margin:       0.5,
+    filename:     'cycle-history-summary.pdf',
+    image:        { type: 'jpeg', quality: 0.98 },
+    html2canvas:  { scale: 2 },
+    jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+  };
+  html2pdf().set(opt).from(element).save();
+}
+</script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
@@ -75,8 +86,10 @@
       margin-bottom: 1em;
     }
   </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
+  <button onclick="downloadPDF()" class="nav-button">⬇ Download Summary as PDF</button>
   <h1>Cycle History</h1>
   <a class="nav-button" href="index.html">← Back to Home</a>
 
@@ -346,5 +359,6 @@
   </script>
 </body>
 </html>
+
 
 
