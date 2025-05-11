@@ -211,6 +211,7 @@
       const allEntries = await loadEntries();
       const currentCycle = getCurrentCycle(allEntries);
       renderCharts(currentCycle);
+renderCalendar(currentCycle, new Date().getMonth(), new Date().getFullYear());
 
       const today = new Date();
       const formatDate = d => d.toISOString().split('T')[0];
@@ -233,6 +234,4 @@
   </script>
 </body>
 </html>
-
-
 
