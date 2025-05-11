@@ -59,7 +59,7 @@
 <body>
 <h1>Cycle Summary</h1>
 <a class="nav-button" href="index.html">← Back to Home</a>
-<h2>Cycle Averages</h2>
+<h2>Today's Summary</h2>
 
 <div class="legend">
 <span style="background:#e76f8a; color:white;">Day 1 Period</span>
@@ -81,10 +81,7 @@
 <button onclick="changeMonth(1)">▶</button>
 </div>
 <div class="calendar-grid" id="calendarWeekdays"></div>
-<div class="calendar-grid" id="calendarGrid"></div><table id="summaryTable">
-<thead><tr><th>Date</th><th>CD</th><th>Phase</th><th>DPO</th></tr></thead>
-<tbody></tbody>
-</table>
+<div class="calendar-grid" id="calendarGrid"></div>
 <div class="chart-container">
 <h2>BBT Chart</h2>
 <canvas id="bbtChart"></canvas>
@@ -105,16 +102,106 @@
 <h2>Sex Frequency by Month</h2>
 <canvas id="sexChart"></canvas>
 </div>
-<script><script src="summary-logic.js"></script></script>
 <script>
-  const sexDates = cycle.filter(e => e.sex && e.sex.toLowerCase() === 'yes')
-                        .map(e => formatDateLocal(new Date(new Date(e.entryDate).getTime() - 86400000)));
-  const sexLabels = [...new Set(sexDates)];
-  const sexCounts = sexLabels.map(d => sexDates.filter(x => x === d).length);
+const firebaseConfig = {
+  apiKey: "AIzaSyByvnVx2aZEldUfqS2c6VNC6UJRIOPvGws",
+  authDomain: "fertility-tracker-c35ff.firebaseapp.com",
+  projectId: "fertility-tracker-c35ff"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
+let allEntries = [];
+let viewMonth, viewYear;
+
+function formatDateLocal(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+async function loadEntries() {
+  const snapshot = await db.collection("entries").orderBy("entryDate").get();
+  return snapshot.docs.map(doc => doc.data());
+}
+
+function getCurrentCycle(entries) {
+  const reversed = [...entries].reverse();
+  const index = reversed.findIndex(e => (e.phase || '').toLowerCase() === 'day1-period');
+  return index !== -1 ? reversed.slice(0, index + 1).reverse() : [];
+}
+
+function renderTable(cycle) {
+  const tbody = document.querySelector("#summaryTable tbody");
+  tbody.innerHTML = "";
+  const today = formatDateLocal(new Date());
+  const todayEntry = cycle.find(e => formatDateLocal(new Date(e.entryDate)) === today);
+  if (!todayEntry) return;
+  const row = document.createElement("tr");
+  const cd = Math.floor((new Date(todayEntry.entryDate) - new Date(cycle[0].entryDate)) / 86400000) + 1;
+  const ov = cycle.find(e => (e.opk || '').toLowerCase() === 'solid face');
+  const dpo = ov ? Math.floor((new Date(todayEntry.entryDate) - new Date(ov.entryDate)) / 86400000) : "-";
+  row.innerHTML = `<td>${todayEntry.entryDate}</td><td>${cd}</td><td>${todayEntry.phase || '-'}</td><td>${dpo}</td>`;
+  tbody.appendChild(row);
+}
+
+function groupCharts(cycle) {
+  const labels = cycle.map(e => formatDateLocal(new Date(e.entryDate)));
+  const bbt = cycle.filter(e => e.bbt && !isNaN(parseFloat(e.bbt)));
+  new Chart(document.getElementById("bbtChart"), {
+    type: 'line',
+    data: {
+      labels: bbt.map(e => formatDateLocal(new Date(e.entryDate))),
+      datasets: [{ label: 'BBT', data: bbt.map(e => parseFloat(e.bbt)), borderColor: 'purple' }]
+    },
+    options: { responsive: true }
+  });
+
+  const cmTypes = ['dry','sticky','creamy','watery','egg white'];
+  const cm = cycle.filter(e => e.cm && cmTypes.includes(e.cm.toLowerCase()));
+  new Chart(document.getElementById("cmChart"), {
+    type: 'bar',
+    data: {
+      labels: cm.map(e => formatDateLocal(new Date(e.entryDate))),
+      datasets: [{
+        label: 'CM',
+        data: cm.map(e => cmTypes.indexOf(e.cm.toLowerCase())),
+        backgroundColor: '#8ecae6'
+      }]
+    },
+    options: { responsive: true, scales: { y: { ticks: { callback: val => cmTypes[val] || '' } } } }
+  });
+
+  const symptoms = cycle.filter(e => e.cramps || e.spotting || e.breastChanges || e.digestive);
+  const cramps = symptoms.map(e => (e.cramps || '').toLowerCase() !== 'none' ? 1 : 0);
+  const spotting = symptoms.map(e => (e.spotting || '').toLowerCase() !== 'none' ? 1 : 0);
+  const breast = symptoms.map(e => (e.breastChanges || '').toLowerCase() !== 'none' ? 1 : 0);
+  const digestive = symptoms.map(e => (e.digestive || '').toLowerCase() !== 'none' ? 1 : 0);
+  const labels2 = symptoms.map(e => formatDateLocal(new Date(e.entryDate)));
+  new Chart(document.getElementById("symptomsChart"), {
+    type: 'bar',
+    data: {
+      labels: labels2,
+      datasets: [
+        { label: 'Cramps', data: cramps, backgroundColor: '#f28e8e' },
+        { label: 'Spotting', data: spotting, backgroundColor: '#f2c28e' },
+        { label: 'Breast', data: breast, backgroundColor: '#c3aed6' },
+        { label: 'Digestive', data: digestive, backgroundColor: '#a0d9b4' }
+      ]
+    },
+    options: { responsive: true, scales: { x: { stacked: true }, y: { stacked: true } } }
+  });
+
+  const sexDates = cycle.filter(e => e.sex && e.sex.toLowerCase() === 'yes')
+    .map(e => formatDateLocal(new Date(e.entryDate)));
+  const sexCounts = [...new Set(sexDates)].map(d => sexDates.filter(x => x === d).length);
   new Chart(document.getElementById("sexChart"), {
     type: 'bar',
-    data: { labels: sexLabels, datasets: [{ label: 'Sex Logged', data: sexCounts, backgroundColor: '#f67280' }] },
+    data: {
+      labels: [...new Set(sexDates)],
+      datasets: [{ label: 'Sex', data: sexCounts, backgroundColor: '#f67280' }]
+    },
     options: { responsive: true, scales: { y: { beginAtZero: true } } }
   });
 }
@@ -165,9 +252,11 @@ async function run() {
   const current = getCurrentCycle(allEntries);
   const today = new Date();
   renderCalendar(current, today.getMonth(), today.getFullYear());
-  renderSummaryTable(current);
-  runCharts(current);
+  renderTable(current);
+  groupCharts(current);
 }
 run();
-</script></body>
+</script>
+</body>
 </html>
+
