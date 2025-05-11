@@ -270,15 +270,20 @@
             box.appendChild(emoji);
           }
         }
-        if (mood) if (mood) box.title += 'Mood: ' + mood + '
+        if (mood) box.title += 'Mood: ' + mood + '
 ';
-        if (cramps && cramps !== 'none') if (cramps && cramps !== 'none') box.title += 'Cramps: ' + cramps + '
+        if (cramps && cramps !== 'none') box.title += 'Cramps: ' + cramps + '
 ';
-        if (spotting && spotting !== 'none') if (spotting && spotting !== 'none') box.title += 'Spotting: ' + spotting + '
+        if (spotting && spotting !== 'none') box.title += 'Spotting: ' + spotting + '
 ';
-        if (sex === 'yes') if (sex === 'yes') box.title += 'Sex: Yes
+        if (sex === 'yes') box.title += 'Sex: Yes
 ';
-        if (bbt) if (bbt) box.title += 'BBT: ' + bbt;
+        if (bbt) box.title += 'BBT: ' + bbt + '
+';
+        if ((entry.breastChanges || '').toLowerCase() !== 'none') box.title += 'Breast Changes
+';
+        if ((entry.digestive || '').toLowerCase() !== 'none') box.title += 'Digestive Symptoms
+';
         calendarGrid.appendChild(box);
       }
       document.getElementById("monthLabel").textContent = new Date(year, month).toLocaleString('default', { month: 'long', year: 'numeric' });
