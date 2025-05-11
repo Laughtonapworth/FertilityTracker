@@ -63,7 +63,119 @@
     <span style="background:#fff0f5;">🌡️ BBT</span>
   </div>
 
-  <!-- Additional content would go here such as the calendar and charts -->
+  <div class="calendar-nav">
+    <button onclick="changeMonth(-1)">◀</button>
+    <span id="monthLabel"></span>
+    <button onclick="changeMonth(1)">▶</button>
+  </div>
+  <div class="calendar-grid" id="calendarWeekdays"></div>
+  <div class="calendar-grid" id="calendarGrid"></div>
+
+  <table id="summaryTable">
+    <thead><tr><th>Date</th><th>CD</th><th>Phase</th><th>DPO</th></tr></thead>
+    <tbody></tbody>
+  </table>
+
+  <div class="chart-container">
+    <h2>BBT Over Time</h2>
+    <canvas id="bbtChart"></canvas>
+  </div>
+  <div class="chart-container">
+    <h2>CM Pattern</h2>
+    <canvas id="cmChart"></canvas>
+  </div>
+  <div class="chart-container">
+    <h2>Symptoms Summary</h2>
+    <canvas id="symptomsChart"></canvas>
+  </div>
+  <div class="chart-container">
+    <h2>Mood Timeline</h2>
+    <canvas id="moodChart"></canvas>
+  </div>
+  <div class="chart-container">
+    <h2>Sex Activity</h2>
+    <canvas id="sexChart"></canvas>
+  </div>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyByvnVx2aZEldUfqS2c6VNC6UJRIOPvGws",
+    authDomain: "fertility-tracker-c35ff.firebaseapp.com",
+    projectId: "fertility-tracker-c35ff"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  let allEntries = [], viewMonth, viewYear;
+
+  function formatDateLocal(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  async function loadEntries() {
+    const snapshot = await db.collection("entries").orderBy("entryDate").get();
+    return snapshot.docs.map(doc => doc.data());
+  }
+
+  function getCurrentCycle(entries) {
+    const sorted = entries.slice().reverse();
+    const startIndex = sorted.findIndex(e => (e.phase || '').toLowerCase() === 'day1-period');
+    if (startIndex === -1) return [];
+    return sorted.slice(0, startIndex + 1).reverse();
+  }
+
+  function renderCalendar(entries, month, year) {
+    document.getElementById("calendarWeekdays").innerHTML = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']
+      .map(d => `<div class="weekday">${d}</div>`).join('');
+    const grid = document.getElementById("calendarGrid");
+    grid.innerHTML = "";
+    const start = new Date(year, month, 1);
+    const end = new Date(year, month + 1, 0);
+    const offset = (start.getDay() + 6) % 7;
+    for (let i = 0; i < offset; i++) grid.appendChild(document.createElement("div"));
+    const map = Object.fromEntries(entries.map(e => [formatDateLocal(new Date(e.entryDate)), e]));
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      const box = document.createElement("div");
+      box.className = "day-box";
+      box.textContent = d.getDate();
+      const key = formatDateLocal(d);
+      const e = map[key];
+      if (e) {
+        const p = (e.phase || '').toLowerCase();
+        const opk = (e.opk || '').toLowerCase();
+        const emojiStyle = 'font-size: 0.8em; display: block;';
+        if (p === 'day1-period') box.classList.add('deep-red');
+        else if (p === 'period') box.classList.add('red');
+        else if (opk === 'flashing face') box.classList.add('blue');
+        else if (p === 'ovulation' || opk === 'solid face') box.classList.add('bold-blue');
+        else if (p === 'post-ovulation') box.classList.add('green');
+
+        if ((e.sex || '').toLowerCase() === 'yes') box.appendChild(Object.assign(document.createElement('span'), {textContent: '💖', style: emojiStyle}));
+        if ((e.breastChanges || '').toLowerCase() !== 'none' && e.breastChanges !== '') box.appendChild(Object.assign(document.createElement('span'), {textContent: '🫶', style: emojiStyle}));
+        if ((e.digestive || '').toLowerCase() !== 'none' && e.digestive !== '') box.appendChild(Object.assign(document.createElement('span'), {textContent: '🫃', style: emojiStyle}));
+      }
+      grid.appendChild(box);
+    }
+    document.getElementById("monthLabel").textContent = new Date(year, month).toLocaleString('default', { month: 'long', year: 'numeric' });
+    viewMonth = month;
+    viewYear = year;
+  }
+
+  function changeMonth(offset) {
+    const newDate = new Date(viewYear, viewMonth + offset);
+    renderCalendar(allEntries, newDate.getMonth(), newDate.getFullYear());
+  }
+
+  async function run() {
+    allEntries = await loadEntries();
+    const currentCycle = getCurrentCycle(allEntries);
+    const today = new Date();
+    renderCalendar(currentCycle, today.getMonth(), today.getFullYear());
+  }
+  run();
+</script>
 </body>
 </html>
 
