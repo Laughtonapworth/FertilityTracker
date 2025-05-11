@@ -103,7 +103,7 @@ function renderTable(entries) {
   const tbody = document.getElementById("summaryRow");
   tbody.innerHTML = "";
   const todayKey = formatDateLocal(new Date());
-  const todayEntry = entries.find(e => formatDateLocal(new Date(e.entryDate)) === todayKey);
+  const todayEntry = entries.find(e => formatDateLocal(new Date(new Date(e.entryDate).getTime() - 86400000)) === todayKey);
   if (!todayEntry) return;
   const cd1 = new Date(entries[0].entryDate);
   const d = new Date(todayEntry.entryDate);
@@ -124,7 +124,7 @@ function renderCalendar(entries, month, year) {
   const end = new Date(year, month + 1, 0);
   const offset = (start.getDay() + 6) % 7;
   for (let i = 0; i < offset; i++) grid.appendChild(document.createElement("div"));
-  const map = Object.fromEntries(entries.map(e => [formatDateLocal(new Date(e.entryDate)), e]));
+  const map = Object.fromEntries(entries.map(e => [formatDateLocal(new Date(new Date(e.entryDate).getTime() - 86400000)), e]));
   for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
     const box = document.createElement("div");
     box.className = "day-box";
@@ -157,7 +157,7 @@ function changeMonth(offset) {
 }
 
 function renderCharts(entries) {
-  const labels = entries.map(e => formatDateLocal(new Date(e.entryDate)));
+  const labels = entries.map(e => formatDateLocal(new Date(new Date(e.entryDate).getTime() - 86400000)));
   const bbt = entries.filter(e => e.bbt && !isNaN(parseFloat(e.bbt))).map(e => parseFloat(e.bbt));
   const cmTypes = ['dry', 'sticky', 'creamy', 'watery', 'egg white'];
   const cm = entries.filter(e => e.cm && cmTypes.includes(e.cm.toLowerCase())).map(e => cmTypes.indexOf(e.cm.toLowerCase()));
@@ -204,3 +204,4 @@ run();
 </script>
 </body>
 </html>
+
