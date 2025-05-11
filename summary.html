@@ -5,27 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Cycle Summary</title>
 
-  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
   <style>
     body { font-family: 'Segoe UI', sans-serif; background: #fffafc; padding: 1em; }
     h1, h2 { text-align: center; }
     .nav-button {
-      display: block;
-      margin: 1em auto;
-      background: #c4d7b2;
-      color: white;
-      padding: 0.6em 1.2em;
-      border-radius: 20px;
-      text-align: center;
-      text-decoration: none;
-      max-width: 250px;
+      display: block; margin: 1em auto; background: #c4d7b2;
+      color: white; padding: 0.6em 1.2em; border-radius: 20px;
+      text-align: center; text-decoration: none; max-width: 250px;
     }
-    .calendar-title { text-align: center; font-weight: bold; margin-top: 1em; font-size: 1.1em; }
     .legend {
       display: flex; flex-wrap: wrap; gap: 0.5em;
       justify-content: center; margin-bottom: 1em;
@@ -34,30 +24,20 @@
       display: inline-block; padding: 0.4em 0.8em;
       border-radius: 5px; font-size: 0.75em;
     }
-
-    .deep-red { background: #e76f8a; color: white; }
-    .red { background: #f6b1b7; }
-    .blue { background: #b7d7f6; }
-    .bold-blue { background: #5f9ed1; color: white; }
-    .green { background: #c8e6c9; }
-
     .calendar-grid {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 5px;
-      margin-bottom: 1.5em;
+      display: grid; grid-template-columns: repeat(7, 1fr);
+      gap: 5px; margin-bottom: 1.5em;
     }
     .weekday { font-weight: bold; text-align: center; }
     .day-box {
       padding: 0.6em 0; border-radius: 6px;
       background: #f0f0f0; text-align: center; font-size: 0.85em;
     }
-    .day-box.deep-red { background: #e76f8a; color: white; }
-    .day-box.red { background: #f6b1b7; }
-    .day-box.blue { background: #b7d7f6; }
-    .day-box.bold-blue { background: #5f9ed1; color: white; }
-    .day-box.green { background: #c8e6c9; }
-
+    .deep-red { background: #e76f8a !important; color: white !important; }
+    .red { background: #f6b1b7 !important; }
+    .blue { background: #b7d7f6 !important; }
+    .bold-blue { background: #5f9ed1 !important; color: white !important; }
+    .green { background: #c8e6c9 !important; }
     table {
       width: 100%; border-collapse: collapse; font-size: 1em;
     }
@@ -65,71 +45,41 @@
       padding: 0.6em; border: 1px solid #ccc; text-align: center;
     }
     th { background: #eeb7c2; color: white; }
-    .chart-container {
-      margin: 2em auto;
-      max-width: 1000px;
-    }
   </style>
 </head>
 <body>
   <h1>Cycle Summary</h1>
-  <a class="nav-button" href="index.html">&larr; Back to Home</a>
+  <a class="nav-button" href="index.html">← Back to Home</a>
 
-  <div class="calendar-title">Cycle Calendar</div>
   <div class="legend">
-    <span class="deep-red">Day 1 Period</span>
-    <span class="red">Period</span>
-    <span class="blue">Fertile (Flashing)</span>
-    <span class="bold-blue">Ovulation (Solid)</span>
-    <span class="green">Post Ovulation</span>
+    <span style="background:#e76f8a; color:white;">Day 1 Period</span>
+    <span style="background:#f6b1b7;">Period</span>
+    <span style="background:#b7d7f6;">Fertile (Flashing)</span>
+    <span style="background:#5f9ed1; color:white;">Ovulation (Solid)</span>
+    <span style="background:#c8e6c9;">Post Ovulation</span>
+    <span style="background:#fff0f5;">💖 Sex</span>
+    <span style="background:#fff0f5;">🫶 Breast Changes</span>
+    <span style="background:#fff0f5;">🫃 Digestive</span>
   </div>
-  <div class="calendar-grid" id="calendarWeekdays">
-    <div class="weekday">Mon</div>
-    <div class="weekday">Tue</div>
-    <div class="weekday">Wed</div>
-    <div class="weekday">Thu</div>
-    <div class="weekday">Fri</div>
-    <div class="weekday">Sat</div>
-    <div class="weekday">Sun</div>
-  </div>
+
+  <div class="calendar-grid" id="calendarWeekdays"></div>
   <div class="calendar-grid" id="calendarGrid"></div>
 
   <table id="summaryTable">
-    <thead>
-      <tr><th>Date</th><th>CD</th><th>Phase</th><th>DPO</th></tr>
-    </thead>
+    <thead><tr><th>Date</th><th>CD</th><th>Phase</th><th>DPO</th></tr></thead>
     <tbody></tbody>
   </table>
-
-  <div class="chart-container">
-    <h2>BBT Over Time</h2>
-    <canvas id="bbtChart"></canvas>
-
-    <h2>Symptoms Summary</h2>
-    <canvas id="symptomsChart"></canvas>
-
-    <h2>Cervical Mucus Trend</h2>
-    <canvas id="cmChart"></canvas>
-
-    <h2>Mood Timeline</h2>
-    <canvas id="moodChart"></canvas>
-
-    <h2>Sex Activity</h2>
-    <canvas id="sexChart"></canvas>
-  </div>
 
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyByvnVx2aZEldUfqS2c6VNC6UJRIOPvGws",
       authDomain: "fertility-tracker-c35ff.firebaseapp.com",
-      projectId: "fertility-tracker-c35ff",
-      storageBucket: "fertility-tracker-c35ff.appspot.com",
-      messagingSenderId: "775022478214",
-      appId: "1:775022478214:web:107ba4f9e0043bee75a207",
-      measurementId: "G-E6DVNWZNKQ"
+      projectId: "fertility-tracker-c35ff"
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
+
+    let allEntries = [], viewMonth, viewYear;
 
     async function loadEntries() {
       const snapshot = await db.collection("entries").orderBy("entryDate").get();
@@ -140,165 +90,65 @@
       const sorted = entries.slice().reverse();
       const startIndex = sorted.findIndex(e => (e.phase || '').toLowerCase() === 'day1-period');
       if (startIndex === -1) return [];
-      const cycleEntries = sorted.slice(0, startIndex + 1).reverse();
-      return cycleEntries;
+      return sorted.slice(0, startIndex + 1).reverse();
     }
 
-    function renderCalendar(cycleEntries, lastOvulation) {
-      const calendarGrid = document.getElementById("calendarGrid");
-      calendarGrid.innerHTML = "";
-
+    function renderCalendar(entries) {
+      const weekdays = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+      document.getElementById("calendarWeekdays").innerHTML = weekdays.map(d => `<div class="weekday">${d}</div>`).join('');
+      const grid = document.getElementById("calendarGrid");
+      grid.innerHTML = "";
       const today = new Date();
-      const year = today.getFullYear();
-      const month = today.getMonth();
-      const start = new Date(year, month, 1);
-      const end = new Date(year, month + 1, 0);
-
-      const entryMap = Object.fromEntries(
-        cycleEntries.map(e => [e.entryDate, e])
-      );
-
+      const start = new Date(today.getFullYear(), today.getMonth(), 1);
+      const end = new Date(today.getFullYear(), today.getMonth() + 1, 0);
       const offset = (start.getDay() + 6) % 7;
-      for (let i = 0; i < offset; i++) {
-        calendarGrid.appendChild(document.createElement("div"));
-      }
-
+      for (let i = 0; i < offset; i++) grid.appendChild(document.createElement("div"));
+      const map = Object.fromEntries(entries.map(e => [e.entryDate, e]));
       for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        const box = document.createElement("div");
+        box.className = "day-box";
+        box.textContent = d.getDate();
         const key = d.toISOString().split("T")[0];
-        const entry = entryMap[key];
-        const cell = document.createElement("div");
-        cell.className = "day-box";
-        cell.textContent = d.getDate();
-
-        if (entry) {
-          const phase = (entry.phase || '').toLowerCase();
-          const opk = (entry.opk || '').toLowerCase();
-          if (phase === 'day1-period') cell.classList.add('deep-red');
-          else if (phase === 'period') cell.classList.add('red');
-          else if (phase === 'ovulation' || opk === 'solid face') cell.classList.add('bold-blue');
-          else if (opk === 'flashing face') cell.classList.add('blue');
-          else if (phase === 'post-ovulation' || (lastOvulation && d > new Date(lastOvulation))) cell.classList.add('green');
+        const e = map[key];
+        if (e) {
+          const p = (e.phase || '').toLowerCase();
+          const opk = (e.opk || '').toLowerCase();
+          const emojiStyle = 'font-size: 0.8em; display: block;';
+          if (p === 'day1-period') box.classList.add('deep-red');
+          else if (p === 'period') box.classList.add('red');
+          else if (opk === 'flashing face') box.classList.add('blue');
+          else if (p === 'ovulation' || opk === 'solid face') box.classList.add('bold-blue');
+          else if (p === 'post-ovulation') box.classList.add('green');
+          if ((e.sex || '').toLowerCase() === 'yes') box.appendChild(Object.assign(document.createElement('span'), {textContent: '💖', style: emojiStyle}));
+          if ((e.breastChanges || '').toLowerCase() !== 'none') box.appendChild(Object.assign(document.createElement('span'), {textContent: '🫶', style: emojiStyle}));
+          if ((e.digestive || '').toLowerCase() !== 'none') box.appendChild(Object.assign(document.createElement('span'), {textContent: '🫃', style: emojiStyle}));
         }
-
-        calendarGrid.appendChild(cell);
+        grid.appendChild(box);
       }
     }
 
-    function renderTable(cycleEntries, lastCD1, lastOvulation) {
+    function renderTable(entries) {
+      const today = new Date().toISOString().split("T")[0];
+      const todayEntry = entries.find(e => e.entryDate === today);
       const tbody = document.querySelector("#summaryTable tbody");
       tbody.innerHTML = "";
-
-      cycleEntries.forEach(e => {
-        const row = document.createElement("tr");
-        const d = new Date(e.entryDate);
-        const cd = lastCD1 ? Math.floor((d - lastCD1) / 86400000) + 1 : "-";
-        const dpo = lastOvulation ? Math.max(Math.floor((d - lastOvulation) / 86400000), 0) : "-";
-
-        row.innerHTML = `
-          <td>${e.entryDate}</td>
-          <td>${cd}</td>
-          <td>${e.phase || ""}</td>
-          <td>${dpo || "-"}</td>
-        `;
-        tbody.appendChild(row);
-      });
-    }
-
-    function renderCharts(cycleEntries) {
-      const labels = cycleEntries.map(e => e.entryDate);
-
-      // BBT
-      const bbtData = cycleEntries.map(e => parseFloat(e.bbt) || null);
-      new Chart(document.getElementById("bbtChart"), {
-        type: 'line',
-        data: { labels, datasets: [{ label: 'BBT (°C)', data: bbtData, borderColor: 'purple', tension: 0.2 }] },
-        options: { responsive: true }
-      });
-
-      // Symptoms stacked bar
-      const cramps = labels.map(d => (cycleEntries.find(e => e.entryDate === d)?.cramps || '').toLowerCase() !== 'none' ? 1 : 0);
-      const spotting = labels.map(d => (cycleEntries.find(e => e.entryDate === d)?.spotting || '').toLowerCase() !== 'none' ? 1 : 0);
-      const mood = labels.map(d => (cycleEntries.find(e => e.entryDate === d)?.mood || '') ? 1 : 0);
-      const breast = labels.map(d => (cycleEntries.find(e => e.entryDate === d)?.breastChanges || '').toLowerCase() !== 'none' ? 1 : 0);
-
-      new Chart(document.getElementById("symptomsChart"), {
-        type: 'bar',
-        data: {
-          labels,
-          datasets: [
-            { label: 'Cramps', data: cramps, backgroundColor: '#f28e8e' },
-            { label: 'Spotting', data: spotting, backgroundColor: '#f2c28e' },
-            { label: 'Mood Logged', data: mood, backgroundColor: '#a8d0e6' },
-            { label: 'Breast Changes', data: breast, backgroundColor: '#c3aed6' }
-          ]
-        },
-        options: { responsive: true, scales: { x: { stacked: true }, y: { stacked: true } } }
-      });
-
-      // CM Line chart
-      const cmTypes = ['dry', 'sticky', 'creamy', 'watery', 'egg white'];
-      const cmData = cycleEntries.map(e => cmTypes.indexOf((e.cm || '').toLowerCase()));
-      new Chart(document.getElementById("cmChart"), {
-        type: 'line',
-        data: {
-          labels,
-          datasets: [{ label: 'Cervical Mucus', data: cmData, borderColor: 'teal', fill: false }]
-        },
-        options: {
-          responsive: true,
-          scales: {
-            y: {
-              ticks: {
-                callback: value => cmTypes[value] || ''
-              },
-              min: 0,
-              max: cmTypes.length - 1
-            }
-          }
-        }
-      });
-
-      // Mood timeline
-      const moods = cycleEntries.map(e => (e.mood || ''));
-      new Chart(document.getElementById("moodChart"), {
-        type: 'bar',
-        data: {
-          labels,
-          datasets: [{
-            label: 'Mood',
-            data: moods.map(() => 1),
-            backgroundColor: moods.map(m => m === 'Happy' ? '#ffd700' : m === 'Calm' ? '#87cefa' : m === 'Low' ? '#ff6b6b' : '#cccccc')
-          }]
-        },
-        options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { display: false } } }
-      });
-
-      // Sex timeline
-      const sex = cycleEntries.map(e => (e.sex || '').toLowerCase() === 'yes' ? 1 : 0);
-      new Chart(document.getElementById("sexChart"), {
-        type: 'bar',
-        data: {
-          labels,
-          datasets: [{ label: 'Sex', data: sex, backgroundColor: '#f67280' }]
-        },
-        options: { responsive: true, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
-      });
+      if (!todayEntry) return;
+      const row = document.createElement("tr");
+      const cd1 = new Date(entries[0].entryDate);
+      const ov = entries.find(e => (e.opk || '').toLowerCase() === 'solid face');
+      const d = new Date(todayEntry.entryDate);
+      const cd = Math.floor((d - cd1) / 86400000) + 1;
+      const dpo = ov ? Math.max(Math.floor((d - new Date(ov.entryDate)) / 86400000), 0) : "-";
+      row.innerHTML = `<td>${todayEntry.entryDate}</td><td>${cd}</td><td>${todayEntry.phase || ''}</td><td>${dpo}</td>`;
+      tbody.appendChild(row);
     }
 
     async function run() {
-      const allEntries = await loadEntries();
-      const cycleEntries = getCurrentCycle(allEntries);
-      if (!cycleEntries.length) return;
-
-      const lastCD1 = new Date(cycleEntries[0].entryDate);
-      const lastOvulationEntry = cycleEntries.findLast(e => (e.opk || '').toLowerCase() === 'solid face');
-      const lastOvulation = lastOvulationEntry ? new Date(lastOvulationEntry.entryDate) : null;
-
-      renderCalendar(cycleEntries, lastOvulation);
-      renderTable(cycleEntries, lastCD1, lastOvulation);
-      renderCharts(cycleEntries);
+      allEntries = await loadEntries();
+      const currentCycle = getCurrentCycle(allEntries);
+      renderCalendar(currentCycle);
+      renderTable(currentCycle);
     }
-
     run();
   </script>
 </body>
