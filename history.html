@@ -8,6 +8,26 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
+    @media (max-width: 600px) {
+      .chart-container {
+      margin: 2em auto;
+      max-width: 100%;
+      padding: 0 1em;
+    }
+      .legend span {
+      display: inline-block;
+      padding: 0.4em 0.8em;
+      border-radius: 5px;
+      font-size: 0.75em;
+      text-align: center;
+    }
+      .calendar-grid {
+        font-size: 0.75em;
+      }
+      .day-box {
+        padding: 0.4em 0;
+      }
+    }
     body { font-family: 'Segoe UI', sans-serif; background: #fffafc; padding: 1em; }
     h1, h2, h3 { text-align: center; }
     .nav-button {
@@ -47,6 +67,13 @@
     .blue { background: #b7d7f6 !important; }
     .bold-blue { background: #5f9ed1 !important; color: white !important; }
     .green { background: #c8e6c9 !important; }
+  .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5em;
+      justify-content: center;
+      margin-bottom: 1em;
+    }
   </style>
 </head>
 <body>
@@ -60,14 +87,12 @@
   </table>
 
   <div class="calendar-nav">
-    <div class="legend" style="display:flex;flex-wrap:wrap;justify-content:center;gap:0.5em;margin-bottom:1em;">
-      <span style="padding:0.4em 0.8em; border-radius:5px; background:#e76f8a; color:white; font-size:0.75em;">Day 1 Period</span>
-      <span style="padding:0.4em 0.8em; border-radius:5px; background:#f6b1b7; font-size:0.75em;">Period</span>
-      <span style="padding:0.4em 0.8em; border-radius:5px; background:#b7d7f6; font-size:0.75em;">Fertile (Flashing)</span>
-      <span style="padding:0.4em 0.8em; border-radius:5px; background:#5f9ed1; color:white; font-size:0.75em;">Ovulation (Solid)</span>
-      <span style="padding:0.4em 0.8em; border-radius:5px; background:#c8e6c9; font-size:0.75em;">Post Ovulation</span>
-      <span style="padding:0.4em 0.8em; border-radius:5px; background:#fff0f5; font-size:0.75em;">💖 Sex Logged</span>
-    </div>
+    $1$2
+      <span style="padding:0.4em 0.8em; border-radius:5px; background:#fff0f5; font-size:0.75em;">😖 Cramps</span>
+      <span style="padding:0.4em 0.8em; border-radius:5px; background:#fff0f5; font-size:0.75em;">🔻 Spotting</span>
+      <span style="padding:0.4em 0.8em; border-radius:5px; background:#fff0f5; font-size:0.75em;">🧠 Mood</span>
+      <span style="padding:0.4em 0.8em; border-radius:5px; background:#fff0f5; font-size:0.75em;">🌡️ BBT</span>
+$3
     <button onclick="changeMonth(-1)">◀</button>
     <span id="monthLabel"></span>
     <button onclick="changeMonth(1)">▶</button>
@@ -90,7 +115,17 @@
     <canvas id="symptomsChart"></canvas>
   </div>
 
-  <script>
+<div class="chart-container">
+  <h2>Mood Timeline</h2>
+  <canvas id="moodChart"></canvas>
+</div>
+
+<div class="chart-container">
+  <h2>Sex Frequency by Month</h2>
+  <canvas id="sexChart"></canvas>
+</div>
+
+<script>
     const firebaseConfig = {
       apiKey: "AIzaSyByvnVx2aZEldUfqS2c6VNC6UJRIOPvGws",
       authDomain: "fertility-tracker-c35ff.firebaseapp.com",
@@ -140,10 +175,18 @@
         const box = document.createElement("div");
         box.className = "day-box";
         box.textContent = d.getDate();
+        box.title = '';
         const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
         const entry = entryMap[key];
         if (entry) {
+          const emojiStyle = 'font-size: 0.8em; display: block;';
           const phase = (entry.phase || '').toLowerCase();
+          const opk = (entry.opk || '').toLowerCase();
+          const sex = (entry.sex || '').toLowerCase();
+          const mood = (entry.mood || '');
+          const cramps = (entry.cramps || '').toLowerCase();
+          const spotting = (entry.spotting || '').toLowerCase();
+          const bbt = (entry.bbt || '');
           const opk = (entry.opk || '').toLowerCase();
           const sex = (entry.sex || '').toLowerCase();
           if (phase === 'day1-period') box.classList.add('deep-red');
@@ -155,11 +198,43 @@
           if (sex === 'yes') {
             const emoji = document.createElement('span');
             emoji.textContent = '💖';
-            emoji.style.fontSize = '0.8em';
-            emoji.style.display = 'block';
+            emoji.style = emojiStyle;
+            box.appendChild(emoji);
+          }
+          if (cramps && cramps !== 'none') {
+            const emoji = document.createElement('span');
+            emoji.textContent = '😖';
+            emoji.style = emojiStyle;
+            box.appendChild(emoji);
+          }
+          if (spotting && spotting !== 'none') {
+            const emoji = document.createElement('span');
+            emoji.textContent = '🔻';
+            emoji.style = emojiStyle;
+            box.appendChild(emoji);
+          }
+          if (mood) {
+            const emoji = document.createElement('span');
+            emoji.textContent = '🧠';
+            emoji.style = emojiStyle;
+            box.appendChild(emoji);
+          }
+          if (bbt) {
+            const emoji = document.createElement('span');
+            emoji.textContent = '🌡️';
+            emoji.style = emojiStyle;
             box.appendChild(emoji);
           }
         }
+        if (mood) box.title += 'Mood: ' + mood + '
+';
+        if (cramps && cramps !== 'none') box.title += 'Cramps: ' + cramps + '
+';
+        if (spotting && spotting !== 'none') box.title += 'Spotting: ' + spotting + '
+';
+        if (sex === 'yes') box.title += 'Sex: Yes
+';
+        if (bbt) box.title += 'BBT: ' + bbt;
         calendarGrid.appendChild(box);
       }
       document.getElementById("monthLabel").textContent = new Date(year, month).toLocaleString('default', { month: 'long', year: 'numeric' });
@@ -187,28 +262,64 @@
     }
 
     function renderCharts(cycles) {
-      const all = cycles.flat();
-      const bbtData = all.map(e => parseFloat(e.bbt)).filter(x => !isNaN(x));
-      const cmTypes = ['dry', 'sticky', 'creamy', 'watery', 'egg white'];
-      const cmData = all.map(e => cmTypes.indexOf((e.cm || '').toLowerCase())).filter(x => x >= 0);
+  const all = cycles.flat();
+  const bbtData = all.map(e => parseFloat(e.bbt)).filter(x => !isNaN(x));
+  const cmTypes = ['dry', 'sticky', 'creamy', 'watery', 'egg white'];
+  const cmData = all.map(e => cmTypes.indexOf((e.cm || '').toLowerCase())).filter(x => x >= 0);
 
-      const symptoms = { cramps: 0, spotting: 0, mood: 0, breast: 0 };
-      all.forEach(e => {
-        if ((e.cramps || '').toLowerCase() !== 'none') symptoms.cramps++;
-        if ((e.spotting || '').toLowerCase() !== 'none') symptoms.spotting++;
-        if ((e.mood || '') !== '') symptoms.mood++;
-        if ((e.breastChanges || '').toLowerCase() !== 'none') symptoms.breast++;
-      });
+  const symptoms = { cramps: 0, spotting: 0, mood: 0, breast: 0 };
+  const moodLabels = [], moodValues = [];
+  const sexMap = {};
 
-      new Chart(document.getElementById("bbtChart"), {
-        type: 'line', data: { labels: bbtData.map((_, i) => i + 1), datasets: [{ label: "BBT", data: bbtData, borderColor: 'purple' }] }, options: { responsive: true }
-      });
+  all.forEach(e => {
+    const date = new Date(e.entryDate);
+    const key = date.toLocaleString('default', { month: 'short', year: 'numeric' });
+    if (e.sex && e.sex.toLowerCase() === 'yes') {
+      sexMap[key] = (sexMap[key] || 0) + 1;
+    }
+    if ((e.cramps || '').toLowerCase() !== 'none') symptoms.cramps++;
+    if ((e.spotting || '').toLowerCase() !== 'none') symptoms.spotting++;
+    if ((e.mood || '') !== '') {
+      symptoms.mood++;
+      moodLabels.push(e.entryDate);
+      moodValues.push(e.mood);
+    }
+    if ((e.breastChanges || '').toLowerCase() !== 'none') symptoms.breast++;
+  });
 
-      new Chart(document.getElementById("cmChart"), {
-        type: 'line', data: { labels: cmData.map((_, i) => i + 1), datasets: [{ label: "CM", data: cmData, borderColor: 'teal' }] }, options: { responsive: true, scales: { y: { ticks: { callback: val => cmTypes[val] } } } }
-      });
+  const moodColors = { Happy: '#ffd700', Calm: '#87cefa', Low: '#ff6b6b', Irritable: '#ffa07a' };
+  new Chart(document.getElementById("moodChart"), {
+    type: 'bar',
+    data: {
+      labels: moodLabels,
+      datasets: [{
+        label: 'Mood',
+        data: moodLabels.map(() => 1),
+        backgroundColor: moodValues.map(m => moodColors[m] || '#ccc')
+      }]
+    },
+    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { display: false } } }
+  });
 
-      new Chart(document.getElementById("symptomsChart"), {
+  const sexLabels = Object.keys(sexMap);
+  const sexValues = Object.values(sexMap);
+  new Chart(document.getElementById("sexChart"), {
+    type: 'bar',
+    data: {
+      labels: sexLabels,
+      datasets: [{ label: 'Sex Logged', data: sexValues, backgroundColor: '#f67280' }]
+    },
+    options: { responsive: true, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+  });
+
+  new Chart(document.getElementById("bbtChart"), {
+    type: 'line', data: { labels: bbtData.map((_, i) => i + 1), datasets: [{ label: "BBT", data: bbtData, borderColor: 'purple' }] }, options: { responsive: true }
+  });
+
+  new Chart(document.getElementById("cmChart"), {
+    type: 'line', data: { labels: cmData.map((_, i) => i + 1), datasets: [{ label: "CM", data: cmData, borderColor: 'teal' }] }, options: { responsive: true, scales: { y: { ticks: { callback: val => cmTypes[val] } } } }
+  });
+ {
         type: 'bar', data: {
           labels: Object.keys(symptoms),
           datasets: [{ label: "Average Occurrence", data: Object.values(symptoms), backgroundColor: ['#f28e8e', '#f2c28e', '#a8d0e6', '#c3aed6'] }]
