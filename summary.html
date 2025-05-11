@@ -1,90 +1,13 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Cycle Summary</title>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js">
-function changeMonth(offset) {
-  const newDate = new Date(viewYear, viewMonth + offset);
-  renderCalendar(allEntries, newDate.getMonth(), newDate.getFullYear());
-}
-
-
-function renderTable(entries) {
-  const today = new Date();
-  const formatDate = d => d.toISOString().split('T')[0];
-  const todayStr = formatDate(today);
-  const todayEntry = entries.find(e => formatDate(new Date(e.entryDate)) === todayStr);
-  const tbody = document.querySelector("#summaryTable tbody");
-  tbody.innerHTML = "";
-  if (todayEntry) {
-    const cd1 = new Date(entries[0].entryDate);
-    const ov = entries.find(e => (e.opk || '').toLowerCase() === 'solid face');
-    const d = new Date(todayEntry.entryDate);
-    const cd = Math.floor((d - cd1) / 86400000) + 1;
-    const dpo = ov ? Math.max(Math.floor((d - new Date(ov.entryDate)) / 86400000), 0) : "-";
-    const row = document.createElement("tr");
-    row.innerHTML = `<td>${todayEntry.entryDate}</td><td>${cd}</td><td>${todayEntry.phase || '-'}</td><td>${dpo}</td>`;
-    tbody.appendChild(row);
-  }
-}
-
-</script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js">
-function changeMonth(offset) {
-  const newDate = new Date(viewYear, viewMonth + offset);
-  renderCalendar(allEntries, newDate.getMonth(), newDate.getFullYear());
-}
-
-
-function renderTable(entries) {
-  const today = new Date();
-  const formatDate = d => d.toISOString().split('T')[0];
-  const todayStr = formatDate(today);
-  const todayEntry = entries.find(e => formatDate(new Date(e.entryDate)) === todayStr);
-  const tbody = document.querySelector("#summaryTable tbody");
-  tbody.innerHTML = "";
-  if (todayEntry) {
-    const cd1 = new Date(entries[0].entryDate);
-    const ov = entries.find(e => (e.opk || '').toLowerCase() === 'solid face');
-    const d = new Date(todayEntry.entryDate);
-    const cd = Math.floor((d - cd1) / 86400000) + 1;
-    const dpo = ov ? Math.max(Math.floor((d - new Date(ov.entryDate)) / 86400000), 0) : "-";
-    const row = document.createElement("tr");
-    row.innerHTML = `<td>${todayEntry.entryDate}</td><td>${cd}</td><td>${todayEntry.phase || '-'}</td><td>${dpo}</td>`;
-    tbody.appendChild(row);
-  }
-}
-
-</script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js">
-function changeMonth(offset) {
-  const newDate = new Date(viewYear, viewMonth + offset);
-  renderCalendar(allEntries, newDate.getMonth(), newDate.getFullYear());
-}
-
-
-function renderTable(entries) {
-  const today = new Date();
-  const formatDate = d => d.toISOString().split('T')[0];
-  const todayStr = formatDate(today);
-  const todayEntry = entries.find(e => formatDate(new Date(e.entryDate)) === todayStr);
-  const tbody = document.querySelector("#summaryTable tbody");
-  tbody.innerHTML = "";
-  if (todayEntry) {
-    const cd1 = new Date(entries[0].entryDate);
-    const ov = entries.find(e => (e.opk || '').toLowerCase() === 'solid face');
-    const d = new Date(todayEntry.entryDate);
-    const cd = Math.floor((d - cd1) / 86400000) + 1;
-    const dpo = ov ? Math.max(Math.floor((d - new Date(ov.entryDate)) / 86400000), 0) : "-";
-    const row = document.createElement("tr");
-    row.innerHTML = `<td>${todayEntry.entryDate}</td><td>${cd}</td><td>${todayEntry.phase || '-'}</td><td>${dpo}</td>`;
-    tbody.appendChild(row);
-  }
-}
-
-</script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body { font-family: 'Segoe UI', sans-serif; background: #fffafc; padding: 1em; }
     h1, h2 { text-align: center; }
@@ -183,7 +106,6 @@ function renderTable(entries) {
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-let viewMonth, viewYear, allEntries = [];
 
     async function loadEntries() {
       const snapshot = await db.collection("entries").orderBy("entryDate").get();
@@ -289,7 +211,7 @@ let viewMonth, viewYear, allEntries = [];
       const allEntries = await loadEntries();
       const currentCycle = getCurrentCycle(allEntries);
       renderCharts(currentCycle);
-renderCalendar(allEntries, new Date().getMonth(), new Date().getFullYear());
+renderCalendar(currentCycle, new Date().getMonth(), new Date().getFullYear());
 
       const today = new Date();
       const formatDate = d => d.toISOString().split('T')[0];
@@ -309,32 +231,6 @@ renderCalendar(allEntries, new Date().getMonth(), new Date().getFullYear());
 
     }
     run();
-  
-function changeMonth(offset) {
-  const newDate = new Date(viewYear, viewMonth + offset);
-  renderCalendar(allEntries, newDate.getMonth(), newDate.getFullYear());
-}
-
-
-function renderTable(entries) {
-  const today = new Date();
-  const formatDate = d => d.toISOString().split('T')[0];
-  const todayStr = formatDate(today);
-  const todayEntry = entries.find(e => formatDate(new Date(e.entryDate)) === todayStr);
-  const tbody = document.querySelector("#summaryTable tbody");
-  tbody.innerHTML = "";
-  if (todayEntry) {
-    const cd1 = new Date(entries[0].entryDate);
-    const ov = entries.find(e => (e.opk || '').toLowerCase() === 'solid face');
-    const d = new Date(todayEntry.entryDate);
-    const cd = Math.floor((d - cd1) / 86400000) + 1;
-    const dpo = ov ? Math.max(Math.floor((d - new Date(ov.entryDate)) / 86400000), 0) : "-";
-    const row = document.createElement("tr");
-    row.innerHTML = `<td>${todayEntry.entryDate}</td><td>${cd}</td><td>${todayEntry.phase || '-'}</td><td>${dpo}</td>`;
-    tbody.appendChild(row);
-  }
-}
-
-</script>
+  </script>
 </body>
-</html
+</html>
