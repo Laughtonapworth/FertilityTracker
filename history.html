@@ -158,7 +158,7 @@ function renderCalendar(month, year) {
     const box = document.createElement("div");
     box.className = "day-box";
     box.textContent = d.getDate();
-    const key = d.toISOString().split("T")[0];
+    const key = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
     const e = map[key];
     if (e) {
       const phase = (e.phase || '').toLowerCase();
@@ -171,8 +171,8 @@ function renderCalendar(month, year) {
       else if (phase === 'post-ovulation') box.classList.add('green');
 
       if ((e.sex || '').toLowerCase() === 'yes') box.appendChild(Object.assign(document.createElement('span'), {textContent: '💖', style: emojiStyle}));
-      if ((e.breastChanges || '').toLowerCase() !== 'none') box.appendChild(Object.assign(document.createElement('span'), {textContent: '🫶', style: emojiStyle}));
-      if ((e.digestive || '').toLowerCase() !== 'none') box.appendChild(Object.assign(document.createElement('span'), {textContent: '🫃', style: emojiStyle}));
+      if (e.breastChanges && e.breastChanges.toLowerCase() !== 'none') box.appendChild(Object.assign(document.createElement('span'), {textContent: '🫶', style: emojiStyle}));
+      if (e.digestive && e.digestive.toLowerCase() !== 'none') box.appendChild(Object.assign(document.createElement('span'), {textContent: '🫃', style: emojiStyle}));
 
       box.title =
         (e.mood ? `Mood: ${e.mood}\n` : '') +
@@ -227,8 +227,8 @@ function renderCharts(cycles) {
     if (e.mood) {
       symptoms.mood++; moodLabels.push(e.entryDate); moodValues.push(e.mood);
     }
-    if ((e.breastChanges || '').toLowerCase() !== 'none') symptoms.breast++;
-    if ((e.digestive || '').toLowerCase() !== 'none') symptoms.digestive++;
+    if (e.breastChanges && e.breastChanges.toLowerCase() !== 'none') symptoms.breast++;
+    if (e.digestive && e.digestive.toLowerCase() !== 'none') symptoms.digestive++;
   });
 
   const moodColors = { Happy: '#ffd700', Calm: '#87cefa', Low: '#ff6b6b', Irritable: '#ffa07a' };
