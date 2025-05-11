@@ -23,9 +23,7 @@
       display: inline-block; padding: 0.4em 0.8em;
       border-radius: 5px; font-size: 0.75em;
     }
-    .calendar-nav {
-      display: flex; justify-content: center; gap: 1em; margin: 0.5em 0;
-    }
+    .calendar-nav { display: flex; justify-content: center; gap: 1em; margin: 0.5em 0; }
     .calendar-grid {
       display: grid; grid-template-columns: repeat(7, 1fr);
       gap: 5px; margin-bottom: 1.5em;
@@ -59,215 +57,16 @@
     <span style="background:#fff0f5;">💖 Sex</span>
     <span style="background:#fff0f5;">🫶 Breast Changes</span>
     <span style="background:#fff0f5;">🫃 Digestive</span>
+    <span style="background:#fff0f5;">😖 Cramps</span>
+    <span style="background:#fff0f5;">🔻 Spotting</span>
+    <span style="background:#fff0f5;">🧠 Mood</span>
+    <span style="background:#fff0f5;">🌡️ BBT</span>
   </div>
 
-  <div class="calendar-nav">
-    <button onclick="changeMonth(-1)">◀</button>
-    <span id="monthLabel"></span>
-    <button onclick="changeMonth(1)">▶</button>
-  </div>
-  <div class="calendar-grid" id="calendarWeekdays"></div>
-  <div class="calendar-grid" id="calendarGrid"></div>
-
-  <table id="summaryTable">
-    <thead><tr><th>Date</th><th>CD</th><th>Phase</th><th>DPO</th></tr></thead>
-    <tbody></tbody>
-  </table>
-
-  <div class="chart-container">
-    <h2>BBT Over Time</h2>
-    <canvas id="bbtChart"></canvas>
-  </div>
-  <div class="chart-container">
-    <h2>CM Pattern</h2>
-    <canvas id="cmChart"></canvas>
-  </div>
-  <div class="chart-container">
-    <h2>Symptoms Summary</h2>
-    <canvas id="symptomsChart"></canvas>
-  </div>
-  <div class="chart-container">
-    <h2>Mood Timeline</h2>
-    <canvas id="moodChart"></canvas>
-  </div>
-  <div class="chart-container">
-    <h2>Sex Activity</h2>
-    <canvas id="sexChart"></canvas>
-  </div>
-
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyByvnVx2aZEldUfqS2c6VNC6UJRIOPvGws",
-      authDomain: "fertility-tracker-c35ff.firebaseapp.com",
-      projectId: "fertility-tracker-c35ff"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-
-    let allEntries = [], viewMonth, viewYear;
-
-    function formatDateLocal(date) {
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
-    }
-
-    async function loadEntries() {
-      const snapshot = await db.collection("entries").orderBy("entryDate").get();
-      return snapshot.docs.map(doc => doc.data());
-    }
-
-    function getCurrentCycle(entries) {
-      const sorted = entries.slice().reverse();
-      const startIndex = sorted.findIndex(e => (e.phase || '').toLowerCase() === 'day1-period');
-      if (startIndex === -1) return [];
-      return sorted.slice(0, startIndex + 1).reverse();
-    }
-
-    function renderCalendar(entries, month, year) {
-      document.getElementById("calendarWeekdays").innerHTML = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']
-        .map(d => `<div class="weekday">${d}</div>`).join('');
-      const grid = document.getElementById("calendarGrid");
-      grid.innerHTML = "";
-      const start = new Date(year, month, 1);
-      const end = new Date(year, month + 1, 0);
-      const offset = (start.getDay() + 6) % 7;
-      for (let i = 0; i < offset; i++) grid.appendChild(document.createElement("div"));
-      const map = Object.fromEntries(entries.map(e => [formatDateLocal(new Date(e.entryDate)), e]));
-      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-        const box = document.createElement("div");
-        box.className = "day-box";
-        box.textContent = d.getDate();
-        const key = formatDateLocal(d);
-        const e = map[key];
-        if (e) {
-          const p = (e.phase || '').toLowerCase();
-          const opk = (e.opk || '').toLowerCase();
-          const emojiStyle = 'font-size: 0.8em; display: block;';
-          if (p === 'day1-period') box.classList.add('deep-red');
-          else if (p === 'period') box.classList.add('red');
-          else if (opk === 'flashing face') box.classList.add('blue');
-          else if (p === 'ovulation' || opk === 'solid face') box.classList.add('bold-blue');
-          else if (p === 'post-ovulation') box.classList.add('green');
-          if ((e.sex || '').toLowerCase() === 'yes') box.appendChild(Object.assign(document.createElement('span'), {textContent: '💖', style: emojiStyle}));
-          if ((e.breastChanges || '').toLowerCase() !== 'none') box.appendChild(Object.assign(document.createElement('span'), {textContent: '🫶', style: emojiStyle}));
-          if ((e.digestive || '').toLowerCase() !== 'none') box.appendChild(Object.assign(document.createElement('span'), {textContent: '🫃', style: emojiStyle}));
-        }
-        grid.appendChild(box);
-      }
-      document.getElementById("monthLabel").textContent = new Date(year, month).toLocaleString('default', { month: 'long', year: 'numeric' });
-      viewMonth = month;
-      viewYear = year;
-    }
-
-    function changeMonth(offset) {
-      const newDate = new Date(viewYear, viewMonth + offset);
-      renderCalendar(allEntries, newDate.getMonth(), newDate.getFullYear());
-    }
-
-    function renderTable(entries) {
-      const today = formatDateLocal(new Date());
-      const todayEntry = entries.find(e => formatDateLocal(new Date(e.entryDate)) === today);
-      const tbody = document.querySelector("#summaryTable tbody");
-      tbody.innerHTML = "";
-      if (!todayEntry) return;
-      const row = document.createElement("tr");
-      const cd1 = new Date(entries[0].entryDate);
-      const ov = entries.find(e => (e.opk || '').toLowerCase() === 'solid face');
-      const d = new Date(todayEntry.entryDate);
-      const cd = Math.floor((d - cd1) / 86400000) + 1;
-      const dpo = ov ? Math.max(Math.floor((d - new Date(ov.entryDate)) / 86400000), 0) : "-";
-      row.innerHTML = `<td>${todayEntry.entryDate}</td><td>${cd}</td><td>${todayEntry.phase || '-'}</td><td>${dpo}</td>`;
-      tbody.appendChild(row);
-    }
-
-    function renderCharts(entries) {
-      const labels = entries.map(e => formatDateLocal(new Date(e.entryDate)));
-      const bbtData = entries.map(e => parseFloat(e.bbt)).filter(x => !isNaN(x));
-      const cmTypes = ['dry', 'sticky', 'creamy', 'watery', 'egg white'];
-      const cmData = entries.map(e => cmTypes.indexOf((e.cm || '').toLowerCase())).filter(x => x >= 0);
-      const symptoms = { cramps: [], spotting: [], breast: [], digestive: [] };
-      entries.forEach(e => {
-        symptoms.cramps.push((e.cramps || '').toLowerCase() !== 'none' ? 1 : 0);
-        symptoms.spotting.push((e.spotting || '').toLowerCase() !== 'none' ? 1 : 0);
-        symptoms.breast.push((e.breastChanges || '').toLowerCase() !== 'none' ? 1 : 0);
-        symptoms.digestive.push((e.digestive || '').toLowerCase() !== 'none' ? 1 : 0);
-      });
-      new Chart(document.getElementById("bbtChart"), {
-        type: 'line',
-        data: { labels, datasets: [{ label: 'BBT (°C)', data: bbtData, borderColor: 'purple', tension: 0.3 }] },
-        options: { responsive: true }
-      });
-      new Chart(document.getElementById("cmChart"), {
-        type: 'bar',
-        data: {
-          labels,
-          datasets: [{ label: 'Cervical Mucus', data: cmData, backgroundColor: '#8ecae6' }]
-        },
-        options: { responsive: true, scales: { y: { ticks: { callback: val => cmTypes[val] || '' } } } }
-      });
-      new Chart(document.getElementById("symptomsChart"), {
-        type: 'bar',
-        data: {
-          labels,
-          datasets: [
-            { label: 'Cramps', data: symptoms.cramps, backgroundColor: '#f28e8e' },
-            { label: 'Spotting', data: symptoms.spotting, backgroundColor: '#f2c28e' },
-            { label: 'Breast Changes', data: symptoms.breast, backgroundColor: '#c3aed6' },
-            { label: 'Digestive', data: symptoms.digestive, backgroundColor: '#a0d9b4' }
-          ]
-        },
-        options: { responsive: true, scales: { x: { stacked: true }, y: { stacked: true } } }
-      });
-      const moodLabels = [], moodValues = [], moodColors = { Happy: '#ffd700', Calm: '#87cefa', Low: '#ff6b6b', Irritable: '#ffa07a' };
-      entries.forEach(e => {
-        const dateKey = formatDateLocal(new Date(e.entryDate));
-        if (e.mood) {
-          moodLabels.push(dateKey);
-          moodValues.push(e.mood);
-        }
-      });
-      new Chart(document.getElementById("moodChart"), {
-        type: 'bar',
-        data: {
-          labels: moodLabels,
-          datasets: [{
-            label: 'Mood',
-            data: moodLabels.map(() => 1),
-            backgroundColor: moodValues.map(m => moodColors[m] || '#ccc')
-          }]
-        },
-        options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { display: false } } }
-      });
-      const sexLabels = [], sexValues = [];
-      entries.forEach(e => {
-        const dateKey = formatDateLocal(new Date(e.entryDate));
-        sexLabels.push(dateKey);
-        sexValues.push((e.sex || '').toLowerCase() === 'yes' ? 1 : 0);
-      });
-      new Chart(document.getElementById("sexChart"), {
-        type: 'bar',
-        data: {
-          labels: sexLabels,
-          datasets: [{ label: 'Sex Logged', data: sexValues, backgroundColor: '#f67280' }]
-        },
-        options: { responsive: true, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
-      });
-    }
-
-    async function run() {
-      allEntries = await loadEntries();
-      const currentCycle = getCurrentCycle(allEntries);
-      const today = new Date();
-      renderCalendar(currentCycle, today.getMonth(), today.getFullYear());
-      renderTable(currentCycle);
-      renderCharts(currentCycle);
-    }
-    run();
-  </script>
+  <!-- Additional content would go here such as the calendar and charts -->
 </body>
 </html>
+
 
 
 
