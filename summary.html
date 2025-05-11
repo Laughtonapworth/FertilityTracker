@@ -117,14 +117,9 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-let allEntries = [];
-let viewMonth, viewYear;
-
-function formatDateLocal(date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+function formatDate(date) {
+  const d = new Date(date);
+  return d.toISOString().split("T")[0];
 }
 
 async function loadEntries() {
@@ -134,101 +129,110 @@ async function loadEntries() {
 
 function getCurrentCycle(entries) {
   const reversed = [...entries].reverse();
-  const index = reversed.findIndex(e => (e.phase || '').toLowerCase() === 'day1-period');
-  return index !== -1 ? reversed.slice(0, index + 1).reverse() : [];
+  const start = reversed.findIndex(e => (e.phase || '').toLowerCase() === 'day1-period');
+  return start !== -1 ? reversed.slice(0, start + 1).reverse() : [];
 }
 
 function renderTable(cycle) {
   const tbody = document.querySelector("#summaryTable tbody");
   tbody.innerHTML = "";
-  const today = formatDateLocal(new Date());
-  const todayEntry = cycle.find(e => formatDateLocal(new Date(e.entryDate)) === today);
+  const today = formatDate(new Date());
+  const todayEntry = cycle.find(e => formatDate(e.entryDate) === today);
   if (!todayEntry) return;
-  const row = document.createElement("tr");
   const cd = Math.floor((new Date(todayEntry.entryDate) - new Date(cycle[0].entryDate)) / 86400000) + 1;
   const ov = cycle.find(e => (e.opk || '').toLowerCase() === 'solid face');
   const dpo = ov ? Math.floor((new Date(todayEntry.entryDate) - new Date(ov.entryDate)) / 86400000) : "-";
+  const row = document.createElement("tr");
   row.innerHTML = `<td>${todayEntry.entryDate}</td><td>${cd}</td><td>${todayEntry.phase || '-'}</td><td>${dpo}</td>`;
   tbody.appendChild(row);
 }
 
-function renderCharts(current) {
-  const labels = current.map(e => formatDateLocal(new Date(e.entryDate)));
+function renderCharts(cycle) {
+  const cmTypes = ['dry', 'sticky', 'creamy', 'watery', 'egg white'];
+  const labels = cycle.map(e => formatDate(e.entryDate));
 
-  const bbt = current.filter(e => e.bbt && !isNaN(parseFloat(e.bbt)));
-  if (bbt.length > 0) {
-    console.debug('Drawing BBT chart...'); new Chart(document.getElementById("bbtChart"), {
+  const bbt = cycle.filter(e => e.bbt && !isNaN(parseFloat(e.bbt)));
+  if (bbt.length) {
+    new Chart(document.getElementById("bbtChart"), {
       type: 'line',
       data: {
-        labels: bbt.map(e => formatDateLocal(new Date(e.entryDate))),
+        labels: bbt.map(e => formatDate(e.entryDate)),
         datasets: [{ label: 'BBT', data: bbt.map(e => parseFloat(e.bbt)), borderColor: 'purple' }]
       },
       options: { responsive: true }
     });
   }
 
-  const cmTypes = ['dry','sticky','creamy','watery','egg white'];
-  const cm = current.filter(e => e.cm && cmTypes.includes(e.cm.toLowerCase()));
-  if (cm.length > 0) {
-    console.debug('Drawing CM chart...'); new Chart(document.getElementById("cmChart"), {
+  const cmValid = cycle.filter(e => cmTypes.includes((e.cm || '').toLowerCase()));
+  if (cmValid.length) {
+    new Chart(document.getElementById("cmChart"), {
       type: 'bar',
       data: {
-        labels: cm.map(e => formatDateLocal(new Date(e.entryDate))),
+        labels: cmValid.map(e => formatDate(e.entryDate)),
         datasets: [{
           label: 'CM',
-          data: cm.map(e => cmTypes.indexOf(e.cm.toLowerCase())),
+          data: cmValid.map(e => cmTypes.indexOf(e.cm.toLowerCase())),
           backgroundColor: '#8ecae6'
         }]
       },
       options: {
         responsive: true,
-        scales: { y: { ticks: { callback: val => cmTypes[val] || '' } } }
+        scales: {
+          y: { ticks: { callback: val => cmTypes[val] || '' } }
+        }
       }
     });
   }
 
-  const symptomLabels = current.map(e => formatDateLocal(new Date(e.entryDate)));
   const symptoms = {
-    cramps: current.map(e => (e.cramps || '').toLowerCase() !== 'none' ? 1 : 0),
-    spotting: current.map(e => (e.spotting || '').toLowerCase() !== 'none' ? 1 : 0),
-    breast: current.map(e => (e.breastChanges || '').toLowerCase() !== 'none' ? 1 : 0),
-    digestive: current.map(e => (e.digestive || '').toLowerCase() !== 'none' ? 1 : 0)
+    cramps: [], spotting: [], breast: [], digestive: []
   };
-  if (symptomLabels.length > 0) {
-    console.debug('Drawing Symptoms chart...'); new Chart(document.getElementById("symptomsChart"), {
-      type: 'bar',
-      data: {
-        labels: symptomLabels,
-        datasets: [
-          { label: 'Cramps', data: symptoms.cramps, backgroundColor: '#f28e8e' },
-          { label: 'Spotting', data: symptoms.spotting, backgroundColor: '#f2c28e' },
-          { label: 'Breast Changes', data: symptoms.breast, backgroundColor: '#c3aed6' },
-          { label: 'Digestive', data: symptoms.digestive, backgroundColor: '#a0d9b4' }
-        ]
-      },
-      options: { responsive: true, scales: { x: { stacked: true }, y: { stacked: true } } }
-    });
-  }
+  const symLabels = [];
 
-  const sexDates = current.filter(e => e.sex && e.sex.toLowerCase() === 'yes')
-                          .map(e => formatDateLocal(new Date(e.entryDate)));
-  if (sexDates.length > 0) {
-    const uniqueDates = [...new Set(sexDates)];
-    const counts = uniqueDates.map(d => sexDates.filter(x => x === d).length);
-    console.debug('Drawing Sex chart...'); new Chart(document.getElementById("sexChart"), {
+  cycle.forEach(e => {
+    const date = formatDate(e.entryDate);
+    symLabels.push(date);
+    symptoms.cramps.push((e.cramps || '').toLowerCase() !== 'none' ? 1 : 0);
+    symptoms.spotting.push((e.spotting || '').toLowerCase() !== 'none' ? 1 : 0);
+    symptoms.breast.push((e.breastChanges || '').toLowerCase() !== 'none' ? 1 : 0);
+    symptoms.digestive.push(e.digestive && e.digestive.toLowerCase() !== 'none' ? 1 : 0);
+  });
+
+  new Chart(document.getElementById("symptomsChart"), {
+    type: 'bar',
+    data: {
+      labels: symLabels,
+      datasets: [
+        { label: 'Cramps', data: symptoms.cramps, backgroundColor: '#f28e8e' },
+        { label: 'Spotting', data: symptoms.spotting, backgroundColor: '#f2c28e' },
+        { label: 'Breast Changes', data: symptoms.breast, backgroundColor: '#c3aed6' },
+        { label: 'Digestive', data: symptoms.digestive, backgroundColor: '#a0d9b4' }
+      ]
+    },
+    options: {
+      responsive: true,
+      scales: { x: { stacked: true }, y: { stacked: true } }
+    }
+  });
+
+  const sex = cycle.filter(e => e.sex && e.sex.toLowerCase() === 'yes');
+  if (sex.length) {
+    const sexDates = sex.map(e => formatDate(e.entryDate));
+    const counts = {};
+    sexDates.forEach(d => counts[d] = (counts[d] || 0) + 1);
+    new Chart(document.getElementById("sexChart"), {
       type: 'bar',
       data: {
-        labels: uniqueDates,
-        datasets: [{ label: 'Sex', data: counts, backgroundColor: '#f67280' }]
+        labels: Object.keys(counts),
+        datasets: [{
+          label: 'Sex',
+          data: Object.values(counts),
+          backgroundColor: '#f67280'
+        }]
       },
       options: { responsive: true, scales: { y: { beginAtZero: true } } }
     });
   }
-}
-
-function changeMonth(offset) {
-  const newDate = new Date(viewYear, viewMonth + offset);
-  renderCalendar(allEntries, newDate.getMonth(), newDate.getFullYear());
 }
 
 function renderCalendar(entries, month, year) {
@@ -240,12 +244,12 @@ function renderCalendar(entries, month, year) {
   const end = new Date(year, month + 1, 0);
   const offset = (start.getDay() + 6) % 7;
   for (let i = 0; i < offset; i++) grid.appendChild(document.createElement("div"));
-  const map = Object.fromEntries(entries.map(e => [formatDateLocal(new Date(e.entryDate)), e]));
+  const map = Object.fromEntries(entries.map(e => [formatDate(e.entryDate), e]));
   for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
     const box = document.createElement("div");
     box.className = "day-box";
     box.textContent = d.getDate();
-    const key = formatDateLocal(d);
+    const key = formatDate(d);
     const e = map[key];
     if (e) {
       const p = (e.phase || '').toLowerCase();
@@ -267,19 +271,23 @@ function renderCalendar(entries, month, year) {
   viewYear = year;
 }
 
+function changeMonth(offset) {
+  const newDate = new Date(viewYear, viewMonth + offset);
+  renderCalendar(currentCycle, newDate.getMonth(), newDate.getFullYear());
+}
+
+let currentCycle = [];
 async function run() {
-  allEntries = await loadEntries();
-  const current = getCurrentCycle(allEntries); console.debug('Current cycle entries loaded:', current);
+  const all = await loadEntries();
+  currentCycle = getCurrentCycle(all);
   const today = new Date();
-  renderCalendar(current, today.getMonth(), today.getFullYear());
-  renderTable(current);
-  console.debug('Rendering charts with:', current); renderCharts(current);
+  renderCalendar(currentCycle, today.getMonth(), today.getFullYear());
+  renderTable(currentCycle);
+  renderCharts(currentCycle);
 }
 run();
 </script>
 </body>
 </html>
-
-
 
 
