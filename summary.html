@@ -129,15 +129,13 @@
       const cmTypes = ['dry', 'sticky', 'creamy', 'watery', 'egg white'];
       const cmData = entries.map(e => cmTypes.indexOf((e.cm || '').toLowerCase())).filter(x => x >= 0);
 
-      
-const symptoms = { cramps: [], spotting: [], breast: [], digestive: [] };
-entries.forEach(e => {
-  symptoms.cramps.push((e.cramps || '').toLowerCase() !== 'none' ? 1 : 0);
-  symptoms.spotting.push((e.spotting || '').toLowerCase() !== 'none' ? 1 : 0);
-  symptoms.breast.push((e.breastChanges || '').toLowerCase() !== 'none' ? 1 : 0);
-  symptoms.digestive.push(typeof e.digestive !== 'undefined' && e.digestive.toLowerCase() !== 'none' ? 1 : 0);
-});
-
+      const symptoms = { cramps: [], spotting: [], breast: [], digestive: [] };
+      entries.forEach(e => {
+        symptoms.cramps.push((e.cramps || '').toLowerCase() !== 'none' ? 1 : 0);
+        symptoms.spotting.push((e.spotting || '').toLowerCase() !== 'none' ? 1 : 0);
+        symptoms.breast.push((e.breastChanges || '').toLowerCase() !== 'none' ? 1 : 0);
+        symptoms.digestive.push((e.digestive || '').toLowerCase() !== 'none' ? 1 : 0);
+      });
 
       new Chart(document.getElementById("bbtChart"), {
         type: 'line',
@@ -212,24 +210,6 @@ entries.forEach(e => {
       const allEntries = await loadEntries();
       const currentCycle = getCurrentCycle(allEntries);
       renderCharts(currentCycle);
-
-      const today = new Date();
-      const formatDate = d => d.toISOString().split('T')[0];
-      const todayStr = formatDate(today);
-      const todayEntry = currentCycle.find(e => formatDate(new Date(e.entryDate)) === todayStr);
-      const tbody = document.querySelector("#summaryTable tbody");
-      tbody.innerHTML = "";
-      if (todayEntry) {
-        const cd1 = new Date(currentCycle[0].entryDate);
-        const ov = currentCycle.find(e => (e.opk || '').toLowerCase() === 'solid face');
-        const d = new Date(todayEntry.entryDate);
-        const cd = Math.floor((d - cd1) / 86400000) + 1;
-        const dpo = ov ? Math.max(Math.floor((d - new Date(ov.entryDate)) / 86400000), 0) : "-";
-        const row = document.createElement("tr");
-        row.innerHTML = `<td>${todayEntry.entryDate}</td><td>${cd}</td><td>${todayEntry.phase || '-'}</td><td>${dpo}</td>`;
-        tbody.appendChild(row);
-      }
-
 renderCalendar(currentCycle, new Date().getMonth(), new Date().getFullYear());
 
       const today = new Date();
