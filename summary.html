@@ -72,6 +72,11 @@
   <div class="calendar-grid" id="calendarWeekdays"></div>
   <div class="calendar-grid" id="calendarGrid"></div>
 
+  <table id="summaryTable">
+    <thead><tr><th>Date</th><th>CD</th><th>Phase</th><th>DPO</th></tr></thead>
+    <tbody></tbody>
+  </table>
+
   <div class="chart-container">
     <h2>BBT Over Time</h2>
     <canvas id="bbtChart"></canvas>
@@ -206,6 +211,23 @@
       const allEntries = await loadEntries();
       const currentCycle = getCurrentCycle(allEntries);
       renderCharts(currentCycle);
+
+      const today = new Date();
+      const formatDate = d => d.toISOString().split('T')[0];
+      const todayStr = formatDate(today);
+      const todayEntry = currentCycle.find(e => formatDate(new Date(e.entryDate)) === todayStr);
+      if (todayEntry) {
+        const tbody = document.querySelector("#summaryTable tbody");
+        const cd1 = new Date(currentCycle[0].entryDate);
+        const ov = currentCycle.find(e => (e.opk || '').toLowerCase() === 'solid face');
+        const d = new Date(todayEntry.entryDate);
+        const cd = Math.floor((d - cd1) / 86400000) + 1;
+        const dpo = ov ? Math.max(Math.floor((d - new Date(ov.entryDate)) / 86400000), 0) : "-";
+        const row = document.createElement("tr");
+        row.innerHTML = `<td>${todayEntry.entryDate}</td><td>${cd}</td><td>${todayEntry.phase || '-'}</td><td>${dpo}</td>`;
+        tbody.appendChild(row);
+      }
+
     }
     run();
   </script>
