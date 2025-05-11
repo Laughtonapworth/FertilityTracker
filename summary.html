@@ -1,13 +1,14 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cycle Summary</title>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Cycle Summary</title>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
     body { font-family: 'Segoe UI', sans-serif; background: #fffafc; padding: 1em; }
     h1, h2 { text-align: center; }
     .nav-button {
@@ -47,36 +48,31 @@
 <body>
 <h1>Cycle Summary</h1>
 <a class="nav-button" href="index.html">← Back to Home</a>
-
 <div class="legend">
-  <span style="background:#e76f8a; color:white;">Day 1 Period</span>
-  <span style="background:#f6b1b7;">Period</span>
-  <span style="background:#b7d7f6;">Fertile (Flashing)</span>
-  <span style="background:#5f9ed1; color:white;">Ovulation (Solid)</span>
-  <span style="background:#c8e6c9;">Post Ovulation</span>
-  <span style="background:#fff0f5;">💖 Sex</span>
-  <span style="background:#fff0f5;">🫶 Breast Changes</span>
-  <span style="background:#fff0f5;">🫃 Digestive</span>
+<span style="background:#e76f8a; color:white;">Day 1 Period</span>
+<span style="background:#f6b1b7;">Period</span>
+<span style="background:#b7d7f6;">Fertile (Flashing)</span>
+<span style="background:#5f9ed1; color:white;">Ovulation (Solid)</span>
+<span style="background:#c8e6c9;">Post Ovulation</span>
+<span style="background:#fff0f5;">💖 Sex</span>
+<span style="background:#fff0f5;">🫶 Breast Changes</span>
+<span style="background:#fff0f5;">🫃 Digestive</span>
 </div>
-
 <div class="calendar-nav">
-  <button onclick="changeMonth(-1)">◀</button>
-  <span id="monthLabel"></span>
-  <button onclick="changeMonth(1)">▶</button>
+<button onclick="changeMonth(-1)">◀</button>
+<span id="monthLabel"></span>
+<button onclick="changeMonth(1)">▶</button>
 </div>
 <div class="calendar-grid" id="calendarWeekdays"></div>
 <div class="calendar-grid" id="calendarGrid"></div>
-
 <h2>Today's Summary</h2>
 <table>
-  <thead><tr><th>Date</th><th>CD</th><th>Phase</th><th>DPO</th></tr></thead>
-  <tbody id="summaryRow"></tbody>
+<thead><tr><th>Date</th><th>CD</th><th>Phase</th><th>DPO</th></tr></thead>
+<tbody id="summaryRow"></tbody>
 </table>
-
 <div class="chart-container"><h2>BBT Over Time</h2><canvas id="bbtChart"></canvas></div>
 <div class="chart-container"><h2>CM Pattern</h2><canvas id="cmChart"></canvas></div>
 <div class="chart-container"><h2>Symptoms Summary</h2><canvas id="symptomsChart"></canvas></div>
-
 <script>
 const firebaseConfig = {
   apiKey: "AIzaSyByvnVx2aZEldUfqS2c6VNC6UJRIOPvGws",
@@ -162,13 +158,13 @@ function changeMonth(offset) {
 
 function renderCharts(entries) {
   const labels = entries.map(e => formatDateLocal(new Date(e.entryDate)));
-  const bbt = entries.map(e => parseFloat(e.bbt)).filter(x => !isNaN(x));
+  const bbt = entries.filter(e => e.bbt && !isNaN(parseFloat(e.bbt))).map(e => parseFloat(e.bbt));
   const cmTypes = ['dry', 'sticky', 'creamy', 'watery', 'egg white'];
-  const cm = entries.map(e => cmTypes.indexOf((e.cm || '').toLowerCase())).filter(x => x >= 0);
-  const cramps = entries.map(e => (e.cramps || '').toLowerCase() !== 'none' ? 1 : 0);
-  const spotting = entries.map(e => (e.spotting || '').toLowerCase() !== 'none' ? 1 : 0);
-  const breast = entries.map(e => (e.breastChanges || '').toLowerCase() !== 'none' ? 1 : 0);
-  const digestive = entries.map(e => (e.digestive || '').toLowerCase() !== 'none' ? 1 : 0);
+  const cm = entries.filter(e => e.cm && cmTypes.includes(e.cm.toLowerCase())).map(e => cmTypes.indexOf(e.cm.toLowerCase()));
+  const cramps = entries.filter(e => e.cramps).map(e => (e.cramps || '').toLowerCase() !== 'none' ? 1 : 0);
+  const spotting = entries.filter(e => e.spotting).map(e => (e.spotting || '').toLowerCase() !== 'none' ? 1 : 0);
+  const breast = entries.filter(e => e.breastChanges).map(e => (e.breastChanges || '').toLowerCase() !== 'none' ? 1 : 0);
+  const digestive = entries.filter(e => e.digestive).map(e => (e.digestive || '').toLowerCase() !== 'none' ? 1 : 0);
 
   new Chart(document.getElementById("bbtChart"), {
     type: 'line',
