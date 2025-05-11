@@ -4,12 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>LLP Fertility Tracker</title>
-
-  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-
-  <!-- Firebase Config -->
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyByvnVx2aZEldUfqS2c6VNC6UJRIOPvGws",
@@ -22,40 +18,29 @@
     };
     firebase.initializeApp(firebaseConfig);
   </script>
-
   <style>
     body { font-family: 'Segoe UI', sans-serif; background: #fffafc; padding: 1em; }
     h1 { text-align: center; }
     .form-group { margin-bottom: 1em; }
     label { display: block; margin-bottom: 0.3em; }
     input, select, button {
-      width: 100%;
-      padding: 0.6em;
-      border: 1px solid #ccc;
-      border-radius: 8px;
+      width: 100%; padding: 0.6em;
+      border: 1px solid #ccc; border-radius: 8px;
     }
     button {
-      background: #c4d7b2;
-      font-weight: bold;
-      cursor: pointer;
+      background: #c4d7b2; font-weight: bold; cursor: pointer;
     }
     .nav-button {
-      display: block;
-      margin: 1em auto;
-      text-align: center;
-      background: #eeb7c2;
-      color: white;
-      padding: 0.6em 1em;
-      border-radius: 20px;
-      text-decoration: none;
-      max-width: 200px;
+      display: block; margin: 1em auto; text-align: center;
+      background: #eeb7c2; color: white;
+      padding: 0.6em 1em; border-radius: 20px;
+      text-decoration: none; max-width: 200px;
     }
   </style>
 </head>
 <body>
   <h1>Log Entry</h1>
   <a class="nav-button" href="index.html">← Back to Home</a>
-
   <form id="entryForm">
     <div class="form-group">
       <label>Date</label>
@@ -72,12 +57,10 @@
         <option value="post-ovulation">Post-Ovulation</option>
       </select>
     </div>
-
     <div class="form-group" id="bbtGroup">
       <label>BBT (°C)</label>
       <input type="number" step="0.01" id="bbt">
     </div>
-
     <div class="form-group" id="cmGroup">
       <label>Cervical Mucus</label>
       <select id="cm">
@@ -85,7 +68,6 @@
         <option>Dry</option><option>Sticky</option><option>Creamy</option><option>Watery</option><option>Egg white</option>
       </select>
     </div>
-
     <div class="form-group" id="opkGroup">
       <label>OPK</label>
       <select id="opk">
@@ -93,7 +75,6 @@
         <option>Blank circle</option><option>Flashing face</option><option>Solid face</option>
       </select>
     </div>
-
     <div class="form-group" id="moodGroup">
       <label>Mood</label>
       <select id="mood">
@@ -101,82 +82,70 @@
         <option>Calm</option><option>Happy</option><option>Irritable</option><option>Low</option>
       </select>
     </div>
-
     <div class="form-group" id="spottingGroup">
       <label>Spotting</label>
       <select id="spotting">
-        <option>None</option><option>Pink</option><option>Brown</option><option>Red</option>
+        <option value="">-- Select Spotting --</option>
+        <option>Pink</option><option>Brown</option><option>Red</option>
       </select>
     </div>
-
     <div class="form-group" id="crampsGroup">
       <label>Cramps</label>
       <select id="cramps">
-        <option>None</option><option>Mild</option><option>Moderate</option><option>Strong</option>
+        <option value="">-- Select Cramps --</option>
+        <option>Mild</option><option>Moderate</option><option>Strong</option>
       </select>
     </div>
-
     <div class="form-group" id="breastGroup">
       <label>Breast Changes</label>
       <select id="breastChanges">
         <option value="">-- Select --</option>
-        <option>Tender Breasts</option>
-        <option>Tender Nipples</option>
-        <option>Color Change</option>
-        <option>Shape Change</option>
-        <option>None</option>
+        <option>Tender Breasts</option><option>Tender Nipples</option><option>Color Change</option><option>Shape Change</option><option>None</option>
       </select>
     </div>
-
-    <div class="form-group" id="pregnancyGroup">
-      <label>Pregnancy Result</label>
-      <select id="pregnancyResult">
+    <div class="form-group" id="digestiveGroup">
+      <label>Digestive Symptoms</label>
+      <select id="digestive">
         <option value="">-- Select --</option>
-        <option>Negative</option>
-        <option>Faint Line</option>
-        <option>Positive</option>
+        <option>Bloating</option><option>Constipation</option><option>Diarrhea</option><option>Nausea</option><option>None</option>
       </select>
     </div>
-
     <div class="form-group" id="sexGroup">
       <label>Sex</label>
       <select id="sex">
         <option value="">-- Select --</option>
-        <option>Yes</option>
-        <option>No</option>
+        <option>Yes</option><option>No</option>
       </select>
     </div>
-
+    <div class="form-group" id="pregnancyGroup">
+      <label>Pregnancy Result</label>
+      <select id="pregnancyResult">
+        <option value="">-- Select --</option>
+        <option>Negative</option><option>Faint Line</option><option>Positive</option>
+      </select>
+    </div>
     <button type="submit">Save Entry</button>
   </form>
-
   <script>
     function updateVisibility() {
       const phase = document.getElementById('phase').value;
       const groups = {
-        opkGroup: false,
-        cmGroup: false,
-        moodGroup: false,
-        spottingGroup: false,
-        crampsGroup: false,
-        breastGroup: false,
-        pregnancyGroup: false,
-        sexGroup: false
+        opkGroup: false, cmGroup: false, moodGroup: false,
+        spottingGroup: false, crampsGroup: false,
+        breastGroup: false, digestiveGroup: false,
+        pregnancyGroup: false, sexGroup: false
       };
       if (["pre-ovulation", "ovulation", "post-ovulation"].includes(phase)) {
         groups.sexGroup = true;
       }
       if (phase === "pre-ovulation") {
-        groups.opkGroup = true;
-        groups.cmGroup = true;
+        groups.opkGroup = true; groups.cmGroup = true;
       } else if (phase === "ovulation") {
         groups.cmGroup = true;
       } else if (phase === "post-ovulation") {
-        groups.cmGroup = true;
-        groups.moodGroup = true;
-        groups.spottingGroup = true;
-        groups.crampsGroup = true;
-        groups.breastGroup = true;
+        groups.cmGroup = true; groups.moodGroup = true;
+        groups.spottingGroup = true; groups.crampsGroup = true;
+        groups.breastGroup = true; groups.digestiveGroup = true;
         groups.pregnancyGroup = true;
       }
       for (const id in groups) {
@@ -184,13 +153,11 @@
         if (el) el.style.display = groups[id] ? "block" : "none";
       }
     }
-
     document.addEventListener("DOMContentLoaded", () => {
       document.getElementById("date").value = new Date().toISOString().split("T")[0];
       updateVisibility();
       document.getElementById("phase").addEventListener("change", updateVisibility);
     });
-
     document.getElementById("entryForm").addEventListener("submit", async function (e) {
       e.preventDefault();
       try {
@@ -204,6 +171,7 @@
           spotting: document.getElementById("spotting").value,
           cramps: document.getElementById("cramps").value,
           breastChanges: document.getElementById("breastChanges").value,
+          digestive: document.getElementById("digestive").value,
           pregnancyResult: document.getElementById("pregnancyResult").value,
           sex: document.getElementById("sex").value,
           timestamp: firebase.firestore.FieldValue.serverTimestamp()
