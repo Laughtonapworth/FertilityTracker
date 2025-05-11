@@ -154,7 +154,7 @@
 
         if ((e.sex || '').toLowerCase() === 'yes') box.appendChild(Object.assign(document.createElement('span'), {textContent: '💖', style: emojiStyle}));
         if ((e.breastChanges || '').toLowerCase() !== 'none' && e.breastChanges !== '') box.appendChild(Object.assign(document.createElement('span'), {textContent: '🫶', style: emojiStyle}));
-        if ((e.digestive || '').toLowerCase() !== 'none' && e.digestive !== '') box.appendChild(Object.assign(document.createElement('span'), {textContent: '🫃', style: emojiStyle}));
+        if (typeof e.digestive !== 'undefined' && e.digestive.toLowerCase() !== 'none' && e.digestive !== '') box.appendChild(Object.assign(document.createElement('span'), {textContent: '🫃', style: emojiStyle}));
       }
       grid.appendChild(box);
     }
@@ -178,7 +178,6 @@
 </script>
 </body>
 </html>
-
 
 
 
