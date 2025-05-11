@@ -209,30 +209,10 @@
             emoji.style = emojiStyle;
             box.appendChild(emoji);
           }
-          if (cramps && cramps !== 'none') {
-            const emoji = document.createElement('span');
-            emoji.textContent = '😖';
-            emoji.style = emojiStyle;
-            box.appendChild(emoji);
-          }
-          if (spotting && spotting !== 'none') {
-            const emoji = document.createElement('span');
-            emoji.textContent = '🔻';
-            emoji.style = emojiStyle;
-            box.appendChild(emoji);
-          }
-          if (mood) {
-            const emoji = document.createElement('span');
-            emoji.textContent = '🧠';
-            emoji.style = emojiStyle;
-            box.appendChild(emoji);
-          }
-          if (bbt) {
-            const emoji = document.createElement('span');
-            emoji.textContent = '🌡️';
-            emoji.style = emojiStyle;
-            box.appendChild(emoji);
-          }
+          
+          
+          
+          
           if ((entry.breastChanges || '').toLowerCase() !== 'none') {
             const emoji = document.createElement('span');
             emoji.textContent = '🫶';
@@ -245,44 +225,24 @@
             emoji.style = emojiStyle;
             box.appendChild(emoji);
           }
-          if (cramps && cramps !== 'none') {
-            const emoji = document.createElement('span');
-            emoji.textContent = '😖';
-            emoji.style = emojiStyle;
-            box.appendChild(emoji);
-          }
-          if (spotting && spotting !== 'none') {
-            const emoji = document.createElement('span');
-            emoji.textContent = '🔻';
-            emoji.style = emojiStyle;
-            box.appendChild(emoji);
-          }
-          if (mood) {
-            const emoji = document.createElement('span');
-            emoji.textContent = '🧠';
-            emoji.style = emojiStyle;
-            box.appendChild(emoji);
-          }
-          if (bbt) {
-            const emoji = document.createElement('span');
-            emoji.textContent = '🌡️';
-            emoji.style = emojiStyle;
-            box.appendChild(emoji);
-          }
+          
+          
+          
+          
         }
-        if (mood) box.title += 'Mood: ' + mood + '
+        if (mood) if (mood) box.title += 'Mood: ' + mood + '
 ';
-        if (cramps && cramps !== 'none') box.title += 'Cramps: ' + cramps + '
+        if (cramps && cramps !== 'none') if (cramps && cramps !== 'none') box.title += 'Cramps: ' + cramps + '
 ';
-        if (spotting && spotting !== 'none') box.title += 'Spotting: ' + spotting + '
+        if (spotting && spotting !== 'none') if (spotting && spotting !== 'none') box.title += 'Spotting: ' + spotting + '
 ';
-        if (sex === 'yes') box.title += 'Sex: Yes
+        if (sex === 'yes') if (sex === 'yes') box.title += 'Sex: Yes
 ';
-        if (bbt) box.title += 'BBT: ' + bbt + '
+        if (bbt) if (bbt) box.title += 'BBT: ' + bbt + '
 ';
-        if ((entry.breastChanges || '').toLowerCase() !== 'none') box.title += 'Breast Changes
+        if ((entry.breastChanges || '').toLowerCase() !== 'none') if ((entry.breastChanges || '').toLowerCase() !== 'none') box.title += 'Breast Changes
 ';
-        if ((entry.digestive || '').toLowerCase() !== 'none') box.title += 'Digestive Symptoms
+        if ((entry.digestive || '').toLowerCase() !== 'none') if ((entry.digestive || '').toLowerCase() !== 'none') box.title += 'Digestive Symptoms
 ';
         calendarGrid.appendChild(box);
       }
@@ -409,5 +369,6 @@ function downloadPDF() {
 </script>
 </body>
 </html>
+
 
 
