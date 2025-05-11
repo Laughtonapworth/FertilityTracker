@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Cycle History</title>
+
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; padding: 1em; background: #fffafc; }
+    h1, h2 { text-align: center; }
+    .summary-table {
+      width: 100%; max-width: 600px; margin: 1em auto; border-collapse: collapse;
+    }
+    th, td {
+      padding: 0.6em; border: 1px solid #ccc; text-align: center;
+    }
+    th { background: #eeb7c2; color: white; }
+    .chart-container {
+      margin: 2em auto;
+      max-width: 1000px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Cycle History</h1>
+
+  <h2>Cycle Averages</h2>
+  <table class="summary-table">
+    <thead>
+      <tr>
+        <th>Avg. Cycle Length</th>
+        <th>Avg. Luteal Phase</th>
+        <th>Avg. Period Length</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr id="averagesRow">
+        <td>–</td><td>–</td><td>–</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="chart-container">
+    <h2>BBT by Cycle</h2>
+    <canvas id="bbtChart"></canvas>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyByvnVx2aZEldUfqS2c6VNC6UJRIOPvGws",
+      authDomain: "fertility-tracker-c35ff.firebaseapp.com",
+      projectId: "fertility-tracker-c35ff",
+      storageBucket: "fertility-tracker-c35ff.appspot.com",
+      messagingSenderId: "775022478214",
+      appId: "1:775022478214:web:107ba4f9e0043bee75a207"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    async function loadEntries() {
+      const snapshot = await db.collection("entries").orderBy("entryDate").get();
+      return snapshot.docs.map(doc => doc.data());
+    }
+
+    function groupByCycles(entries) {
+      const cycles = [];
+      let current = [];
+
+      for (let i = 0; i < entries.length; i++) {
+        const e = entries[i];
+        if ((e.phase || '').toLowerCase() === 'day1-period') {
+          if (current.length) cycles.push([...current]);
+          current = [e];
+        } else {
+          current.push(e);
+        }
+      }
+      if (current.length) cycles.push(current);
+      return cycles;
+    }
+
+    function calculateAverages(cycles) {
+      const cycleLengths = [];
+      const lutealLengths = [];
+      const periodLengths = [];
+
+      for (const cycle of cycles) {
+        if (cycle.length < 3) continue;
+        const start = new Date(cycle[0].entryDate);
+        const end = new Date(cycle[cycle.length - 1].entryDate);
+        const cycleLen = (end - start) / 86400000 + 1;
+        cycleLengths.push(cycleLen);
+
+        const ovulationIndex = cycle.findIndex(e => (e.opk || '').toLowerCase() === 'solid face');
+        if (ovulationIndex !== -1) {
+          const lutealLen = cycle.length - ovulationIndex - 1;
+          lutealLengths.push(lutealLen);
+        }
+
+        const periodLen = cycle.filter(e => {
+          const p = (e.phase || '').toLowerCase();
+          return p === 'day1-period' || p === 'period';
+        }).length;
+        periodLengths.push(periodLen);
+      }
+
+      const avg = arr => arr.length ? (arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(1) : '–';
+      document.getElementById("averagesRow").innerHTML = `
+        <td>${avg(cycleLengths)}</td>
+        <td>${avg(lutealLengths)}</td>
+        <td>${avg(periodLengths)}</td>
+      `;
+    }
+
+    function renderBBTChart(cycles) {
+      const datasets = cycles.map((cycle, index) => {
+        const bbt = cycle.map(e => parseFloat(e.bbt)).filter(v => !isNaN(v));
+        const labels = cycle.map(e => e.entryDate).slice(0, bbt.length);
+        return {
+          label: `Cycle ${index + 1}`,
+          data: bbt,
+          fill: false,
+          borderColor: `hsl(${(index * 60) % 360}, 70%, 50%)`,
+          tension: 0.2
+        };
+      });
+
+      new Chart(document.getElementById("bbtChart"), {
+        type: 'line',
+        data: {
+          labels: [], // individual cycle labels will vary
+          datasets
+        },
+        options: {
+          responsive: true,
+          scales: { x: { display: false } }
+        }
+      });
+    }
+
+    async function run() {
+      const entries = await loadEntries();
+      const cycles = groupByCycles(entries);
+      calculateAverages(cycles);
+      renderBBTChart(cycles);
+    }
+
+    run();
+  </script>
+</body>
+</html>
