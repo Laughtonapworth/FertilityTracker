@@ -4,41 +4,39 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Cycle History</title>
-
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
   <style>
-    body { font-family: 'Segoe UI', sans-serif; background: #fffafc; padding: 1em; }
+    body { font-family: 'Segoe UI', sans-serif; padding: 1em; background: #fffafc; }
     h1, h2, h3 { text-align: center; }
-    table {
-      width: 100%; border-collapse: collapse; margin: 1em 0; font-size: 0.95em;
-    }
-    th, td {
-      padding: 0.5em; border: 1px solid #ccc; text-align: center;
-    }
-    th { background: #eeb7c2; color: white; }
-    .chart-container {
-      margin: 2em auto;
-      max-width: 900px;
-    }
-    .calendar-title {
-      font-weight: bold;
-      margin: 1em 0 0.5em;
+    .nav-button {
+      display: block;
+      margin: 1em auto;
+      background: #c4d7b2;
+      color: white;
+      padding: 0.6em 1.2em;
+      border-radius: 20px;
       text-align: center;
-      font-size: 1.1em;
+      text-decoration: none;
+      max-width: 250px;
     }
+    table { width: 100%; border-collapse: collapse; margin: 1em 0; font-size: 0.95em; }
+    th, td { padding: 0.5em; border: 1px solid #ccc; text-align: center; }
+    th { background: #eeb7c2; color: white; }
+    .chart-container { margin: 2em auto; max-width: 900px; }
+
+    .calendar-title { text-align: center; font-weight: bold; margin-top: 1em; font-size: 1.1em; }
+    .calendar-nav { display: flex; justify-content: center; gap: 1em; margin: 0.5em 0; }
+    .calendar-nav button { padding: 0.4em 1em; border: none; border-radius: 5px; background: #d6d6d6; cursor: pointer; }
+
     .calendar-grid {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
       gap: 5px;
-      margin-bottom: 2em;
+      margin-bottom: 1.5em;
     }
-    .weekday {
-      font-weight: bold;
-      text-align: center;
-    }
+    .weekday { font-weight: bold; text-align: center; }
     .day-box {
       padding: 0.6em 0;
       border-radius: 6px;
@@ -55,15 +53,14 @@
 </head>
 <body>
   <h1>Cycle History</h1>
+  <a class="nav-button" href="index.html">← Back to Home</a>
 
   <h2>Cycle Averages</h2>
   <table>
     <thead>
       <tr><th>Avg. Cycle Length</th><th>Avg. Luteal Phase</th><th>Avg. Period Length</th></tr>
     </thead>
-    <tbody>
-      <tr id="averagesRow"><td>–</td><td>–</td><td>–</td></tr>
-    </tbody>
+    <tbody><tr id="averagesRow"><td>–</td><td>–</td><td>–</td></tr></tbody>
   </table>
 
   <div class="chart-container">
@@ -90,7 +87,6 @@
     function groupCycles(entries) {
       const cycles = [];
       let current = [];
-
       for (let i = 0; i < entries.length; i++) {
         const e = entries[i];
         if ((e.phase || '').toLowerCase() === 'day1-period') {
@@ -106,27 +102,18 @@
 
     function calculateAverages(cycles) {
       const cycleLengths = [], luteals = [], periodLengths = [];
-
       for (const cycle of cycles) {
         if (cycle.length < 3) continue;
         const start = new Date(cycle[0].entryDate);
         const end = new Date(cycle[cycle.length - 1].entryDate);
         cycleLengths.push((end - start) / 86400000 + 1);
-
         const ovulationIndex = cycle.findIndex(e => (e.opk || '').toLowerCase() === 'solid face');
         if (ovulationIndex !== -1) luteals.push(cycle.length - ovulationIndex - 1);
-
-        const periodCount = cycle.filter(e => {
-          const phase = (e.phase || '').toLowerCase();
-          return phase === 'period' || phase === 'day1-period';
-        }).length;
+        const periodCount = cycle.filter(e => ['day1-period', 'period'].includes((e.phase || '').toLowerCase())).length;
         periodLengths.push(periodCount);
       }
-
       const avg = arr => arr.length ? (arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(1) : '–';
-      document.getElementById("averagesRow").innerHTML = `
-        <td>${avg(cycleLengths)}</td><td>${avg(luteals)}</td><td>${avg(periodLengths)}</td>
-      `;
+      document.getElementById("averagesRow").innerHTML = `<td>${avg(cycleLengths)}</td><td>${avg(luteals)}</td><td>${avg(periodLengths)}</td>`;
     }
 
     function renderBBTChart(cycles) {
@@ -134,11 +121,8 @@
         const bbt = cycle.map(e => parseFloat(e.bbt)).filter(v => !isNaN(v));
         if (!bbt.length) return null;
         const label = new Date(cycle[0].entryDate).toLocaleString('default', { month: 'short', year: 'numeric' });
-        return {
-          label, data: bbt, borderColor: `hsl(${index * 60}, 70%, 50%)`, fill: false, tension: 0.3
-        };
+        return { label, data: bbt, borderColor: `hsl(${index * 60}, 70%, 50%)`, fill: false, tension: 0.3 };
       }).filter(Boolean);
-
       new Chart(document.getElementById("bbtChart"), {
         type: 'line',
         data: { labels: [], datasets },
@@ -150,44 +134,65 @@
       const container = document.getElementById("cycleCalendars");
       container.innerHTML = "";
 
-      for (const cycle of cycles) {
+      cycles.forEach((cycle, index) => {
         const entryMap = Object.fromEntries(cycle.map(e => [e.entryDate, e]));
-        const startDate = new Date(cycle[0].entryDate);
-        const endDate = new Date(cycle[cycle.length - 1].entryDate);
-        const label = startDate.toLocaleString('default', { month: 'long', year: 'numeric' });
+        const firstDate = new Date(cycle[0].entryDate);
+        let viewMonth = firstDate.getMonth();
+        let viewYear = firstDate.getFullYear();
 
-        const calendar = document.createElement("div");
-        calendar.innerHTML = `<h3>${label}</h3>
-          <div class="calendar-grid">
+        const wrapper = document.createElement("div");
+        const calendarId = `calendar-${index}`;
+        wrapper.innerHTML = `
+          <h3>${firstDate.toLocaleString('default', { month: 'long', year: 'numeric' })}</h3>
+          <div class="calendar-nav">
+            <button onclick="changeMonth(${index}, -1)">◀</button>
+            <span id="monthLabel-${index}">${firstDate.toLocaleString('default', { month: 'long', year: 'numeric' })}</span>
+            <button onclick="changeMonth(${index}, 1)">▶</button>
+          </div>
+          <div class="calendar-grid" id="weekdays-${index}">
             ${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d => `<div class="weekday">${d}</div>`).join('')}
           </div>
-          <div class="calendar-grid" id="grid-${label.replace(/\\s+/g, '')}"></div>`;
-        container.appendChild(calendar);
+          <div class="calendar-grid" id="${calendarId}"></div>
+        `;
+        container.appendChild(wrapper);
 
-        const grid = calendar.querySelector(`#grid-${label.replace(/\\s+/g, '')}`);
-
-        const day = new Date(startDate);
-        const offset = (day.getDay() + 6) % 7;
-        for (let i = 0; i < offset; i++) grid.appendChild(document.createElement("div"));
-
-        for (; day <= endDate; day.setDate(day.getDate() + 1)) {
-          const box = document.createElement("div");
-          box.className = "day-box";
-          box.textContent = day.getDate();
-          const key = day.toISOString().split("T")[0];
-          const entry = entryMap[key];
-          if (entry) {
-            const phase = (entry.phase || '').toLowerCase();
-            const opk = (entry.opk || '').toLowerCase();
-            if (phase === 'day1-period') box.classList.add('deep-red');
-            else if (phase === 'period') box.classList.add('red');
-            else if (opk === 'flashing face') box.classList.add('blue');
-            else if (phase === 'ovulation' || opk === 'solid face') box.classList.add('bold-blue');
-            else if (phase === 'post-ovulation') box.classList.add('green');
+        window[`renderMonth-${index}`] = function(month, year) {
+          const grid = document.getElementById(calendarId);
+          grid.innerHTML = "";
+          const start = new Date(year, month, 1);
+          const end = new Date(year, month + 1, 0);
+          const offset = (start.getDay() + 6) % 7;
+          for (let i = 0; i < offset; i++) grid.appendChild(document.createElement("div"));
+          for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+            const box = document.createElement("div");
+            box.className = "day-box";
+            box.textContent = d.getDate();
+            const key = d.toISOString().split('T')[0];
+            const entry = entryMap[key];
+            if (entry) {
+              const phase = (entry.phase || '').toLowerCase();
+              const opk = (entry.opk || '').toLowerCase();
+              if (phase === 'day1-period') box.classList.add('deep-red');
+              else if (phase === 'period') box.classList.add('red');
+              else if (opk === 'flashing face') box.classList.add('blue');
+              else if (phase === 'ovulation' || opk === 'solid face') box.classList.add('bold-blue');
+              else if (phase === 'post-ovulation') box.classList.add('green');
+            }
+            grid.appendChild(box);
           }
-          grid.appendChild(box);
-        }
-      }
+          document.getElementById(`monthLabel-${index}`).textContent = new Date(year, month).toLocaleString('default', { month: 'long', year: 'numeric' });
+          window[`viewMonth-${index}`] = month;
+          window[`viewYear-${index}`] = year;
+        };
+        window[`renderMonth-${index}`](viewMonth, viewYear);
+      });
+    }
+
+    function changeMonth(index, offset) {
+      const m = window[`viewMonth-${index}`];
+      const y = window[`viewYear-${index}`];
+      const newDate = new Date(y, m + offset);
+      window[`renderMonth-${index}`](newDate.getMonth(), newDate.getFullYear());
     }
 
     async function run() {
