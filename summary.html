@@ -150,7 +150,7 @@ function renderCharts(current) {
 
   const bbt = current.filter(e => e.bbt && !isNaN(parseFloat(e.bbt)));
   if (bbt.length > 0) {
-    new Chart(document.getElementById("bbtChart"), {
+    console.debug('Drawing BBT chart...'); new Chart(document.getElementById("bbtChart"), {
       type: 'line',
       data: {
         labels: bbt.map(e => formatDateLocal(new Date(e.entryDate))),
@@ -163,7 +163,7 @@ function renderCharts(current) {
   const cmTypes = ['dry','sticky','creamy','watery','egg white'];
   const cm = current.filter(e => e.cm && cmTypes.includes(e.cm.toLowerCase()));
   if (cm.length > 0) {
-    new Chart(document.getElementById("cmChart"), {
+    console.debug('Drawing CM chart...'); new Chart(document.getElementById("cmChart"), {
       type: 'bar',
       data: {
         labels: cm.map(e => formatDateLocal(new Date(e.entryDate))),
@@ -188,7 +188,7 @@ function renderCharts(current) {
     digestive: current.map(e => (e.digestive || '').toLowerCase() !== 'none' ? 1 : 0)
   };
   if (symptomLabels.length > 0) {
-    new Chart(document.getElementById("symptomsChart"), {
+    console.debug('Drawing Symptoms chart...'); new Chart(document.getElementById("symptomsChart"), {
       type: 'bar',
       data: {
         labels: symptomLabels,
@@ -208,7 +208,7 @@ function renderCharts(current) {
   if (sexDates.length > 0) {
     const uniqueDates = [...new Set(sexDates)];
     const counts = uniqueDates.map(d => sexDates.filter(x => x === d).length);
-    new Chart(document.getElementById("sexChart"), {
+    console.debug('Drawing Sex chart...'); new Chart(document.getElementById("sexChart"), {
       type: 'bar',
       data: {
         labels: uniqueDates,
@@ -262,14 +262,15 @@ function renderCalendar(entries, month, year) {
 
 async function run() {
   allEntries = await loadEntries();
-  const current = getCurrentCycle(allEntries);
+  const current = getCurrentCycle(allEntries); console.debug('Current cycle entries loaded:', current);
   const today = new Date();
   renderCalendar(current, today.getMonth(), today.getFullYear());
   renderTable(current);
-  renderCharts(current);
+  console.debug('Rendering charts with:', current); renderCharts(current);
 }
 run();
 </script>
 </body>
+</html>
 
 
