@@ -4,19 +4,20 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cycle History</title>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js">function downloadPDF() {
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"><script>
+function downloadPDF() {
   const element = document.body;
   const opt = {
-    margin:       0.5,
-    filename:     'cycle-history-summary.pdf',
-    image:        { type: 'jpeg', quality: 0.98 },
-    html2canvas:  { scale: 2 },
-    jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+    margin: 0.5,
+    filename: 'cycle-history-summary.pdf',
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2 },
+    jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
   };
   html2pdf().set(opt).from(element).save();
 }
 </script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     @media (max-width: 600px) {
@@ -99,8 +100,9 @@
     <tbody><tr id="averagesRow"><td>–</td><td>–</td><td>–</td></tr></tbody>
   </table>
 
-  <div class="legend">
-    <span style="padding:0.4em 0.8em; border-radius:5px; background:#e76f8a; color:white; font-size:0.75em;">Day 1 Period</span>
+  $1
+    <span style="padding:0.4em 0.8em; border-radius:5px; background:#fff0f5; font-size:0.75em;">🫶 Breast Changes</span>
+    <span style="padding:0.4em 0.8em; border-radius:5px; background:#fff0f5; font-size:0.75em;">🫃 Digestive</span>
     <span style="padding:0.4em 0.8em; border-radius:5px; background:#f6b1b7; font-size:0.75em;">Period</span>
     <span style="padding:0.4em 0.8em; border-radius:5px; background:#b7d7f6; font-size:0.75em;">Fertile (Flashing)</span>
     <span style="padding:0.4em 0.8em; border-radius:5px; background:#5f9ed1; color:white; font-size:0.75em;">Ovulation (Solid)</span>
@@ -200,8 +202,7 @@
         if (entry) {
           const emojiStyle = 'font-size: 0.8em; display: block;';
           const phase = (entry.phase || '').toLowerCase();
-          const opk = (entry.opk || '').toLowerCase();
-          const sex = (entry.sex || '').toLowerCase();
+          
           const mood = (entry.mood || '');
           const cramps = (entry.cramps || '').toLowerCase();
           const spotting = (entry.spotting || '').toLowerCase();
@@ -217,6 +218,42 @@
           if (sex === 'yes') {
             const emoji = document.createElement('span');
             emoji.textContent = '💖';
+            emoji.style = emojiStyle;
+            box.appendChild(emoji);
+          }
+          if (cramps && cramps !== 'none') {
+            const emoji = document.createElement('span');
+            emoji.textContent = '😖';
+            emoji.style = emojiStyle;
+            box.appendChild(emoji);
+          }
+          if (spotting && spotting !== 'none') {
+            const emoji = document.createElement('span');
+            emoji.textContent = '🔻';
+            emoji.style = emojiStyle;
+            box.appendChild(emoji);
+          }
+          if (mood) {
+            const emoji = document.createElement('span');
+            emoji.textContent = '🧠';
+            emoji.style = emojiStyle;
+            box.appendChild(emoji);
+          }
+          if (bbt) {
+            const emoji = document.createElement('span');
+            emoji.textContent = '🌡️';
+            emoji.style = emojiStyle;
+            box.appendChild(emoji);
+          }
+          if ((entry.breastChanges || '').toLowerCase() !== 'none') {
+            const emoji = document.createElement('span');
+            emoji.textContent = '🫶';
+            emoji.style = emojiStyle;
+            box.appendChild(emoji);
+          }
+          if ((entry.digestive || '').toLowerCase() !== 'none') {
+            const emoji = document.createElement('span');
+            emoji.textContent = '🫃';
             emoji.style = emojiStyle;
             box.appendChild(emoji);
           }
@@ -286,7 +323,7 @@
   const cmTypes = ['dry', 'sticky', 'creamy', 'watery', 'egg white'];
   const cmData = all.map(e => cmTypes.indexOf((e.cm || '').toLowerCase())).filter(x => x >= 0);
 
-  const symptoms = { cramps: 0, spotting: 0, mood: 0, breast: 0 };
+  const symptoms = { cramps: 0, spotting: 0, mood: 0, breast: 0, digestive: 0 };
   const moodLabels = [], moodValues = [];
   const sexMap = {};
 
@@ -304,6 +341,7 @@
       moodValues.push(e.mood);
     }
     if ((e.breastChanges || '').toLowerCase() !== 'none') symptoms.breast++;
+    if ((e.digestive || '').toLowerCase() !== 'none') symptoms.digestive++;
   });
 
   const moodColors = { Happy: '#ffd700', Calm: '#87cefa', Low: '#ff6b6b', Irritable: '#ffa07a' };
@@ -338,11 +376,17 @@
   new Chart(document.getElementById("cmChart"), {
     type: 'line', data: { labels: cmData.map((_, i) => i + 1), datasets: [{ label: "CM", data: cmData, borderColor: 'teal' }] }, options: { responsive: true, scales: { y: { ticks: { callback: val => cmTypes[val] } } } }
   });
- {
-        type: 'bar', data: {
-          labels: Object.keys(symptoms),
-          datasets: [{ label: "Average Occurrence", data: Object.values(symptoms), backgroundColor: ['#f28e8e', '#f2c28e', '#a8d0e6', '#c3aed6'] }]
-        }, options: { responsive: true }
+ new Chart(document.getElementById("symptomsChart"), {
+        type: 'bar',
+        data: {
+          labels: ['Cramps', 'Spotting', 'Mood', 'Breast Changes', 'Digestive'],
+          datasets: [{
+            label: 'Average Occurrence',
+            data: [symptoms.cramps, symptoms.spotting, symptoms.mood, symptoms.breast, symptoms.digestive],
+            backgroundColor: ['#f28e8e', '#f2c28e', '#a8d0e6', '#c3aed6', '#a0d9b4']
+          }]
+        },
+        options: { responsive: true }
       });
     }
 
@@ -359,6 +403,4 @@
   </script>
 </body>
 </html>
-
-
 
