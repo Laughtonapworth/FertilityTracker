@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,7 +6,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Cycle Summary</title>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js">
-
+function renderCalendar(entries, month, year) {
+  document.getElementById("calendarWeekdays").innerHTML = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']
+    .map(d => `<div class="weekday">${d}</div>`).join('');
+  const grid = document.getElementById("calendarGrid");
+  grid.innerHTML = "";
+  const start = new Date(year, month, 1);
+  const end = new Date(year, month + 1, 0);
+  const offset = (start.getDay() + 6) % 7;
+  for (let i = 0; i < offset; i++) grid.appendChild(document.createElement("div"));
+  const map = Object.fromEntries(entries.map(e => [e.entryDate, e]));
+  
+  }
+  document.getElementById("monthLabel").textContent = new Date(year, month).toLocaleString('default', { month: 'long', year: 'numeric' });
+  viewMonth = month;
+  viewYear = year;
+}
 
 function changeMonth(offset) {
   const newDate = new Date(viewYear, viewMonth + offset);
@@ -14,7 +30,22 @@ function changeMonth(offset) {
 
 </script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js">
-
+function renderCalendar(entries, month, year) {
+  document.getElementById("calendarWeekdays").innerHTML = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']
+    .map(d => `<div class="weekday">${d}</div>`).join('');
+  const grid = document.getElementById("calendarGrid");
+  grid.innerHTML = "";
+  const start = new Date(year, month, 1);
+  const end = new Date(year, month + 1, 0);
+  const offset = (start.getDay() + 6) % 7;
+  for (let i = 0; i < offset; i++) grid.appendChild(document.createElement("div"));
+  const map = Object.fromEntries(entries.map(e => [e.entryDate, e]));
+  
+  }
+  document.getElementById("monthLabel").textContent = new Date(year, month).toLocaleString('default', { month: 'long', year: 'numeric' });
+  viewMonth = month;
+  viewYear = year;
+}
 
 function changeMonth(offset) {
   const newDate = new Date(viewYear, viewMonth + offset);
@@ -23,7 +54,22 @@ function changeMonth(offset) {
 
 </script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js">
-
+function renderCalendar(entries, month, year) {
+  document.getElementById("calendarWeekdays").innerHTML = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']
+    .map(d => `<div class="weekday">${d}</div>`).join('');
+  const grid = document.getElementById("calendarGrid");
+  grid.innerHTML = "";
+  const start = new Date(year, month, 1);
+  const end = new Date(year, month + 1, 0);
+  const offset = (start.getDay() + 6) % 7;
+  for (let i = 0; i < offset; i++) grid.appendChild(document.createElement("div"));
+  const map = Object.fromEntries(entries.map(e => [e.entryDate, e]));
+  
+  }
+  document.getElementById("monthLabel").textContent = new Date(year, month).toLocaleString('default', { month: 'long', year: 'numeric' });
+  viewMonth = month;
+  viewYear = year;
+}
 
 function changeMonth(offset) {
   const newDate = new Date(viewYear, viewMonth + offset);
@@ -257,7 +303,22 @@ renderCalendar(currentCycle, new Date().getMonth(), new Date().getFullYear());
     }
     run();
   
-
+function renderCalendar(entries, month, year) {
+  document.getElementById("calendarWeekdays").innerHTML = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']
+    .map(d => `<div class="weekday">${d}</div>`).join('');
+  const grid = document.getElementById("calendarGrid");
+  grid.innerHTML = "";
+  const start = new Date(year, month, 1);
+  const end = new Date(year, month + 1, 0);
+  const offset = (start.getDay() + 6) % 7;
+  for (let i = 0; i < offset; i++) grid.appendChild(document.createElement("div"));
+  const map = Object.fromEntries(entries.map(e => [e.entryDate, e]));
+  
+  }
+  document.getElementById("monthLabel").textContent = new Date(year, month).toLocaleString('default', { month: 'long', year: 'numeric' });
+  viewMonth = month;
+  viewYear = year;
+}
 
 function changeMonth(offset) {
   const newDate = new Date(viewYear, viewMonth + offset);
@@ -267,6 +328,7 @@ function changeMonth(offset) {
 </script>
 </body>
 </html>
+
 
 
 
