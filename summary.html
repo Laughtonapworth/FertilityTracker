@@ -141,15 +141,15 @@
 
       for (const e of entries) {
         if (e.entryDate) {
-          entryMap[e.entryDate] = e;
+          const normalizedDate = new Date(e.entryDate).toISOString().split("T")[0];
+          entryMap[normalizedDate] = e;
 
+          const date = new Date(normalizedDate);
           if (e.phase === "day1-period") {
-            const d = new Date(e.entryDate);
-            if (!lastCD1 || d > lastCD1) lastCD1 = d;
+            if (!lastCD1 || date > lastCD1) lastCD1 = date;
           }
           if (e.opk === "Solid face") {
-            const d = new Date(e.entryDate);
-            if (!lastOvulation || d > lastOvulation) lastOvulation = d;
+            if (!lastOvulation || date > lastOvulation) lastOvulation = date;
           }
         }
       }
@@ -219,4 +219,5 @@
   </script>
 </body>
 </html>
+
 
