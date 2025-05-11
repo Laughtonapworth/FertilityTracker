@@ -130,13 +130,15 @@
       const cmTypes = ['dry', 'sticky', 'creamy', 'watery', 'egg white'];
       const cmData = entries.map(e => cmTypes.indexOf((e.cm || '').toLowerCase())).filter(x => x >= 0);
 
-      const symptoms = { cramps: [], spotting: [], breast: [], digestive: [] };
-      entries.forEach(e => {
-        symptoms.cramps.push((e.cramps || '').toLowerCase() !== 'none' ? 1 : 0);
-        symptoms.spotting.push((e.spotting || '').toLowerCase() !== 'none' ? 1 : 0);
-        symptoms.breast.push((e.breastChanges || '').toLowerCase() !== 'none' ? 1 : 0);
-        symptoms.digestive.push((e.digestive || '').toLowerCase() !== 'none' ? 1 : 0);
-      });
+      
+const symptoms = { cramps: [], spotting: [], breast: [], digestive: [] };
+entries.forEach(e => {
+  symptoms.cramps.push((e.cramps || '').toLowerCase() !== 'none' ? 1 : 0);
+  symptoms.spotting.push((e.spotting || '').toLowerCase() !== 'none' ? 1 : 0);
+  symptoms.breast.push((e.breastChanges || '').toLowerCase() !== 'none' ? 1 : 0);
+  symptoms.digestive.push(typeof e.digestive !== 'undefined' && e.digestive.toLowerCase() !== 'none' ? 1 : 0);
+});
+
 
       new Chart(document.getElementById("bbtChart"), {
         type: 'line',
@@ -234,4 +236,3 @@ renderCalendar(currentCycle, new Date().getMonth(), new Date().getFullYear());
   </script>
 </body>
 </html>
-
