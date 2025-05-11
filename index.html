@@ -1,11 +1,12 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>LLP Fertility Tracker</title>
-  <link rel="stylesheet" href="styles.css" />
-  <style>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>LLP Fertility Tracker</title>
+<link href="styles.css" rel="stylesheet"/>
+<style>
     body {
       font-family: 'Segoe UI', sans-serif;
       background-color: #fffafc;
@@ -33,17 +34,14 @@
       max-width: 250px;
     }
   </style>
-</head>
+<link href="manifest.json" rel="manifest"/><meta content="#88a58d" name="theme-color"/></head>
 <body>
-  <img src="LLP_logo.svg" alt="LLP Logo" class="logo" />
-  <h1>LLP Fertility Tracker</h1>
-
-  <a class="nav-button" href="tracker.html">Log Today's Entry</a>
-  <a class="nav-button" href="summary.html">Current Cycle Summary</a>
-  <a class="nav-button" href="history.html">Cycle History & Averages</a>
-   <a class="nav-button" href="information.html">Information</a>
-
-  <script>
+<img alt="LLP Logo" class="logo" src="LLP_logo.svg"/>
+<h1>LLP Fertility Tracker</h1>
+<a class="nav-button" href="tracker.html">Log Today's Entry</a>
+<a class="nav-button" href="summary.html">Current Cycle Summary</a>
+<a class="nav-button" href="history.html">Cycle History &amp; Averages</a><a class="nav-button" href="information.html">Information</a>
+<script>
     window.addEventListener("beforeinstallprompt", (e) => {
       e.preventDefault();
       const installBtn = document.createElement("button");
@@ -53,7 +51,22 @@
       document.body.appendChild(installBtn);
     });
   </script>
-</body>
+<script>
+// Register service worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('service-worker.js').then(() => {
+    console.log('Service Worker Registered');
+  }).catch(console.error);
+}
+
+// Handle install prompt
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  const installBtn = document.createElement("button");
+  installBtn.textContent = "Install App";
+  installBtn.className = "nav-button";
+  installBtn.onclick = () => e.prompt();
+  document.body.appendChild(installBtn);
+});
+</script></body>
 </html>
-
-
