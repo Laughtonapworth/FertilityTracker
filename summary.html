@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,6 +5,42 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Cycle Summary</title>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js">
+
+function renderCalendar(entries, month, year) {
+  document.getElementById("calendarWeekdays").innerHTML = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']
+    .map(d => `<div class="weekday">${d}</div>`).join('');
+  const grid = document.getElementById("calendarGrid");
+  grid.innerHTML = "";
+  const start = new Date(year, month, 1);
+  const end = new Date(year, month + 1, 0);
+  const offset = (start.getDay() + 6) % 7;
+  for (let i = 0; i < offset; i++) grid.appendChild(document.createElement("div"));
+  const map = Object.fromEntries(entries.map(e => [formatDateLocal(new Date(e.entryDate)), e]));
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    const box = document.createElement("div");
+    box.className = "day-box";
+    box.textContent = d.getDate();
+    const key = formatDateLocal(d);
+    const e = map[key];
+    if (e) {
+      const p = (e.phase || '').toLowerCase();
+      const opk = (e.opk || '').toLowerCase();
+      const emojiStyle = 'font-size: 0.8em; display: block;';
+      if (p === 'day1-period') box.classList.add('deep-red');
+      else if (p === 'period') box.classList.add('red');
+      else if (opk === 'flashing face') box.classList.add('blue');
+      else if (p === 'ovulation' || opk === 'solid face') box.classList.add('bold-blue');
+      else if (p === 'post-ovulation') box.classList.add('green');
+      if ((e.sex || '').toLowerCase() === 'yes') box.appendChild(Object.assign(document.createElement('span'), {textContent: '💖', style: emojiStyle}));
+      if ((e.breastChanges || '').toLowerCase() !== 'none' && e.breastChanges !== '') box.appendChild(Object.assign(document.createElement('span'), {textContent: '🫶', style: emojiStyle}));
+      if (typeof e.digestive !== 'undefined' && e.digestive.toLowerCase() !== 'none' && e.digestive !== '') box.appendChild(Object.assign(document.createElement('span'), {textContent: '🫃', style: emojiStyle}));
+    }
+    grid.appendChild(box);
+  }
+  document.getElementById("monthLabel").textContent = new Date(year, month).toLocaleString('default', { month: 'long', year: 'numeric' });
+  viewMonth = month;
+  viewYear = year;
+}
 
 
 function changeMonth(offset) {
@@ -17,6 +51,42 @@ function changeMonth(offset) {
 </script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js">
 
+function renderCalendar(entries, month, year) {
+  document.getElementById("calendarWeekdays").innerHTML = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']
+    .map(d => `<div class="weekday">${d}</div>`).join('');
+  const grid = document.getElementById("calendarGrid");
+  grid.innerHTML = "";
+  const start = new Date(year, month, 1);
+  const end = new Date(year, month + 1, 0);
+  const offset = (start.getDay() + 6) % 7;
+  for (let i = 0; i < offset; i++) grid.appendChild(document.createElement("div"));
+  const map = Object.fromEntries(entries.map(e => [formatDateLocal(new Date(e.entryDate)), e]));
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    const box = document.createElement("div");
+    box.className = "day-box";
+    box.textContent = d.getDate();
+    const key = formatDateLocal(d);
+    const e = map[key];
+    if (e) {
+      const p = (e.phase || '').toLowerCase();
+      const opk = (e.opk || '').toLowerCase();
+      const emojiStyle = 'font-size: 0.8em; display: block;';
+      if (p === 'day1-period') box.classList.add('deep-red');
+      else if (p === 'period') box.classList.add('red');
+      else if (opk === 'flashing face') box.classList.add('blue');
+      else if (p === 'ovulation' || opk === 'solid face') box.classList.add('bold-blue');
+      else if (p === 'post-ovulation') box.classList.add('green');
+      if ((e.sex || '').toLowerCase() === 'yes') box.appendChild(Object.assign(document.createElement('span'), {textContent: '💖', style: emojiStyle}));
+      if ((e.breastChanges || '').toLowerCase() !== 'none' && e.breastChanges !== '') box.appendChild(Object.assign(document.createElement('span'), {textContent: '🫶', style: emojiStyle}));
+      if (typeof e.digestive !== 'undefined' && e.digestive.toLowerCase() !== 'none' && e.digestive !== '') box.appendChild(Object.assign(document.createElement('span'), {textContent: '🫃', style: emojiStyle}));
+    }
+    grid.appendChild(box);
+  }
+  document.getElementById("monthLabel").textContent = new Date(year, month).toLocaleString('default', { month: 'long', year: 'numeric' });
+  viewMonth = month;
+  viewYear = year;
+}
+
 
 function changeMonth(offset) {
   const newDate = new Date(viewYear, viewMonth + offset);
@@ -25,6 +95,42 @@ function changeMonth(offset) {
 
 </script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js">
+
+function renderCalendar(entries, month, year) {
+  document.getElementById("calendarWeekdays").innerHTML = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']
+    .map(d => `<div class="weekday">${d}</div>`).join('');
+  const grid = document.getElementById("calendarGrid");
+  grid.innerHTML = "";
+  const start = new Date(year, month, 1);
+  const end = new Date(year, month + 1, 0);
+  const offset = (start.getDay() + 6) % 7;
+  for (let i = 0; i < offset; i++) grid.appendChild(document.createElement("div"));
+  const map = Object.fromEntries(entries.map(e => [formatDateLocal(new Date(e.entryDate)), e]));
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    const box = document.createElement("div");
+    box.className = "day-box";
+    box.textContent = d.getDate();
+    const key = formatDateLocal(d);
+    const e = map[key];
+    if (e) {
+      const p = (e.phase || '').toLowerCase();
+      const opk = (e.opk || '').toLowerCase();
+      const emojiStyle = 'font-size: 0.8em; display: block;';
+      if (p === 'day1-period') box.classList.add('deep-red');
+      else if (p === 'period') box.classList.add('red');
+      else if (opk === 'flashing face') box.classList.add('blue');
+      else if (p === 'ovulation' || opk === 'solid face') box.classList.add('bold-blue');
+      else if (p === 'post-ovulation') box.classList.add('green');
+      if ((e.sex || '').toLowerCase() === 'yes') box.appendChild(Object.assign(document.createElement('span'), {textContent: '💖', style: emojiStyle}));
+      if ((e.breastChanges || '').toLowerCase() !== 'none' && e.breastChanges !== '') box.appendChild(Object.assign(document.createElement('span'), {textContent: '🫶', style: emojiStyle}));
+      if (typeof e.digestive !== 'undefined' && e.digestive.toLowerCase() !== 'none' && e.digestive !== '') box.appendChild(Object.assign(document.createElement('span'), {textContent: '🫃', style: emojiStyle}));
+    }
+    grid.appendChild(box);
+  }
+  document.getElementById("monthLabel").textContent = new Date(year, month).toLocaleString('default', { month: 'long', year: 'numeric' });
+  viewMonth = month;
+  viewYear = year;
+}
 
 
 function changeMonth(offset) {
@@ -257,8 +363,15 @@ async function run() {
 }
 
 
+
+function changeMonth(offset) {
+  const newDate = new Date(viewYear, viewMonth + offset);
+  renderCalendar(allEntries, newDate.getMonth(), newDate.getFullYear());
+}
+
 </script>
 </body>
 </html>
+
 
 
