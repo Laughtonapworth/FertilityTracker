@@ -9,7 +9,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body { font-family: 'Segoe UI', sans-serif; background: #fffafc; padding: 1em; }
-    h1, h2 { text-align: center; }
+    h1, h2, h3 { text-align: center; }
     .nav-button {
       display: block; margin: 1em auto; background: #c4d7b2;
       color: white; padding: 0.6em 1.2em; border-radius: 20px;
@@ -23,7 +23,9 @@
       display: inline-block; padding: 0.4em 0.8em;
       border-radius: 5px; font-size: 0.75em;
     }
-    .calendar-nav { display: flex; justify-content: center; gap: 1em; margin: 0.5em 0; }
+    .calendar-nav {
+      display: flex; justify-content: center; gap: 1em; margin: 0.5em 0;
+    }
     .calendar-grid {
       display: grid; grid-template-columns: repeat(7, 1fr);
       gap: 5px; margin-bottom: 1.5em;
@@ -31,22 +33,37 @@
     .weekday { font-weight: bold; text-align: center; }
     .day-box {
       padding: 0.6em 0; border-radius: 6px;
-      background: #f0f0f0; text-align: center; font-size: 0.85em;
+      background: #f0f0f0; text-align: center;
+      font-size: 0.85em;
     }
     .deep-red { background: #e76f8a !important; color: white !important; }
     .red { background: #f6b1b7 !important; }
     .blue { background: #b7d7f6 !important; }
     .bold-blue { background: #5f9ed1 !important; color: white !important; }
     .green { background: #c8e6c9 !important; }
-    table { width: 100%; border-collapse: collapse; font-size: 1em; }
-    th, td { padding: 0.6em; border: 1px solid #ccc; text-align: center; }
-    th { background: #eeb7c2; color: white; }
-    .chart-container { margin: 2em auto; max-width: 900px; }
+    .chart-container {
+      margin: 2em auto; max-width: 900px;
+    }
+    table {
+      width: 100%; border-collapse: collapse; margin: 1em 0; font-size: 0.95em;
+    }
+    th, td {
+      padding: 0.5em; border: 1px solid #ccc; text-align: center;
+    }
+    th {
+      background: #eeb7c2; color: white;
+    }
   </style>
 </head>
 <body>
 <h1>Cycle Summary</h1>
-<a class="nav-button" href="index.html">&larr; Back to Home</a>
+<a class="nav-button" href="index.html">← Back to Home</a>
+
+<h2>Today's Summary</h2>
+<table>
+  <thead><tr><th>Avg. Cycle Length</th><th>Avg. Luteal Phase</th><th>Avg. Period Length</th></tr></thead>
+  <tbody><tr id="averagesRow"><td>–</td><td>–</td><td>–</td></tr></tbody>
+</table>
 
 <div class="legend">
   <span style="background:#e76f8a; color:white;">Day 1 Period</span>
@@ -55,6 +72,10 @@
   <span style="background:#5f9ed1; color:white;">Ovulation (Solid)</span>
   <span style="background:#c8e6c9;">Post Ovulation</span>
   <span style="background:#fff0f5;">💖 Sex</span>
+  <span style="background:#fff0f5;">😖 Cramps</span>
+  <span style="background:#fff0f5;">🔻 Spotting</span>
+  <span style="background:#fff0f5;">🧠 Mood</span>
+  <span style="background:#fff0f5;">🌡️ BBT</span>
   <span style="background:#fff0f5;">🫶 Breast Changes</span>
   <span style="background:#fff0f5;">🫃 Digestive</span>
 </div>
@@ -67,18 +88,197 @@
 <div class="calendar-grid" id="calendarWeekdays"></div>
 <div class="calendar-grid" id="calendarGrid"></div>
 
-<table id="summaryTable">
-  <thead><tr><th>Date</th><th>CD</th><th>Phase</th><th>DPO</th></tr></thead>
-  <tbody></tbody>
-</table>
+<div class="chart-container">
+  <h2>BBT Chart</h2>
+  <canvas id="bbtChart"></canvas>
+</div>
+<div class="chart-container">
+  <h2>CM Pattern</h2>
+  <canvas id="cmChart"></canvas>
+</div>
+<div class="chart-container">
+  <h2>Average Symptoms</h2>
+  <canvas id="symptomsChart"></canvas>
+</div>
+<div class="chart-container">
+  <h2>Mood Timeline</h2>
+  <canvas id="moodChart"></canvas>
+</div>
+<div class="chart-container">
+  <h2>Sex Frequency by Month</h2>
+  <canvas id="sexChart"></canvas>
+</div>
 
-<div class="chart-container"><h2>BBT Over Time</h2><canvas id="bbtChart"></canvas></div>
-<div class="chart-container"><h2>CM Pattern</h2><canvas id="cmChart"></canvas></div>
-<div class="chart-container"><h2>Symptoms Summary</h2><canvas id="symptomsChart"></canvas></div>
-<div class="chart-container"><h2>Sex Activity</h2><canvas id="sexChart"></canvas></div>
 
 <script>
-// JavaScript logic was already added earlier (omitted here for brevity)
+const firebaseConfig = {
+  apiKey: "AIzaSyByvnVx2aZEldUfqS2c6VNC6UJRIOPvGws",
+  authDomain: "fertility-tracker-c35ff.firebaseapp.com",
+  projectId: "fertility-tracker-c35ff"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+let allEntries = [];
+let viewMonth, viewYear;
+
+async function loadEntries() {
+  const snapshot = await db.collection("entries").orderBy("entryDate").get();
+  return snapshot.docs.map(doc => doc.data());
+}
+
+function calculateAverages(cycles) {
+  const cycleLengths = [], luteals = [], periodLengths = [];
+  for (const cycle of cycles) {
+    if (cycle.length < 3) continue;
+    const start = new Date(cycle[0].entryDate);
+    const end = new Date(cycle[cycle.length - 1].entryDate);
+    cycleLengths.push((end - start) / 86400000 + 1);
+    const ovIndex = cycle.findIndex(e => (e.opk || '').toLowerCase() === 'solid face');
+    if (ovIndex !== -1) luteals.push(cycle.length - ovIndex - 1);
+    const periodCount = cycle.filter(e => ['day1-period', 'period'].includes((e.phase || '').toLowerCase())).length;
+    periodLengths.push(periodCount);
+  }
+  const avg = arr => arr.length ? (arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(1) : '–';
+  document.getElementById("averagesRow").innerHTML = `<td>${avg(cycleLengths)}</td><td>${avg(luteals)}</td><td>${avg(periodLengths)}</td>`;
+}
+
+function renderCalendar(month, year) {
+  document.getElementById("calendarWeekdays").innerHTML = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']
+    .map(d => `<div class="weekday">${d}</div>`).join('');
+  const grid = document.getElementById("calendarGrid");
+  grid.innerHTML = "";
+  const start = new Date(year, month, 1);
+  const end = new Date(year, month + 1, 0);
+  const offset = (start.getDay() + 6) % 7;
+  for (let i = 0; i < offset; i++) grid.appendChild(document.createElement("div"));
+
+  const map = Object.fromEntries(allEntries.map(e => [e.entryDate, e]));
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    const box = document.createElement("div");
+    box.className = "day-box";
+    box.textContent = d.getDate();
+    const key = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+    const e = map[key];
+    if (e) {
+      const phase = (e.phase || '').toLowerCase();
+      const opk = (e.opk || '').toLowerCase();
+      const emojiStyle = 'font-size: 0.8em; display: block;';
+      if (phase === 'day1-period') box.classList.add('deep-red');
+      else if (phase === 'period') box.classList.add('red');
+      else if (opk === 'flashing face') box.classList.add('blue');
+      else if (phase === 'ovulation' || opk === 'solid face') box.classList.add('bold-blue');
+      else if (phase === 'post-ovulation') box.classList.add('green');
+
+      if ((e.sex || '').toLowerCase() === 'yes') box.appendChild(Object.assign(document.createElement('span'), {textContent: '💖', style: emojiStyle}));
+      if (e.breastChanges && e.breastChanges.toLowerCase() !== 'none') box.appendChild(Object.assign(document.createElement('span'), {textContent: '🫶', style: emojiStyle}));
+      if (e.digestive && e.digestive.toLowerCase() !== 'none') box.appendChild(Object.assign(document.createElement('span'), {textContent: '🫃', style: emojiStyle}));
+
+      box.title =
+        (e.mood ? `Mood: ${e.mood}\n` : '') +
+        ((e.cramps || '').toLowerCase() !== 'none' ? `Cramps: ${e.cramps}\n` : '') +
+        ((e.spotting || '').toLowerCase() !== 'none' ? `Spotting: ${e.spotting}\n` : '') +
+        ((e.sex || '').toLowerCase() === 'yes' ? 'Sex: Yes\n' : '') +
+        (e.bbt ? `BBT: ${e.bbt}\n` : '') +
+        ((e.breastChanges || '').toLowerCase() !== 'none' ? 'Breast Changes\n' : '') +
+        ((e.digestive || '').toLowerCase() !== 'none' ? 'Digestive Symptoms\n' : '');
+    }
+    grid.appendChild(box);
+  }
+  document.getElementById("monthLabel").textContent = new Date(year, month).toLocaleString('default', { month: 'long', year: 'numeric' });
+  viewMonth = month;
+  viewYear = year;
+}
+
+function changeMonth(offset) {
+  const newDate = new Date(viewYear, viewMonth + offset);
+  renderCalendar(newDate.getMonth(), newDate.getFullYear());
+}
+
+function groupCycles(entries) {
+  const cycles = [], current = [];
+  for (const e of entries) {
+    if ((e.phase || '').toLowerCase() === 'day1-period') {
+      if (current.length) cycles.push([...current]);
+      current.length = 0;
+    }
+    current.push(e);
+  }
+  if (current.length) cycles.push(current);
+  return cycles;
+}
+
+function renderCharts(cycles) {
+  const all = cycles.flat();
+  const bbtData = all.map(e => parseFloat(e.bbt)).filter(x => !isNaN(x));
+  const cmTypes = ['dry', 'sticky', 'creamy', 'watery', 'egg white'];
+  const cmData = all.map(e => cmTypes.indexOf((e.cm || '').toLowerCase())).filter(x => x >= 0);
+
+  const symptoms = { cramps: 0, spotting: 0, mood: 0, breast: 0, digestive: 0 };
+  const moodLabels = [], moodValues = [];
+  const sexMap = {};
+
+  all.forEach(e => {
+    const date = new Date(e.entryDate);
+    const key = date.toLocaleString('default', { month: 'short', year: 'numeric' });
+    if ((e.sex || '').toLowerCase() === 'yes') sexMap[key] = (sexMap[key] || 0) + 1;
+    if ((e.cramps || '').toLowerCase() !== 'none') symptoms.cramps++;
+    if ((e.spotting || '').toLowerCase() !== 'none') symptoms.spotting++;
+    if (e.mood) {
+      symptoms.mood++; moodLabels.push(e.entryDate); moodValues.push(e.mood);
+    }
+    if (e.breastChanges && e.breastChanges.toLowerCase() !== 'none') symptoms.breast++;
+    if (e.digestive && e.digestive.toLowerCase() !== 'none') symptoms.digestive++;
+  });
+
+  const moodColors = { Happy: '#ffd700', Calm: '#87cefa', Low: '#ff6b6b', Irritable: '#ffa07a' };
+
+  new Chart(document.getElementById("moodChart"), {
+    type: 'bar',
+    data: { labels: moodLabels, datasets: [{ label: 'Mood', data: moodLabels.map(() => 1), backgroundColor: moodValues.map(m => moodColors[m] || '#ccc') }] },
+    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { display: false } } }
+  });
+
+  new Chart(document.getElementById("sexChart"), {
+    type: 'bar',
+    data: { labels: Object.keys(sexMap), datasets: [{ label: 'Sex Logged', data: Object.values(sexMap), backgroundColor: '#f67280' }] },
+    options: { responsive: true, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+  });
+
+  new Chart(document.getElementById("bbtChart"), {
+    type: 'line', data: { labels: bbtData.map((_, i) => i + 1), datasets: [{ label: "BBT", data: bbtData, borderColor: 'purple' }] }, options: { responsive: true }
+  });
+
+  new Chart(document.getElementById("cmChart"), {
+    type: 'line', data: { labels: cmData.map((_, i) => i + 1), datasets: [{ label: "CM", data: cmData, borderColor: 'teal' }] },
+    options: { responsive: true, scales: { y: { ticks: { callback: val => cmTypes[val] } } } }
+  });
+
+  new Chart(document.getElementById("symptomsChart"), {
+    type: 'bar',
+    data: {
+      labels: ['Cramps', 'Spotting', 'Mood', 'Breast Changes', 'Digestive'],
+      datasets: [{
+        label: 'Average Occurrence',
+        data: [symptoms.cramps, symptoms.spotting, symptoms.mood, symptoms.breast, symptoms.digestive],
+        backgroundColor: ['#f28e8e', '#f2c28e', '#a8d0e6', '#c3aed6', '#a0d9b4']
+      }]
+    },
+    options: { responsive: true }
+  });
+}
+
+async function run() {
+  allEntries = await loadEntries();
+  const cycles = groupCycles(allEntries);
+  calculateAverages(cycles);
+  const today = new Date();
+  renderCalendar(today.getMonth(), today.getFullYear());
+  renderCharts(cycles);
+}
+run();
 </script>
+
 </body>
 </html>
+
