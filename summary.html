@@ -19,7 +19,7 @@ function renderCalendar(entries, month, year) {
     const box = document.createElement("div");
     box.className = "day-box";
     box.textContent = d.getDate();
-    const key = d.toISOString().split("T")[0];
+    const key = formatDateLocal(d);
     const e = map[key];
     if (e) {
       const p = (e.phase || '').toLowerCase();
@@ -62,7 +62,7 @@ function renderCalendar(entries, month, year) {
     const box = document.createElement("div");
     box.className = "day-box";
     box.textContent = d.getDate();
-    const key = d.toISOString().split("T")[0];
+    const key = formatDateLocal(d);
     const e = map[key];
     if (e) {
       const p = (e.phase || '').toLowerCase();
@@ -105,7 +105,7 @@ function renderCalendar(entries, month, year) {
     const box = document.createElement("div");
     box.className = "day-box";
     box.textContent = d.getDate();
-    const key = d.toISOString().split("T")[0];
+    const key = formatDateLocal(d);
     const e = map[key];
     if (e) {
       const p = (e.phase || '').toLowerCase();
@@ -224,6 +224,14 @@ function changeMonth(offset) {
   </div>
 
   <script>
+
+function formatDateLocal(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
     const firebaseConfig = {
       apiKey: "AIzaSyByvnVx2aZEldUfqS2c6VNC6UJRIOPvGws",
       authDomain: "fertility-tracker-c35ff.firebaseapp.com",
@@ -337,6 +345,7 @@ let viewMonth, viewYear, allEntries = [];
       const allEntries = await loadEntries();
       const currentCycle = getCurrentCycle(allEntries);
       renderCharts(currentCycle);
+renderTable(currentCycle);
 renderCalendar(currentCycle, new Date().getMonth(), new Date().getFullYear());
 renderCalendar(currentCycle, new Date().getMonth(), new Date().getFullYear());
 
@@ -373,7 +382,7 @@ function renderCalendar(entries, month, year) {
     const box = document.createElement("div");
     box.className = "day-box";
     box.textContent = d.getDate();
-    const key = d.toISOString().split("T")[0];
+    const key = formatDateLocal(d);
     const e = map[key];
     if (e) {
       const p = (e.phase || '').toLowerCase();
@@ -403,4 +412,5 @@ function changeMonth(offset) {
 </script>
 </body>
 </html>
+
 
