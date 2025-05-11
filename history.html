@@ -1,6 +1,3 @@
-
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -63,6 +60,14 @@
   </table>
 
   <div class="calendar-nav">
+    <div class="legend" style="display:flex;flex-wrap:wrap;justify-content:center;gap:0.5em;margin-bottom:1em;">
+      <span style="padding:0.4em 0.8em; border-radius:5px; background:#e76f8a; color:white; font-size:0.75em;">Day 1 Period</span>
+      <span style="padding:0.4em 0.8em; border-radius:5px; background:#f6b1b7; font-size:0.75em;">Period</span>
+      <span style="padding:0.4em 0.8em; border-radius:5px; background:#b7d7f6; font-size:0.75em;">Fertile (Flashing)</span>
+      <span style="padding:0.4em 0.8em; border-radius:5px; background:#5f9ed1; color:white; font-size:0.75em;">Ovulation (Solid)</span>
+      <span style="padding:0.4em 0.8em; border-radius:5px; background:#c8e6c9; font-size:0.75em;">Post Ovulation</span>
+      <span style="padding:0.4em 0.8em; border-radius:5px; background:#fff0f5; font-size:0.75em;">💖 Sex Logged</span>
+    </div>
     <button onclick="changeMonth(-1)">◀</button>
     <span id="monthLabel"></span>
     <button onclick="changeMonth(1)">▶</button>
@@ -224,3 +229,4 @@
   </script>
 </body>
 </html>
+
