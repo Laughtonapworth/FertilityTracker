@@ -89,8 +89,7 @@
   </table>
 
   <div class="legend">
-    <span style="padding:0.4em 0.8em; border-radius:5px; background:#fff0f5; font-size:0.75em;">🫶 Breast Changes</span>
-    <span style="padding:0.4em 0.8em; border-radius:5px; background:#fff0f5; font-size:0.75em;">🫃 Digestive</span>
+    <span style="padding:0.4em 0.8em; border-radius:5px; background:#e76f8a; color:white; font-size:0.75em;">Day 1 Period</span>
     <span style="padding:0.4em 0.8em; border-radius:5px; background:#f6b1b7; font-size:0.75em;">Period</span>
     <span style="padding:0.4em 0.8em; border-radius:5px; background:#b7d7f6; font-size:0.75em;">Fertile (Flashing)</span>
     <span style="padding:0.4em 0.8em; border-radius:5px; background:#5f9ed1; color:white; font-size:0.75em;">Ovulation (Solid)</span>
@@ -100,6 +99,8 @@
     <span style="padding:0.4em 0.8em; border-radius:5px; background:#fff0f5; font-size:0.75em;">🔻 Spotting</span>
     <span style="padding:0.4em 0.8em; border-radius:5px; background:#fff0f5; font-size:0.75em;">🧠 Mood</span>
     <span style="padding:0.4em 0.8em; border-radius:5px; background:#fff0f5; font-size:0.75em;">🌡️ BBT</span>
+    <span style="padding:0.4em 0.8em; border-radius:5px; background:#fff0f5; font-size:0.75em;">🫶 Breast Changes</span>
+    <span style="padding:0.4em 0.8em; border-radius:5px; background:#fff0f5; font-size:0.75em;">🫃 Digestive</span>
   </div>
   <div class="calendar-nav">
     <button onclick="changeMonth(-1)">◀</button>
@@ -190,6 +191,16 @@
         if (entry) {
           const emojiStyle = 'font-size: 0.8em; display: block;';
           const phase = (entry.phase || '').toLowerCase();
+          const mood = (entry.mood || '');
+          const cramps = (entry.cramps || '').toLowerCase();
+          const spotting = (entry.spotting || '').toLowerCase();
+          const bbt = (entry.bbt || '');
+          const opk = (entry.opk || '').toLowerCase();
+          const sex = (entry.sex || '').toLowerCase();
+          const breast = (entry.breastChanges || '').toLowerCase();
+          const digestive = (entry.digestive || '').toLowerCase();
+          const emojiStyle = 'font-size: 0.8em; display: block;';
+          const phase = (entry.phase || '').toLowerCase();
           
           const mood = (entry.mood || '');
           const cramps = (entry.cramps || '').toLowerCase();
@@ -230,19 +241,33 @@
           
           
         }
-        if (mood) if (mood) box.title += 'Mood: ' + mood + '
+        if (entry && mood) box.title += 'Mood: ' + mood + '
 ';
-        if (cramps && cramps !== 'none') if (cramps && cramps !== 'none') box.title += 'Cramps: ' + cramps + '
+        if (entry && cramps && cramps !== 'none') box.title += 'Cramps: ' + cramps + '
 ';
-        if (spotting && spotting !== 'none') if (spotting && spotting !== 'none') box.title += 'Spotting: ' + spotting + '
+        if (entry && spotting && spotting !== 'none') box.title += 'Spotting: ' + spotting + '
 ';
-        if (sex === 'yes') if (sex === 'yes') box.title += 'Sex: Yes
+        if (entry && sex === 'yes') box.title += 'Sex: Yes
 ';
-        if (bbt) if (bbt) box.title += 'BBT: ' + bbt + '
+        if (entry && bbt) box.title += 'BBT: ' + bbt + '
 ';
-        if ((entry.breastChanges || '').toLowerCase() !== 'none') if ((entry.breastChanges || '').toLowerCase() !== 'none') box.title += 'Breast Changes
+        if (entry && breast && breast !== 'none') box.title += 'Breast Changes
 ';
-        if ((entry.digestive || '').toLowerCase() !== 'none') if ((entry.digestive || '').toLowerCase() !== 'none') box.title += 'Digestive Symptoms
+        if (entry && digestive && digestive !== 'none') box.title += 'Digestive Symptoms
+';
+                  if (mood) box.title += 'Mood: ' + mood + '
+';
+          if (cramps && cramps !== 'none') box.title += 'Cramps: ' + cramps + '
+';
+          if (spotting && spotting !== 'none') box.title += 'Spotting: ' + spotting + '
+';
+          if (sex === 'yes') box.title += 'Sex: Yes
+';
+          if (bbt) box.title += 'BBT: ' + bbt + '
+';
+          if (breast && breast !== 'none') box.title += 'Breast Changes
+';
+          if (digestive && digestive !== 'none') box.title += 'Digestive Symptoms
 ';
         calendarGrid.appendChild(box);
       }
@@ -369,6 +394,5 @@ function downloadPDF() {
 </script>
 </body>
 </html>
-
 
 
