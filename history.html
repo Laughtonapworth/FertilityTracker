@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -24,6 +25,9 @@
     th, td { padding: 0.5em; border: 1px solid #ccc; text-align: center; }
     th { background: #eeb7c2; color: white; }
     .chart-container { margin: 2em auto; max-width: 900px; }
+
+    .calendar-nav { display: flex; justify-content: center; gap: 1em; margin: 0.5em 0; }
+    .calendar-nav button { padding: 0.4em 1em; border: none; border-radius: 5px; background: #d6d6d6; cursor: pointer; }
     .calendar-grid {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
@@ -47,14 +51,28 @@
 </head>
 <body>
   <h1>Cycle History</h1>
-  <a class="nav-button" href="index.html">← Back to Home</a>  <h2>Cycle Averages</h2>
+  <a class="nav-button" href="index.html">← Back to Home</a>
+
+  <h2>Cycle Averages</h2>
   <table>
     <thead><tr><th>Avg. Cycle Length</th><th>Avg. Luteal Phase</th><th>Avg. Period Length</th></tr></thead>
     <tbody><tr id="averagesRow"><td>–</td><td>–</td><td>–</td></tr></tbody>
-  </table>  <div id="cycleCalendars"></div>  <div class="chart-container">
+  </table>
+
+  <div class="calendar-nav">
+    <button onclick="changeMonth(-1)">◀</button>
+    <span id="monthLabel"></span>
+    <button onclick="changeMonth(1)">▶</button>
+  </div>
+  <div class="calendar-grid" id="calendarWeekdays"></div>
+  <div class="calendar-grid" id="calendarGrid"></div>
+
+  <div class="chart-container">
     <h2>BBT by Cycle</h2>
     <canvas id="bbtChart"></canvas>
-  </div>  <script>
+  </div>
+
+  <script>
     const firebaseConfig = {
       apiKey: "AIzaSyByvnVx2aZEldUfqS2c6VNC6UJRIOPvGws",
       authDomain: "fertility-tracker-c35ff.firebaseapp.com",
@@ -63,23 +81,12 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
+    let allEntries = [];
+    let viewMonth, viewYear;
+
     async function loadEntries() {
       const snapshot = await db.collection("entries").orderBy("entryDate").get();
       return snapshot.docs.map(doc => doc.data());
-    }
-
-    function groupCycles(entries) {
-      const cycles = [], current = [];
-      for (let i = 0; i < entries.length; i++) {
-        const e = entries[i];
-        if ((e.phase || '').toLowerCase() === 'day1-period') {
-          if (current.length) cycles.push([...current]);
-          current.length = 0;
-        }
-        current.push(e);
-      }
-      if (current.length) cycles.push(current);
-      return cycles;
     }
 
     function calculateAverages(cycles) {
@@ -98,6 +105,60 @@
       document.getElementById("averagesRow").innerHTML = `<td>${avg(cycleLengths)}</td><td>${avg(luteals)}</td><td>${avg(periodLengths)}</td>`;
     }
 
+    function renderCalendar(month, year) {
+      document.getElementById("calendarWeekdays").innerHTML = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d => `<div class="weekday">${d}</div>`).join('');
+
+      const calendarGrid = document.getElementById("calendarGrid");
+      calendarGrid.innerHTML = "";
+      const start = new Date(year, month, 1);
+      const end = new Date(year, month + 1, 0);
+      const offset = (start.getDay() + 6) % 7;
+
+      for (let i = 0; i < offset; i++) calendarGrid.appendChild(document.createElement("div"));
+
+      const entryMap = Object.fromEntries(allEntries.map(e => [e.entryDate, e]));
+
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        const box = document.createElement("div");
+        box.className = "day-box";
+        box.textContent = d.getDate();
+        const key = d.toISOString().split('T')[0];
+        const entry = entryMap[key];
+        if (entry) {
+          const phase = (entry.phase || '').toLowerCase();
+          const opk = (entry.opk || '').toLowerCase();
+          if (phase === 'day1-period') box.classList.add('deep-red');
+          else if (phase === 'period') box.classList.add('red');
+          else if (opk === 'flashing face') box.classList.add('blue');
+          else if (phase === 'ovulation' || opk === 'solid face') box.classList.add('bold-blue');
+          else if (phase === 'post-ovulation') box.classList.add('green');
+        }
+        calendarGrid.appendChild(box);
+      }
+      document.getElementById("monthLabel").textContent = new Date(year, month).toLocaleString('default', { month: 'long', year: 'numeric' });
+      viewMonth = month;
+      viewYear = year;
+    }
+
+    function changeMonth(offset) {
+      const newDate = new Date(viewYear, viewMonth + offset);
+      renderCalendar(newDate.getMonth(), newDate.getFullYear());
+    }
+
+    function groupCycles(entries) {
+      const cycles = [], current = [];
+      for (let i = 0; i < entries.length; i++) {
+        const e = entries[i];
+        if ((e.phase || '').toLowerCase() === 'day1-period') {
+          if (current.length) cycles.push([...current]);
+          current.length = 0;
+        }
+        current.push(e);
+      }
+      if (current.length) cycles.push(current);
+      return cycles;
+    }
+
     function renderBBTChart(cycles) {
       const datasets = cycles.map((cycle, index) => {
         const bbt = cycle.map(e => parseFloat(e.bbt)).filter(v => !isNaN(v));
@@ -112,61 +173,17 @@
       });
     }
 
-    function renderCycleCalendars(cycles) {
-      const container = document.getElementById("cycleCalendars");
-      container.innerHTML = "";
-      cycles.forEach((cycle, index) => {
-        const calendar = document.createElement("div");
-        const entryMap = Object.fromEntries(cycle.map(e => [e.entryDate, e]));
-        const firstDate = new Date(cycle[0].entryDate);
-        const start = new Date(firstDate.getFullYear(), firstDate.getMonth(), 1);
-        const end = new Date(firstDate.getFullYear(), firstDate.getMonth() + 1, 0);
-        const offset = (start.getDay() + 6) % 7;
-
-        calendar.innerHTML = `<h3>${firstDate.toLocaleString('default', { month: 'long', year: 'numeric' })}</h3>`;
-        const grid = document.createElement("div");
-        grid.className = "calendar-grid";
-
-        ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].forEach(day => {
-          const dayElem = document.createElement("div");
-          dayElem.className = "weekday";
-          dayElem.textContent = day;
-          grid.appendChild(dayElem);
-        });
-
-        for (let i = 0; i < offset; i++) grid.appendChild(document.createElement("div"));
-
-        for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-          const box = document.createElement("div");
-          box.className = "day-box";
-          box.textContent = d.getDate();
-          const key = d.toISOString().split('T')[0];
-          const entry = entryMap[key];
-          if (entry) {
-            const phase = (entry.phase || '').toLowerCase();
-            const opk = (entry.opk || '').toLowerCase();
-            if (phase === 'day1-period') box.classList.add('deep-red');
-            else if (phase === 'period') box.classList.add('red');
-            else if (opk === 'flashing face') box.classList.add('blue');
-            else if (phase === 'ovulation' || opk === 'solid face') box.classList.add('bold-blue');
-            else if (phase === 'post-ovulation') box.classList.add('green');
-          }
-          grid.appendChild(box);
-        }
-
-        calendar.appendChild(grid);
-        container.appendChild(calendar);
-      });
-    }
-
     async function run() {
-      const entries = await loadEntries();
-      const cycles = groupCycles(entries);
+      allEntries = await loadEntries();
+      const cycles = groupCycles(allEntries);
       calculateAverages(cycles);
-      renderCycleCalendars(cycles);
+      const today = new Date();
+      renderCalendar(today.getMonth(), today.getFullYear());
       renderBBTChart(cycles);
     }
 
     run();
-  </script></body>
+  </script>
+</body>
 </html>
+
