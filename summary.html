@@ -141,10 +141,10 @@
 
       for (const e of entries) {
         if (e.entryDate) {
-          const normalizedDate = new Date(e.entryDate).toISOString().split("T")[0];
+          const normalizedDate = e.entryDate; // use exactly as saved in Firebase
           entryMap[normalizedDate] = e;
 
-          const date = new Date(normalizedDate);
+          const date = new Date(e.entryDate);
           if ((e.phase || "").toLowerCase() === "day1-period") {
             if (!lastCD1 || date > lastCD1) lastCD1 = date;
           }
@@ -172,7 +172,7 @@
       const tableRows = [];
 
       for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-        const key = d.toISOString().split("T")[0];
+        const key = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, '0') + "-" + String(d.getDate()).padStart(2, '0');
         const entry = entryMap[key];
         const cell = document.createElement("div");
         cell.className = "day-box";
@@ -190,7 +190,7 @@
           else if (lastOvulation && d > lastOvulation) className = "green";
 
           if (className) {
-            console.log(`Marking ${key} with class ${className}`);
+            console.log(`✅ Marking ${key} as ${className}`);
             cell.classList.add(className);
           }
 
@@ -225,6 +225,7 @@
   </script>
 </body>
 </html>
+
 
 
 
