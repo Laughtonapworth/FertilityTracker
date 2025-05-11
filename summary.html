@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Cycle Summary</title>
 
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyByvnVx2aZEldUfqS2c6VNC6UJRIOPvGws",
@@ -132,81 +132,84 @@
   <script>
     async function loadAndDisplayEntries() {
       const db = firebase.firestore();
-      const snapshot = await db.collection("entries").orderBy("entryDate").get();
+      const snapshot = await db.collection("entries").get();
       const entries = snapshot.docs.map(doc => doc.data());
 
+      const entryMap = {};
       let lastCD1 = null;
-      let lastOvulationDate = null;
-      const calendarData = {};
-      const tableRows = [];
+      let lastOvulation = null;
 
       for (const e of entries) {
-        if (e.phase === "day1-period" && e.entryDate) {
-          const dt = new Date(e.entryDate);
-          if (!lastCD1 || dt < lastCD1) lastCD1 = dt;
+        if (e.entryDate) {
+          entryMap[e.entryDate] = e;
+
+          if (e.phase === "day1-period") {
+            const d = new Date(e.entryDate);
+            if (!lastCD1 || d > lastCD1) lastCD1 = d;
+          }
+          if (e.opk === "Solid face") {
+            const d = new Date(e.entryDate);
+            if (!lastOvulation || d > lastOvulation) lastOvulation = d;
+          }
         }
       }
 
-      for (const e of entries) {
-        const dateStr = e.entryDate;
-        const date = new Date(dateStr);
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = today.getMonth();
 
-        if (e.opk === "Solid face") {
-          lastOvulationDate = new Date(dateStr);
-        }
-
-        let cd = "-";
-        if (lastCD1) {
-          cd = Math.floor((date - lastCD1) / (1000 * 60 * 60 * 24)) + 1;
-        }
-
-        let dpo = "-";
-        if (lastOvulationDate) {
-          const diff = Math.floor((date - lastOvulationDate) / (1000 * 60 * 60 * 24));
-          dpo = diff >= 1 ? diff : "-";
-        }
-
-        tableRows.push(`
-          <tr>
-            <td>${dateStr}</td>
-            <td>${cd}</td>
-            <td>${e.phase || ""}</td>
-            <td>${dpo}</td>
-          </tr>
-        `);
-
-        let className = "";
-        if (e.phase === "day1-period") className = "deep-red";
-        else if (e.phase === "period") className = "red";
-        else if (e.opk === "Flashing face") className = "blue";
-        else if (e.opk === "Solid face") className = "bold-blue";
-        else if (lastOvulationDate && date > lastOvulationDate) className = "green";
-
-        calendarData[dateStr] = { className };
-      }
-
-      console.log("Calendar Data:", calendarData);
+      const start = new Date(year, month, 1);
+      const end = new Date(year, month + 1, 0);
 
       const calendarGrid = document.getElementById("calendarGrid");
-      if (lastCD1) {
-        const today = new Date();
-        let d = new Date(lastCD1);
-        const offset = (d.getDay() + 6) % 7;
-        for (let i = 0; i < offset; i++) {
-          const empty = document.createElement("div");
-          calendarGrid.appendChild(empty);
-        }
-        while (d <= today) {
-          const key = d.toISOString().split("T")[0];
-          const cell = document.createElement("div");
-          cell.className = "day-box";
-          if (calendarData[key]) {
-            cell.classList.add(calendarData[key].className);
+      calendarGrid.innerHTML = "";
+
+      const offset = (start.getDay() + 6) % 7;
+      for (let i = 0; i < offset; i++) {
+        calendarGrid.appendChild(document.createElement("div"));
+      }
+
+      const tableRows = [];
+
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        const key = d.toISOString().split("T")[0];
+        const entry = entryMap[key];
+        const cell = document.createElement("div");
+        cell.className = "day-box";
+        cell.textContent = d.getDate();
+
+        if (entry) {
+          let className = "";
+          if (entry.phase === "day1-period") className = "deep-red";
+          else if (entry.phase === "period") className = "red";
+          else if (entry.opk === "Flashing face") className = "blue";
+          else if (entry.opk === "Solid face") className = "bold-blue";
+          else if (lastOvulation && d > lastOvulation) className = "green";
+
+          if (className) cell.classList.add(className);
+
+          let cd = "-";
+          if (lastCD1) {
+            cd = Math.floor((d - lastCD1) / (1000 * 60 * 60 * 24)) + 1;
           }
-          cell.textContent = d.getDate();
-          calendarGrid.appendChild(cell);
-          d.setDate(d.getDate() + 1);
+
+          let dpo = "-";
+          if (lastOvulation) {
+            const diff = Math.floor((d - lastOvulation) / (1000 * 60 * 60 * 24));
+            dpo = diff >= 1 ? diff : "-";
+          }
+
+          tableRows.push(`
+            <tr>
+              <td>${key}</td>
+              <td>${cd}</td>
+              <td>${entry.phase || ""}</td>
+              <td>${dpo}</td>
+            </tr>
+          `);
         }
+
+        calendarGrid.appendChild(cell);
       }
 
       document.querySelector("#summaryTable tbody").innerHTML = tableRows.reverse().join("");
@@ -216,3 +219,4 @@
   </script>
 </body>
 </html>
+
