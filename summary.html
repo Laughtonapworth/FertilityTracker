@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -42,6 +43,8 @@ function renderCalendar(entries, month, year) {
 }
 
 function changeMonth(offset) {
+  const newDate = new Date(viewYear, viewMonth + offset);
+  renderCalendar(allEntries, newDate.getMonth(), newDate.getFullYear());
   const newDate = new Date(viewYear, viewMonth + offset);
   renderCalendar(allEntries, newDate.getMonth(), newDate.getFullYear());
 }
@@ -107,6 +110,8 @@ function renderCalendar(entries, month, year) {
 function changeMonth(offset) {
   const newDate = new Date(viewYear, viewMonth + offset);
   renderCalendar(allEntries, newDate.getMonth(), newDate.getFullYear());
+  const newDate = new Date(viewYear, viewMonth + offset);
+  renderCalendar(allEntries, newDate.getMonth(), newDate.getFullYear());
 }
 
 
@@ -125,7 +130,7 @@ function changeMonth(offset) {
         const dpo = ov ? Math.max(Math.floor((d - new Date(ov.entryDate)) / 86400000), 0) : "-";
         const row = document.createElement("tr");
         row.innerHTML = `<td>${todayEntry.entryDate}</td><td>${cd}</td><td>${todayEntry.phase || '-'}</td><td>${dpo}</td>`;
-        tbody.appendChild(row);
+        // row append skipped if already handled
       }
     }
     
@@ -170,6 +175,8 @@ function renderCalendar(entries, month, year) {
 function changeMonth(offset) {
   const newDate = new Date(viewYear, viewMonth + offset);
   renderCalendar(allEntries, newDate.getMonth(), newDate.getFullYear());
+  const newDate = new Date(viewYear, viewMonth + offset);
+  renderCalendar(allEntries, newDate.getMonth(), newDate.getFullYear());
 }
 
 
@@ -188,7 +195,7 @@ function changeMonth(offset) {
         const dpo = ov ? Math.max(Math.floor((d - new Date(ov.entryDate)) / 86400000), 0) : "-";
         const row = document.createElement("tr");
         row.innerHTML = `<td>${todayEntry.entryDate}</td><td>${cd}</td><td>${todayEntry.phase || '-'}</td><td>${dpo}</td>`;
-        tbody.appendChild(row);
+        // row append skipped if already handled
       }
     }
     
@@ -291,6 +298,7 @@ function changeMonth(offset) {
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
+let allEntries = [], currentCycle = [], viewMonth, viewYear;
 let viewMonth, viewYear;
 
     async function loadEntries() {
@@ -414,7 +422,7 @@ renderCalendar(allEntries, new Date().getMonth(), new Date().getFullYear());
         const dpo = ov ? Math.max(Math.floor((d - new Date(ov.entryDate)) / 86400000), 0) : "-";
         const row = document.createElement("tr");
         row.innerHTML = `<td>${todayEntry.entryDate}</td><td>${cd}</td><td>${todayEntry.phase || '-'}</td><td>${dpo}</td>`;
-        tbody.appendChild(row);
+        // row append skipped if already handled
       }
 
     }
@@ -459,6 +467,8 @@ function renderCalendar(entries, month, year) {
 function changeMonth(offset) {
   const newDate = new Date(viewYear, viewMonth + offset);
   renderCalendar(allEntries, newDate.getMonth(), newDate.getFullYear());
+  const newDate = new Date(viewYear, viewMonth + offset);
+  renderCalendar(allEntries, newDate.getMonth(), newDate.getFullYear());
 }
 
 
@@ -477,11 +487,10 @@ function changeMonth(offset) {
         const dpo = ov ? Math.max(Math.floor((d - new Date(ov.entryDate)) / 86400000), 0) : "-";
         const row = document.createElement("tr");
         row.innerHTML = `<td>${todayEntry.entryDate}</td><td>${cd}</td><td>${todayEntry.phase || '-'}</td><td>${dpo}</td>`;
-        tbody.appendChild(row);
+        // row append skipped if already handled
       }
     }
     
 </script>
 </body>
 </html>
-
