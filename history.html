@@ -10,37 +10,59 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
-    body { font-family: 'Segoe UI', sans-serif; padding: 1em; background: #fffafc; }
-    h1, h2 { text-align: center; }
-    .summary-table {
-      width: 100%; max-width: 600px; margin: 1em auto; border-collapse: collapse;
+    body { font-family: 'Segoe UI', sans-serif; background: #fffafc; padding: 1em; }
+    h1, h2, h3 { text-align: center; }
+    table {
+      width: 100%; border-collapse: collapse; margin: 1em 0; font-size: 0.95em;
     }
     th, td {
-      padding: 0.6em; border: 1px solid #ccc; text-align: center;
+      padding: 0.5em; border: 1px solid #ccc; text-align: center;
     }
     th { background: #eeb7c2; color: white; }
     .chart-container {
       margin: 2em auto;
-      max-width: 1000px;
+      max-width: 900px;
     }
+    .calendar-title {
+      font-weight: bold;
+      margin: 1em 0 0.5em;
+      text-align: center;
+      font-size: 1.1em;
+    }
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 5px;
+      margin-bottom: 2em;
+    }
+    .weekday {
+      font-weight: bold;
+      text-align: center;
+    }
+    .day-box {
+      padding: 0.6em 0;
+      border-radius: 6px;
+      background: #f0f0f0;
+      text-align: center;
+      font-size: 0.85em;
+    }
+    .day-box.deep-red { background: #e76f8a; color: white; }
+    .day-box.red { background: #f6b1b7; }
+    .day-box.blue { background: #b7d7f6; }
+    .day-box.bold-blue { background: #5f9ed1; color: white; }
+    .day-box.green { background: #c8e6c9; }
   </style>
 </head>
 <body>
   <h1>Cycle History</h1>
 
   <h2>Cycle Averages</h2>
-  <table class="summary-table">
+  <table>
     <thead>
-      <tr>
-        <th>Avg. Cycle Length</th>
-        <th>Avg. Luteal Phase</th>
-        <th>Avg. Period Length</th>
-      </tr>
+      <tr><th>Avg. Cycle Length</th><th>Avg. Luteal Phase</th><th>Avg. Period Length</th></tr>
     </thead>
     <tbody>
-      <tr id="averagesRow">
-        <td>–</td><td>–</td><td>–</td>
-      </tr>
+      <tr id="averagesRow"><td>–</td><td>–</td><td>–</td></tr>
     </tbody>
   </table>
 
@@ -49,14 +71,13 @@
     <canvas id="bbtChart"></canvas>
   </div>
 
+  <div id="cycleCalendars"></div>
+
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyByvnVx2aZEldUfqS2c6VNC6UJRIOPvGws",
       authDomain: "fertility-tracker-c35ff.firebaseapp.com",
-      projectId: "fertility-tracker-c35ff",
-      storageBucket: "fertility-tracker-c35ff.appspot.com",
-      messagingSenderId: "775022478214",
-      appId: "1:775022478214:web:107ba4f9e0043bee75a207"
+      projectId: "fertility-tracker-c35ff"
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
@@ -66,14 +87,14 @@
       return snapshot.docs.map(doc => doc.data());
     }
 
-    function groupByCycles(entries) {
+    function groupCycles(entries) {
       const cycles = [];
       let current = [];
 
       for (let i = 0; i < entries.length; i++) {
         const e = entries[i];
         if ((e.phase || '').toLowerCase() === 'day1-period') {
-          if (current.length) cycles.push([...current]);
+          if (current.length) cycles.push(current);
           current = [e];
         } else {
           current.push(e);
@@ -84,69 +105,97 @@
     }
 
     function calculateAverages(cycles) {
-      const cycleLengths = [];
-      const lutealLengths = [];
-      const periodLengths = [];
+      const cycleLengths = [], luteals = [], periodLengths = [];
 
       for (const cycle of cycles) {
         if (cycle.length < 3) continue;
         const start = new Date(cycle[0].entryDate);
         const end = new Date(cycle[cycle.length - 1].entryDate);
-        const cycleLen = (end - start) / 86400000 + 1;
-        cycleLengths.push(cycleLen);
+        cycleLengths.push((end - start) / 86400000 + 1);
 
         const ovulationIndex = cycle.findIndex(e => (e.opk || '').toLowerCase() === 'solid face');
-        if (ovulationIndex !== -1) {
-          const lutealLen = cycle.length - ovulationIndex - 1;
-          lutealLengths.push(lutealLen);
-        }
+        if (ovulationIndex !== -1) luteals.push(cycle.length - ovulationIndex - 1);
 
-        const periodLen = cycle.filter(e => {
-          const p = (e.phase || '').toLowerCase();
-          return p === 'day1-period' || p === 'period';
+        const periodCount = cycle.filter(e => {
+          const phase = (e.phase || '').toLowerCase();
+          return phase === 'period' || phase === 'day1-period';
         }).length;
-        periodLengths.push(periodLen);
+        periodLengths.push(periodCount);
       }
 
       const avg = arr => arr.length ? (arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(1) : '–';
       document.getElementById("averagesRow").innerHTML = `
-        <td>${avg(cycleLengths)}</td>
-        <td>${avg(lutealLengths)}</td>
-        <td>${avg(periodLengths)}</td>
+        <td>${avg(cycleLengths)}</td><td>${avg(luteals)}</td><td>${avg(periodLengths)}</td>
       `;
     }
 
     function renderBBTChart(cycles) {
       const datasets = cycles.map((cycle, index) => {
         const bbt = cycle.map(e => parseFloat(e.bbt)).filter(v => !isNaN(v));
-        const labels = cycle.map(e => e.entryDate).slice(0, bbt.length);
+        if (!bbt.length) return null;
+        const label = new Date(cycle[0].entryDate).toLocaleString('default', { month: 'short', year: 'numeric' });
         return {
-          label: `Cycle ${index + 1}`,
-          data: bbt,
-          fill: false,
-          borderColor: `hsl(${(index * 60) % 360}, 70%, 50%)`,
-          tension: 0.2
+          label, data: bbt, borderColor: `hsl(${index * 60}, 70%, 50%)`, fill: false, tension: 0.3
         };
-      });
+      }).filter(Boolean);
 
       new Chart(document.getElementById("bbtChart"), {
         type: 'line',
-        data: {
-          labels: [], // individual cycle labels will vary
-          datasets
-        },
-        options: {
-          responsive: true,
-          scales: { x: { display: false } }
-        }
+        data: { labels: [], datasets },
+        options: { responsive: true, scales: { x: { display: false } } }
       });
+    }
+
+    function renderCycleCalendars(cycles) {
+      const container = document.getElementById("cycleCalendars");
+      container.innerHTML = "";
+
+      for (const cycle of cycles) {
+        const entryMap = Object.fromEntries(cycle.map(e => [e.entryDate, e]));
+        const startDate = new Date(cycle[0].entryDate);
+        const endDate = new Date(cycle[cycle.length - 1].entryDate);
+        const label = startDate.toLocaleString('default', { month: 'long', year: 'numeric' });
+
+        const calendar = document.createElement("div");
+        calendar.innerHTML = `<h3>${label}</h3>
+          <div class="calendar-grid">
+            ${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d => `<div class="weekday">${d}</div>`).join('')}
+          </div>
+          <div class="calendar-grid" id="grid-${label.replace(/\\s+/g, '')}"></div>`;
+        container.appendChild(calendar);
+
+        const grid = calendar.querySelector(`#grid-${label.replace(/\\s+/g, '')}`);
+
+        const day = new Date(startDate);
+        const offset = (day.getDay() + 6) % 7;
+        for (let i = 0; i < offset; i++) grid.appendChild(document.createElement("div"));
+
+        for (; day <= endDate; day.setDate(day.getDate() + 1)) {
+          const box = document.createElement("div");
+          box.className = "day-box";
+          box.textContent = day.getDate();
+          const key = day.toISOString().split("T")[0];
+          const entry = entryMap[key];
+          if (entry) {
+            const phase = (entry.phase || '').toLowerCase();
+            const opk = (entry.opk || '').toLowerCase();
+            if (phase === 'day1-period') box.classList.add('deep-red');
+            else if (phase === 'period') box.classList.add('red');
+            else if (opk === 'flashing face') box.classList.add('blue');
+            else if (phase === 'ovulation' || opk === 'solid face') box.classList.add('bold-blue');
+            else if (phase === 'post-ovulation') box.classList.add('green');
+          }
+          grid.appendChild(box);
+        }
+      }
     }
 
     async function run() {
       const entries = await loadEntries();
-      const cycles = groupByCycles(entries);
+      const cycles = groupCycles(entries);
       calculateAverages(cycles);
       renderBBTChart(cycles);
+      renderCycleCalendars(cycles);
     }
 
     run();
