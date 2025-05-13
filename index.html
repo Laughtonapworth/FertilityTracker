@@ -77,8 +77,8 @@ function generatePDF(url) {
   iframe.src = url;
   document.body.appendChild(iframe);
 
-  iframe.onload = () => {
-    setTimeout(() => {
+  const listener = (event) => {
+    if (event.data.renderReady) {
       html2pdf().set({
         margin: 0.5,
         filename: url.includes('summary') ? 'Current_Cycle.pdf' : 'Cycle_History.pdf',
@@ -87,10 +87,13 @@ function generatePDF(url) {
         jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
       }).from(iframe.contentDocument.body).save();
 
+      window.removeEventListener('message', listener);
       document.body.removeChild(iframe);
       document.querySelector('body').removeChild(document.querySelector('body').lastChild);
-    }, 2500); // delay to allow rendering of charts and calendar
+    }
   };
+
+  window.addEventListener('message', listener);
 }
 </script>
 
