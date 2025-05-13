@@ -188,19 +188,22 @@ function renderCharts(cycle) {
     });
   }
 
-  const symptoms = {
-    cramps: [], spotting: [], breast: [], digestive: []
-  };
-  const symLabels = [];
+ cycle.forEach(e => {
+  const hasSymptoms =
+    (e.cramps && e.cramps.toLowerCase() !== 'none') ||
+    (e.spotting && e.spotting.toLowerCase() !== 'none') ||
+    (e.breastChanges && e.breastChanges.toLowerCase() !== 'none') ||
+    (e.digestive && e.digestive.toLowerCase() !== 'none');
 
-  cycle.forEach(e => {
+  if (hasSymptoms) {
     const date = formatDate(e.entryDate);
     symLabels.push(date);
-    symptoms.cramps.push((e.cramps || '').toLowerCase() !== 'none' ? 1 : 0);
-    symptoms.spotting.push((e.spotting || '').toLowerCase() !== 'none' ? 1 : 0);
-    symptoms.breast.push((e.breastChanges || '').toLowerCase() !== 'none' ? 1 : 0);
+    symptoms.cramps.push(e.cramps && e.cramps.toLowerCase() !== 'none' ? 1 : 0);
+    symptoms.spotting.push(e.spotting && e.spotting.toLowerCase() !== 'none' ? 1 : 0);
+    symptoms.breast.push(e.breastChanges && e.breastChanges.toLowerCase() !== 'none' ? 1 : 0);
     symptoms.digestive.push(e.digestive && e.digestive.toLowerCase() !== 'none' ? 1 : 0);
-  });
+  }
+});
 
   new Chart(document.getElementById("symptomsChart"), {
     type: 'bar',
