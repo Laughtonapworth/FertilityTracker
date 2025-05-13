@@ -78,7 +78,11 @@ function generatePDF(url) {
   document.body.appendChild(iframe);
 
   const listener = (event) => {
+    console.log('[Parent] Message received:', event.data); // ✅ Add this line
+
     if (event.data.renderReady) {
+      console.log('[Parent] Render is ready, generating PDF...'); // ✅ Add this too
+
       html2pdf().set({
         margin: 0.5,
         filename: url.includes('summary') ? 'Current_Cycle.pdf' : 'Cycle_History.pdf',
