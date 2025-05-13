@@ -54,7 +54,7 @@
     th {
       background: #eeb7c2; color: white;
     }
-  </style>
+</style>
 </head>
 <body>
 <h1>Cycle Summary</h1>
@@ -67,7 +67,7 @@
 <span style="background:#5f9ed1; color:white;">Ovulation (Solid)</span>
 <span style="background:#c8e6c9;">Post Ovulation</span>
 <span style="background:#fff0f5;">💖 Sex</span>
-<span style="background:#fff0f5;">😖 Cramps</span>
+<span style="background:#fff0f5;">🚖 Cramps</span>
 <span style="background:#fff0f5;">🔻 Spotting</span>
 <span style="background:#fff0f5;">🧠 Mood</span>
 <span style="background:#fff0f5;">🌡️ BBT</span>
@@ -84,7 +84,7 @@
 
 <table id="summaryTable">
 <thead>
-<tr><th>Date</th><th>CD</th><th>Phase</th><th>DPO</th></tr>
+<tr><th>Date</th><th>CD</th><th>BBT</th><th>Phase</th><th>DPO</th></tr>
 </thead>
 <tbody></tbody>
 </table>
@@ -142,8 +142,9 @@ function renderTable(cycle) {
   const cd = Math.floor((new Date(todayEntry.entryDate) - new Date(cycle[0].entryDate)) / 86400000) + 1;
   const ov = cycle.find(e => (e.opk || '').toLowerCase() === 'solid face');
   const dpo = ov ? Math.floor((new Date(todayEntry.entryDate) - new Date(ov.entryDate)) / 86400000) : "-";
+  const bbt = todayEntry.bbt && !isNaN(parseFloat(todayEntry.bbt)) ? parseFloat(todayEntry.bbt).toFixed(2) : "-";
   const row = document.createElement("tr");
-  row.innerHTML = `<td>${todayEntry.entryDate}</td><td>${cd}</td><td>${todayEntry.phase || '-'}</td><td>${dpo}</td>`;
+  row.innerHTML = `<td>${todayEntry.entryDate}</td><td>${cd}</td><td>${bbt}</td><td>${todayEntry.phase || '-'}</td><td>${dpo}</td>`;
   tbody.appendChild(row);
 }
 
@@ -289,5 +290,4 @@ run();
 </script>
 </body>
 </html>
-
 
