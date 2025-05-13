@@ -78,24 +78,34 @@ function generatePDF(url) {
   document.body.appendChild(iframe);
 
   const listener = (event) => {
-    console.log('[Parent] Message received:', event.data); // ✅ Add this line
+    console.log('[Parent] Message received:', event.data);
 
     if (event.data.renderReady) {
-      console.log('[Parent] Render is ready, generating PDF...'); // ✅ Add this too
+      console.log('[Parent] Render is ready, waiting for DOM to complete...');
 
-      html2pdf().set({
-        margin: 0.5,
-        filename: url.includes('summary') ? 'Current_Cycle.pdf' : 'Cycle_History.pdf',
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2 },
-        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-      }).from(iframe.contentDocument.body).save();
+      const checkReady = setInterval(() => {
+        if (iframe.contentDocument.readyState === 'complete') {
+          clearInterval(checkReady);
+          console.log('[Parent] DOM ready. Generating PDF...');
+          
+          html2pdf().set({
+            margin: 0.5,
+            filename: url.includes('summary') ? 'Current_Cycle.pdf' : 'Cycle_History.pdf',
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2 },
+            jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+          }).from(iframe.contentDocument.body).save();
 
-      window.removeEventListener('message', listener);
-      document.body.removeChild(iframe);
-      document.querySelector('body').removeChild(document.querySelector('body').lastChild);
+          window.removeEventListener('message', listener);
+          document.body.removeChild(iframe);
+          document.querySelector('body').removeChild(document.querySelector('body').lastChild);
+        }
+      }, 250);
     }
   };
+
+  window.addEventListener('message', listener);
+}
 
   window.addEventListener('message', listener);
 }
