@@ -32,6 +32,8 @@
       border-radius: 20px;
       text-decoration: none;
       max-width: 250px;
+      width: 100%;
+      box-sizing: border-box;
     }
 </style>
 <link href="manifest.json" rel="manifest"/><meta content="#88a58d" name="theme-color"/></head>
@@ -70,30 +72,25 @@ function downloadPDF() {
 }
 
 function generatePDF(url) {
-  fetch(url)
-    .then(response => response.text())
-    .then(html => {
-      const iframe = document.createElement('iframe');
-      iframe.style.display = 'none';
-      document.body.appendChild(iframe);
-      const doc = iframe.contentWindow.document;
-      doc.open();
-      doc.write(html);
-      doc.close();
+  const iframe = document.createElement('iframe');
+  iframe.style.display = 'none';
+  iframe.src = url;
+  document.body.appendChild(iframe);
 
-      iframe.onload = () => {
-        html2pdf().set({
-          margin: 0.5,
-          filename: url.includes('summary') ? 'Current_Cycle.pdf' : 'Cycle_History.pdf',
-          image: { type: 'jpeg', quality: 0.98 },
-          html2canvas: { scale: 2 },
-          jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-        }).from(iframe.contentDocument.body).save();
+  iframe.onload = () => {
+    setTimeout(() => {
+      html2pdf().set({
+        margin: 0.5,
+        filename: url.includes('summary') ? 'Current_Cycle.pdf' : 'Cycle_History.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+      }).from(iframe.contentDocument.body).save();
 
-        document.body.removeChild(iframe);
-        document.querySelector('body').removeChild(document.querySelector('body').lastChild);
-      };
-    });
+      document.body.removeChild(iframe);
+      document.querySelector('body').removeChild(document.querySelector('body').lastChild);
+    }, 2500); // delay to allow rendering of charts and calendar
+  };
 }
 </script>
 
