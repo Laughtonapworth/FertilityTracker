@@ -1,3 +1,5 @@
+<!-- updated summary.html goes here -->
+
 <!DOCTYPE html>
 
 <html lang="en">
@@ -188,22 +190,27 @@ function renderCharts(cycle) {
     });
   }
 
- cycle.forEach(e => {
-  const hasSymptoms =
-    (e.cramps && e.cramps.toLowerCase() !== 'none') ||
-    (e.spotting && e.spotting.toLowerCase() !== 'none') ||
-    (e.breastChanges && e.breastChanges.toLowerCase() !== 'none') ||
-    (e.digestive && e.digestive.toLowerCase() !== 'none');
+  const symptoms = {
+    cramps: [], spotting: [], breast: [], digestive: []
+  };
+  const symLabels = [];
 
-  if (hasSymptoms) {
-    const date = formatDate(e.entryDate);
-    symLabels.push(date);
-    symptoms.cramps.push(e.cramps && e.cramps.toLowerCase() !== 'none' ? 1 : 0);
-    symptoms.spotting.push(e.spotting && e.spotting.toLowerCase() !== 'none' ? 1 : 0);
-    symptoms.breast.push(e.breastChanges && e.breastChanges.toLowerCase() !== 'none' ? 1 : 0);
-    symptoms.digestive.push(e.digestive && e.digestive.toLowerCase() !== 'none' ? 1 : 0);
-  }
-});
+  cycle.forEach(e => {
+    const hasSymptoms =
+      (e.cramps && e.cramps.toLowerCase() !== 'none') ||
+      (e.spotting && e.spotting.toLowerCase() !== 'none') ||
+      (e.breastChanges && e.breastChanges.toLowerCase() !== 'none') ||
+      (e.digestive && e.digestive.toLowerCase() !== 'none');
+
+    if (hasSymptoms) {
+      const date = formatDate(e.entryDate);
+      symLabels.push(date);
+      symptoms.cramps.push(e.cramps && e.cramps.toLowerCase() !== 'none' ? 1 : 0);
+      symptoms.spotting.push(e.spotting && e.spotting.toLowerCase() !== 'none' ? 1 : 0);
+      symptoms.breast.push(e.breastChanges && e.breastChanges.toLowerCase() !== 'none' ? 1 : 0);
+      symptoms.digestive.push(e.digestive && e.digestive.toLowerCase() !== 'none' ? 1 : 0);
+    }
+  });
 
   new Chart(document.getElementById("symptomsChart"), {
     type: 'bar',
@@ -291,16 +298,13 @@ async function run() {
   renderCalendar(currentCycle, today.getMonth(), today.getFullYear());
   renderTable(currentCycle);
   renderCharts(currentCycle);
+
+  // NEW: Let parent page know when rendering is complete
+  setTimeout(() => {
+    window.parent.postMessage({ renderReady: true }, '*');
+  }, 500);
 }
 run();
-</script>
-
-<script>
-  window.onload = () => {
-    setTimeout(() => {
-      window.parent.postMessage({ renderReady: true }, '*');
-    }, 500);
-  };
 </script>
 </body>
 </html>
