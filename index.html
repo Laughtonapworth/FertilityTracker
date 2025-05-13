@@ -81,26 +81,34 @@ function generatePDF(url) {
     console.log('[Parent] Message received:', event.data);
 
     if (event.data.renderReady) {
-      console.log('[Parent] Render is ready, waiting for DOM to complete...');
+      console.log('[Parent] Render is ready, generating PDF...');
 
-      const checkReady = setInterval(() => {
-        if (iframe.contentDocument.readyState === 'complete') {
-          clearInterval(checkReady);
-          console.log('[Parent] DOM ready. Generating PDF...');
-          
+      const cloneContainer = document.createElement('div');
+      cloneContainer.style.display = 'none';
+      document.body.appendChild(cloneContainer);
+
+      const interval = setInterval(() => {
+        const doc = iframe.contentDocument;
+        if (doc && doc.readyState === 'complete') {
+          clearInterval(interval);
+
+          // Clone the entire body from the iframe into the hidden div
+          cloneContainer.innerHTML = doc.body.innerHTML;
+
           html2pdf().set({
             margin: 0.5,
             filename: url.includes('summary') ? 'Current_Cycle.pdf' : 'Cycle_History.pdf',
             image: { type: 'jpeg', quality: 0.98 },
             html2canvas: { scale: 2 },
             jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-          }).from(iframe.contentDocument.body).save();
-
-          window.removeEventListener('message', listener);
-          document.body.removeChild(iframe);
-          document.querySelector('body').removeChild(document.querySelector('body').lastChild);
+          }).from(cloneContainer).save().then(() => {
+            window.removeEventListener('message', listener);
+            document.body.removeChild(cloneContainer);
+            document.body.removeChild(iframe);
+            document.querySelector('body').removeChild(document.querySelector('body').lastChild); // remove modal
+          });
         }
-      }, 250);
+      }, 300);
     }
   };
 
