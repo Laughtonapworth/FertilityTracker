@@ -77,6 +77,12 @@
 <h1>Cycle Summary</h1>
 <a class="nav-button" href="index.html">← Back to Home</a>
 <h2>Today's Summary</h2>
+<table id="summaryTable">
+<thead>
+<tr><th>Date</th><th>CD</th><th>BBT</th><th>Phase</th><th>DPO</th></tr>
+</thead>
+<tbody></tbody>
+</table>
 <div class="legend">
 <span style="background:#e76f8a; color:white;">Day 1 Period</span>
 <span style="background:#f6b1b7;">Period</span>
@@ -96,6 +102,12 @@
 <span id="monthLabel"></span>
 <button onclick="changeMonth(1)">▶</button>
 </div>
+<div style="text-align:center; margin-bottom:1em; font-weight:bold;">
+  <span>Predictions: </span>
+  <span style="color:#F44336;">🔴 Period Days</span>
+  <span style="color:#4CAF50;">🟢 Fertile Window</span> | 
+  <span style="color:#FFC107;">🟡 Ovulation Day</span> | 
+  </div>
 <div class="calendar-grid" id="calendarWeekdays"></div>
 <div class="calendar-grid" id="calendarGrid"></div>
 <table id="summaryTable">
@@ -495,3 +507,4 @@ run();
 </script>
 </body>
 </html>
+
