@@ -74,10 +74,17 @@
   <a class="nav-button" href="index.html">← Back to Home</a>
 
   <h2>Cycle Averages</h2>
-  <table>
-    <thead><tr><th>Avg. Cycle Length</th><th>Avg. Luteal Phase</th><th>Avg. Period Length</th></tr></thead>
-    <tbody><tr id="averagesRow"><td>–</td><td>–</td><td>–</td></tr></tbody>
-  </table>
+<table>
+  <thead>
+    <tr>
+      <th>Avg. Cycle Length</th>
+      <th>Avg. Luteal Phase</th>
+      <th>Avg. Period Length</th>
+      <th>Avg. Sex Entries / Cycle</th>
+    </tr>
+  </thead>
+  <tbody><tr id="averagesRow"><td>–</td><td>–</td><td>–</td><td>–</td></tr></tbody>
+</table>
 
   <div class="legend">
     <span style="background:#e76f8a; color:white;">Day 1 Period</span>
@@ -126,10 +133,7 @@
     <h2>Mood Timeline</h2>
     <canvas id="moodChart"></canvas>
   </div>
-  <div class="chart-container">
-    <h2>Sex Frequency</h2>
-    <canvas id="sexChart"></canvas>
-  </div>
+  
 
 <script>
 const firebaseConfig = {
@@ -210,9 +214,9 @@ function calculateAverages(cycles) {
     periodLengths.push(periodCount);
   }
 
-  avgCycleLength = cycleLengths.length ? cycleLengths.reduce((a,b) => a + b, 0) / cycleLengths.length : null;
-  avgLutealLength = lutealPhases.length ? Math.round(lutealPhases.reduce((a,b) => a + b, 0) / lutealPhases.length) : null;
-  avgPeriodLength = periodLengths.length ? (periodLengths.reduce((a,b) => a + b, 0) / periodLengths.length) : null;
+  avgCycleLength = cycleLengths.length ? cycleLengths.reduce((a, b) => a + b, 0) / cycleLengths.length : null;
+  avgLutealLength = lutealPhases.length ? Math.round(lutealPhases.reduce((a, b) => a + b, 0) / lutealPhases.length) : null;
+  avgPeriodLength = periodLengths.length ? (periodLengths.reduce((a, b) => a + b, 0) / periodLengths.length) : null;
 
   const ovulationDays = cycles
     .map(cycle => cycle.findIndex(e => (e.opk || '').toLowerCase() === 'solid face'))
@@ -223,12 +227,27 @@ function calculateAverages(cycles) {
     ? Math.round(ovulationDays.reduce((a, b) => a + b, 0) / ovulationDays.length)
     : null;
 
-  const avg = arr => arr.length ? (arr.reduce((a,b) => a+b, 0) / arr.length).toFixed(1) : '–';
+  const allCycles = groupAllCycles(allEntries);
+  const sexFreqPerCycle = [];
+
+  if (allCycles && allCycles.length > 0) {
+    allCycles.forEach(cycle => {
+      const sexCount = cycle.filter(e => (e.sex || '').trim().toLowerCase() === 'yes').length;
+      sexFreqPerCycle.push(sexCount);
+    });
+  }
+
+  const avgSexFreq = sexFreqPerCycle.length
+    ? Math.round(sexFreqPerCycle.reduce((a, b) => a + b, 0) / sexFreqPerCycle.length)
+    : 0;
+
+  const avg = arr => arr.length ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : '–';
 
   document.getElementById("averagesRow").innerHTML = `
     <td>${avg(cycleLengths)}</td>
     <td>${avg(lutealPhases)}</td>
     <td>${avg(periodLengths)}</td>
+    <td>${avgSexFreq}</td>
   `;
 }
 
@@ -450,7 +469,7 @@ function renderCharts(cycles) {
 
   const cmTypes = ['dry', 'sticky', 'creamy', 'watery', 'egg white'];
   const cmAvgPerCycle = [];
-  const symptomsAvg = { cramps: 0, spotting: 0, mood: 0, breast: 0, digestive: 0 };
+  const symptomsAvg = { cramps: 0, spotting: 0, breast: 0, digestive: 0 };
   const moodLabels = [];
   const moodValues = [];
 
@@ -465,7 +484,6 @@ function renderCharts(cycles) {
 
       symptomsAvg.cramps += cycle.filter(e => (e.cramps || '').toLowerCase() !== 'none').length / cycle.length;
       symptomsAvg.spotting += cycle.filter(e => (e.spotting || '').toLowerCase() !== 'none').length / cycle.length;
-      symptomsAvg.mood += cycle.filter(e => e.mood).length / cycle.length;
       symptomsAvg.breast += cycle.filter(e => (e.breastChanges || '').toLowerCase() !== 'none').length / cycle.length;
       symptomsAvg.digestive += cycle.filter(e => (e.digestive || '').toLowerCase() !== 'none').length / cycle.length;
 
@@ -516,54 +534,49 @@ function renderCharts(cycles) {
   if(window.cmChartInstance) window.cmChartInstance.destroy();
   if(window.symptomsChartInstance) window.symptomsChartInstance.destroy();
 
-  window.moodChartInstance = new Chart(document.getElementById("moodChart"), {
-    type: 'bar',
-    data: {
-      labels: moodLabels.length ? moodLabels : ['No Data'],
-      datasets: [{
-        label: 'Mood',
-        data: moodLabels.length ? moodLabels.map(() => 1) : [1],
-        backgroundColor: moodValues.length
-          ? moodValues.map(m => moodColors[m] || '#ccc')
-          : ['#ccc']
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: { legend: { display: false } },
-      scales: { y: { display: false } }
-    }
-  });
+// Predefine known moods with 0 counts
+const knownMoods = ['Calm', 'Happy', 'Irritable', 'Low'];
+const moodFreq = {};
+knownMoods.forEach(m => moodFreq[m] = 0);
 
-  window.sexChartInstance = new Chart(document.getElementById("sexChart"), {
-    type: 'bar',
-    data: {
-      labels: ['Average Sex Frequency'],
-      datasets: [{
-        label: 'Avg Sex Frequency (per cycle)',
-        data: [avgSexFreq || 0],
-        backgroundColor: '#f67280'
-      }]
-    },
-    options: {
-      responsive: true,
-      scales: {
-        y: {
-          beginAtZero: true,
-          ticks: {
-            stepSize: 1,
-            precision: 0
-          }
-        },
-        x: {
-          title: {
-            display: true,
-            text: 'Overall Average'
-          }
-        }
+// Count actual mood data
+allEntries.forEach(e => {
+  const mood = (e.mood || '').trim();
+  if (knownMoods.includes(mood)) {
+    moodFreq[mood]++;
+  }
+});
+
+const moodChartLabels = knownMoods;
+const moodChartData = moodChartLabels.map(m => moodFreq[m]);
+const moodBarColors = moodChartLabels.map(m => moodColors[m] || '#ccc');
+
+window.moodChartInstance = new Chart(document.getElementById("moodChart"), {
+  type: 'bar',
+  data: {
+    labels: moodChartLabels,
+    datasets: [{
+      label: 'Mood Frequency (All Time)',
+      data: moodChartData,
+      backgroundColor: moodBarColors
+    }]
+  },
+  options: {
+    responsive: true,
+    scales: {
+      y: {
+        beginAtZero: true,
+        title: { display: true, text: 'Number of Entries' }
+      },
+      x: {
+        title: { display: true, text: 'Mood Type' }
       }
     }
-  });
+  }
+});
+
+
+
 
   window.bbtChartInstance = new Chart(document.getElementById("bbtChart"), {
     type: 'line',
@@ -586,40 +599,58 @@ function renderCharts(cycles) {
     }
   });
 
-  window.cmChartInstance = new Chart(document.getElementById("cmChart"), {
-    type: 'line',
-    data: {
-      labels: ['Dry', 'Sticky', 'Creamy', 'Watery', 'Egg White'],
-      datasets: [{
-        label: "Avg CM",
-        data: Array(5).fill(avgCm),
-        borderColor: 'teal',
-        fill: false,
-        tension: 0.1
-      }]
-    },
-    options: {
-      responsive: true,
-      scales: {
-        y: {
-          title: { display: true, text: 'CM Type (numeric)' },
-          ticks: { callback: val => ['Dry','Sticky','Creamy','Watery','Egg White'][val] || val }
-        },
-        x: { title: { display: true, text: 'Cycle' } }
-      }
+// Count occurrences of each CM type
+const cmTypeCounts = { dry: 0, sticky: 0, creamy: 0, watery: 0, 'egg white': 0 };
+let totalCycles = 0;
+
+cycles.forEach(cycle => {
+  const typesSeen = new Set();
+  cycle.forEach(e => {
+    const cm = (e.cm || '').toLowerCase();
+    if (cmTypes.includes(cm)) {
+      typesSeen.add(cm);
     }
   });
+  typesSeen.forEach(cm => cmTypeCounts[cm]++);
+  totalCycles++;
+});
+
+const cmChartLabels = ['Dry', 'Sticky', 'Creamy', 'Watery', 'Egg White'];
+const cmChartData = cmChartLabels.map(label => {
+  const key = label.toLowerCase();
+  return totalCycles ? (cmTypeCounts[key] / totalCycles).toFixed(2) : 0;
+});
+
+window.cmChartInstance = new Chart(document.getElementById("cmChart"), {
+  type: 'bar',
+  data: {
+    labels: cmChartLabels,
+    datasets: [{
+      label: 'Average CM Occurrence per Cycle',
+      data: cmChartData,
+      backgroundColor: ['#fde2e4', '#fad2e1', '#dfe7fd', '#cdeac0', '#b5ead7']
+    }]
+  },
+  options: {
+    responsive: true,
+    scales: {
+      y: {
+        beginAtZero: true,
+        title: { display: true, text: 'Avg Occurrence per Cycle' }
+      }
+    }
+  }
+});
 
   window.symptomsChartInstance = new Chart(document.getElementById("symptomsChart"), {
     type: 'bar',
     data: {
-      labels: ['Cramps', 'Spotting', 'Mood', 'Breast Changes', 'Digestive'],
+      labels: ['Cramps', 'Spotting', 'Breast Changes', 'Digestive'],
       datasets: [{
         label: 'Average Occurrence',
         data: [
           symptomsAvg.cramps || 0,
           symptomsAvg.spotting || 0,
-          symptomsAvg.mood || 0,
           symptomsAvg.breast || 0,
           symptomsAvg.digestive || 0
         ],
@@ -643,3 +674,4 @@ run();
 </script>
 </body>
 </html>
+
