@@ -282,7 +282,7 @@ function renderCalendar(entries, month, year) {
       if (dayEntries.some(e => (e.phase || '').toLowerCase() === 'day1-period')) phaseClass = 'deep-red';
       else if (dayEntries.some(e => (e.phase || '').toLowerCase() === 'period')) phaseClass = 'red';
       else if (dayEntries.some(e => (e.phase || '').toLowerCase() === 'ovulation' || (e.opk || '').toLowerCase() === 'solid face')) phaseClass = 'bold-blue';
-      else if (dayEntries.some(e => (e.phase || '').toLowerCase() === 'ovulation' || (e.opk || '').toLowerCase() === 'surge')) phaseClass = 'bold-pink';
+      else if (dayEntries.some(e => (e.phase || '').toLowerCase() === 'surge' || (e.opk || '').toLowerCase() === 'surge')) phaseClass = 'bold-pink';
       else if (dayEntries.some(e => (e.opk || '').toLowerCase() === 'flashing face')) phaseClass = 'blue';
       else if (dayEntries.some(e => (e.phase || '').toLowerCase() === 'post-ovulation')) phaseClass = 'green';
 
