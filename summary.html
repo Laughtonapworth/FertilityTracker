@@ -103,6 +103,14 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
+    function formatDate(date) {
+  const d = new Date(date);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
     async function fetchEntries() {
       const snapshot = await db.collection("entries").orderBy("entryDate").get();
       return snapshot.docs.map(doc => doc.data());
