@@ -363,15 +363,33 @@ function renderTable(cycle) {
   const today = formatDate(new Date());
   const todayEntry = cycle.find(e => formatDate(e.entryDate) === today);
   if (!todayEntry) return;
+
   const cd = Math.floor((new Date(todayEntry.entryDate) - new Date(cycle[0].entryDate)) / 86400000) + 1;
-  const ov = cycle.find(e => (e.opk || '').toLowerCase() === 'solid face');
-  const dpo = ov ? Math.floor((new Date(todayEntry.entryDate) - new Date(ov.entryDate)) / 86400000) : "-";
+
+  // Use 'surge' as ovulation marker
+  const surgeEntry = cycle.find(e => (e.opk || '').toLowerCase() === 'surge');
+  let dpo = "-";
+  if (surgeEntry) {
+    const surgeDate = new Date(surgeEntry.entryDate);
+    const todayDate = new Date(todayEntry.entryDate);
+    const diffDays = Math.floor((todayDate - surgeDate) / 86400000);
+
+    // DPO = 1 two days after surge, 2 three days after, etc.
+    if (diffDays >= 2) {
+      dpo = diffDays - 1; // so day 2 after surge = 1 DPO
+    } else {
+      dpo = "0";
+    }
+  }
+
   const bbt = todayEntry.bbt && !isNaN(parseFloat(todayEntry.bbt)) ? parseFloat(todayEntry.bbt).toFixed(2) : "-";
-  const row = document.createElement("tr");
   const phaseDisplay = (todayEntry.phase || '-').toLowerCase() === 'post-ovulation' ? 'Luteal' : (todayEntry.phase || '-');
-row.innerHTML = `<td>${todayEntry.entryDate}</td><td>${cd}</td><td>${bbt}</td><td>${phaseDisplay}</td><td>${dpo}</td>`;
+
+  const row = document.createElement("tr");
+  row.innerHTML = `<td>${todayEntry.entryDate}</td><td>${cd}</td><td>${bbt}</td><td>${phaseDisplay}</td><td>${dpo}</td>`;
   tbody.appendChild(row);
 }
+
 
 function renderCharts(cycle) {
   const cmTypes = ['dry', 'sticky', 'creamy', 'watery', 'egg white'];
