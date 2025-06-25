@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cycle Summary</title>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="calendar.js" defer></script>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background: #fffafc; padding: 1em; }
+    h1, h2 { text-align: center; }
+    .nav-button {
+      display: block; margin: 1em auto; background: #c4d7b2;
+      color: white; padding: 0.6em 1.2em; border-radius: 20px;
+      text-align: center; text-decoration: none; max-width: 250px;
+    }
+    .legend {
+      display: flex; flex-wrap: wrap; gap: 0.5em;
+      justify-content: center; margin-bottom: 1em;
+    }
+    .legend span {
+      display: inline-block; padding: 0.4em 0.8em;
+      border-radius: 5px; font-size: 0.75em;
+    }
+    .calendar-nav {
+      display: flex; justify-content: center; gap: 1em; margin: 0.5em 0;
+    }
+    .calendar-grid {
+      display: grid; grid-template-columns: repeat(7, 1fr);
+      gap: 5px; margin-bottom: 1.5em;
+    }
+    .weekday { font-weight: bold; text-align: center; }
+    .day-box {
+      padding: 0.6em 0; border-radius: 6px; background: #f0f0f0;
+      text-align: center; font-size: 0.85em;
+      display: flex; flex-direction: column; align-items: center;
+      gap: 2px; min-height: 3.5em; position: relative;
+    }
+    .deep-red { background: #e76f8a !important; color: white !important; }
+    .red { background: #f6b1b7 !important; }
+    .blue { background: #b7d7f6 !important; }
+    .light-pink { background: #f2b3d0 !important; }
+    .bold-blue { background: #5f9ed1 !important; color: white !important; }
+    .peach { background: #ffd3b6 !important; }
+    .bold-pink { background: #d15fa7 !important; color: white !important; }
+    .day-box span { font-size: 0.9em; display: block; opacity: 0.7; line-height: 1; }
+    .chart-container { max-width: 90%; margin: 1em auto; }
+    table { width: 100%; margin-bottom: 1.5em; border-collapse: collapse; }
+    th, td { padding: 0.5em; border: 1px solid #ccc; text-align: center; }
+    th { background-color: #f2f2f2; }
+  </style>
+</head>
+<body>
+  <h1>Cycle Summary</h1>
+  <a class="nav-button" href="index.html">← Back to Home</a>
+
+  <h2>Today's Summary</h2>
+  <table id="summaryTable">
+    <thead>
+      <tr><th>Date</th><th>CD</th><th>BBT</th><th>Phase</th><th>DPO</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <div class="legend">
+    <span style="background:#e76f8a; color:white;">Day 1 Period</span>
+    <span style="background:#f6b1b7;">Period</span>
+    <span style="background:#b7d7f6;">Fertile Window (Flashing)</span>
+    <span style="background:#f2b3d0;">High Fertility (Solid Face)</span>
+    <span style="background:#d15fa7; color:white;">Ovulation (Surge)</span>
+    <span style="background:#ffd3b6;">Luteal Phase</span>
+    <span style="background:#fff0f5;">💖 Sex</span>
+    <span style="background:#fff0f5;">😖 Cramps</span>
+    <span style="background:#fff0f5;">🔻 Spotting</span>
+    <span style="background:#fff0f5;">🧠 Mood</span>
+    <span style="background:#fff0f5;">🌡️ BBT</span>
+    <span style="background:#fff0f5;">🫶 Breast Changes</span>
+    <span style="background:#fff0f5;">🫃 Digestive</span>
+  </div>
+
+  <div class="calendar-nav">
+    <button onclick="changeMonth(-1)">◀</button>
+    <span id="monthLabel"></span>
+    <button onclick="changeMonth(1)">▶</button>
+  </div>
+  <div class="calendar-grid" id="calendarWeekdays"></div>
+  <div class="calendar-grid" id="calendarGrid"></div>
+
+  <div class="chart-container"><h2>BBT This Cycle</h2><canvas id="bbtChart"></canvas></div>
+  <div class="chart-container"><h2>Cervical Mucus Logged This Cycle</h2><canvas id="cmChart"></canvas></div>
+  <div class="chart-container"><h2>Symptoms This Cycle</h2><canvas id="symptomsChart"></canvas></div>
+  <div class="chart-container"><h2>Mood Timeline</h2><canvas id="moodChart"></canvas></div>
+  <div class="chart-container"><h2>Sex Activity This Cycle</h2><canvas id="sexChart"></canvas></div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyByvnVx2aZEldUfqS2c6VNC6UJRIOPvGws",
+      authDomain: "fertility-tracker-c35ff.firebaseapp.com",
+      projectId: "fertility-tracker-c35ff"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    async function fetchEntries() {
+      const snapshot = await db.collection("entries").orderBy("entryDate").get();
+      return snapshot.docs.map(doc => doc.data());
+    }
+
+    async function init() {
+      const entries = await fetchEntries();
+      allEntries = entries;
+      renderCalendar(entries);  // Now owned by calendar.js
+      setMonthChangeHandler((month, year) => renderCalendar(entries, month, year));
+      renderTable(entries);
+      renderCharts(entries);
+    }
+
+    window.addEventListener("DOMContentLoaded", init);
+  </script>
+</body>
+</html>
