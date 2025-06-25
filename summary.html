@@ -108,15 +108,7 @@
       return snapshot.docs.map(doc => doc.data());
     }
 
-    async function init() {
-      const entries = await fetchEntries();
-      allEntries = entries;
-      renderCalendar(entries);  // Now owned by calendar.js
-      setMonthChangeHandler((month, year) => renderCalendar(entries, month, year));
-      renderTable(entries);
-      renderCharts(entries);
-    }
-function renderTable(cycle) {
+    function renderTable(cycle) {
   const tbody = document.querySelector("#summaryTable tbody");
   tbody.innerHTML = "";
   const today = formatDate(new Date());
@@ -162,6 +154,16 @@ if ((todayEntry.phase || '').toLowerCase() === 'post-ovulation') {
     phaseDisplay = 'Post-Ovulation';
   }
 }
+
+    async function init() {
+      const entries = await fetchEntries();
+      allEntries = entries;
+      renderCalendar(entries);  // Now owned by calendar.js
+      setMonthChangeHandler((month, year) => renderCalendar(entries, month, year));
+      renderTable(entries);
+      renderCharts(entries);
+    }
+
 
 
   const row = document.createElement("tr");
