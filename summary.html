@@ -109,68 +109,51 @@
     }
 
     function renderTable(cycle) {
-  const tbody = document.querySelector("#summaryTable tbody");
-  tbody.innerHTML = "";
-  const today = formatDate(new Date());
-  const todayEntry = cycle.find(e => formatDate(e.entryDate) === today);
-  if (!todayEntry) return;
+      const tbody = document.querySelector("#summaryTable tbody");
+      tbody.innerHTML = "";
+      const today = formatDate(new Date());
+      const todayEntry = cycle.find(e => formatDate(e.entryDate) === today);
+      if (!todayEntry) return;
 
-  const cd = Math.floor((new Date(todayEntry.entryDate) - new Date(cycle[0].entryDate)) / 86400000) + 1;
+      const cd = Math.floor((new Date(todayEntry.entryDate) - new Date(cycle[0].entryDate)) / 86400000) + 1;
 
-  // Use 'surge' as ovulation marker
-  const surgeEntry = cycle.find(e => (e.opk || '').toLowerCase() === 'surge');
-  let dpo = "-";
-  if (surgeEntry) {
-    const surgeDate = new Date(surgeEntry.entryDate);
-    const todayDate = new Date(todayEntry.entryDate);
-    const diffDays = Math.floor((todayDate - surgeDate) / 86400000);
+      const surgeEntry = cycle.find(e => (e.opk || '').toLowerCase() === 'surge');
+      let dpo = "-";
+      if (surgeEntry) {
+        const surgeDate = new Date(surgeEntry.entryDate);
+        const todayDate = new Date(todayEntry.entryDate);
+        const diffDays = Math.floor((todayDate - surgeDate) / 86400000);
+        dpo = diffDays >= 2 ? diffDays - 1 : "0";
+      }
 
-    // DPO = 1 two days after surge, 2 three days after, etc.
-    if (diffDays >= 2) {
-      dpo = diffDays - 1; // so day 2 after surge = 1 DPO
-    } else {
-      dpo = "0";
+      const bbt = todayEntry.bbt && !isNaN(parseFloat(todayEntry.bbt)) ? parseFloat(todayEntry.bbt).toFixed(2) : "-";
+      let phaseDisplay = todayEntry.phase || '-';
+
+      if ((todayEntry.phase || '').toLowerCase() === 'post-ovulation') {
+        if (surgeEntry) {
+          const surgeDate = new Date(surgeEntry.entryDate);
+          const ovulationDate = new Date(surgeDate);
+          ovulationDate.setDate(ovulationDate.getDate() + 1);
+          const todayDate = new Date(todayEntry.entryDate);
+          phaseDisplay = todayDate <= ovulationDate ? 'Ovulation' : 'Luteal';
+        } else {
+          phaseDisplay = 'Post-Ovulation';
+        }
+      }
+
+      const row = document.createElement("tr");
+      row.innerHTML = `<td>${todayEntry.entryDate}</td><td>${cd}</td><td>${bbt}</td><td>${phaseDisplay}</td><td>${dpo}</td>`;
+      tbody.appendChild(row);
     }
-  }
-
-  const bbt = todayEntry.bbt && !isNaN(parseFloat(todayEntry.bbt)) ? parseFloat(todayEntry.bbt).toFixed(2) : "-";
-  let phaseDisplay = todayEntry.phase || '-';
-
-if ((todayEntry.phase || '').toLowerCase() === 'post-ovulation') {
-  if (surgeEntry) {
-    const surgeDate = new Date(surgeEntry.entryDate);
-    const ovulationDate = new Date(surgeDate);
-    ovulationDate.setDate(ovulationDate.getDate() + 1); // ovulation = surge + 1
-
-    const todayDate = new Date(todayEntry.entryDate);
-
-    if (todayDate <= ovulationDate) {
-      phaseDisplay = 'Ovulation';
-    } else {
-      phaseDisplay = 'Luteal';
-    }
-  } else {
-    // If no surge detected, fallback to generic 'Post-Ovulation'
-    phaseDisplay = 'Post-Ovulation';
-  }
-}
 
     async function init() {
       const entries = await fetchEntries();
       allEntries = entries;
-      renderCalendar(entries);  // Now owned by calendar.js
+      renderCalendar(entries);
       setMonthChangeHandler((month, year) => renderCalendar(entries, month, year));
       renderTable(entries);
       renderCharts(entries);
     }
-
-
-
-  const row = document.createElement("tr");
-  row.innerHTML = `<td>${todayEntry.entryDate}</td><td>${cd}</td><td>${bbt}</td><td>${phaseDisplay}</td><td>${dpo}</td>`;
-  tbody.appendChild(row);
-}
-
 
     window.addEventListener("DOMContentLoaded", init);
   </script>
