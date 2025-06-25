@@ -383,7 +383,27 @@ function renderTable(cycle) {
   }
 
   const bbt = todayEntry.bbt && !isNaN(parseFloat(todayEntry.bbt)) ? parseFloat(todayEntry.bbt).toFixed(2) : "-";
-  const phaseDisplay = (todayEntry.phase || '-').toLowerCase() === 'post-ovulation' ? 'Luteal' : (todayEntry.phase || '-');
+  let phaseDisplay = todayEntry.phase || '-';
+
+if ((todayEntry.phase || '').toLowerCase() === 'post-ovulation') {
+  if (surgeEntry) {
+    const surgeDate = new Date(surgeEntry.entryDate);
+    const ovulationDate = new Date(surgeDate);
+    ovulationDate.setDate(ovulationDate.getDate() + 1); // ovulation = surge + 1
+
+    const todayDate = new Date(todayEntry.entryDate);
+
+    if (todayDate <= ovulationDate) {
+      phaseDisplay = 'Ovulation';
+    } else {
+      phaseDisplay = 'Luteal';
+    }
+  } else {
+    // If no surge detected, fallback to generic 'Post-Ovulation'
+    phaseDisplay = 'Post-Ovulation';
+  }
+}
+
 
   const row = document.createElement("tr");
   row.innerHTML = `<td>${todayEntry.entryDate}</td><td>${cd}</td><td>${bbt}</td><td>${phaseDisplay}</td><td>${dpo}</td>`;
