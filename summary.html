@@ -154,6 +154,98 @@
       tbody.appendChild(row);
     }
 
+    function renderCharts(cycle) {
+  const bbtCtx = document.getElementById("bbtChart").getContext("2d");
+  const cmCtx = document.getElementById("cmChart").getContext("2d");
+  const symptomsCtx = document.getElementById("symptomsChart").getContext("2d");
+  const moodCtx = document.getElementById("moodChart").getContext("2d");
+  const sexCtx = document.getElementById("sexChart").getContext("2d");
+
+  const dates = cycle.map(e => e.entryDate);
+  
+  const bbtValues = cycle.map(e => parseFloat(e.bbt) || null);
+  const cmValues = cycle.map(e => e.cm || '');
+  const moodValues = cycle.map(e => e.mood || '');
+  const symptomCounts = {};
+  const moodCounts = {};
+  const sexValues = cycle.map(e => (e.sex || '').toLowerCase() === 'y' ? 1 : 0);
+
+  cycle.forEach(e => {
+    if (Array.isArray(e.symptoms)) {
+      e.symptoms.forEach(symptom => {
+        symptomCounts[symptom] = (symptomCounts[symptom] || 0) + 1;
+      });
+    }
+
+    if (e.mood) {
+      moodCounts[e.mood] = (moodCounts[e.mood] || 0) + 1;
+    }
+  });
+
+  new Chart(bbtCtx, {
+    type: 'line',
+    data: {
+      labels: dates,
+      datasets: [{
+        label: 'BBT',
+        data: bbtValues,
+        borderColor: '#d15fa7',
+        backgroundColor: '#f8d4e8',
+        fill: false
+      }]
+    }
+  });
+
+  new Chart(cmCtx, {
+    type: 'bar',
+    data: {
+      labels: dates,
+      datasets: [{
+        label: 'Cervical Mucus',
+        data: cmValues.map(v => v ? 1 : 0),
+        backgroundColor: '#b7d7f6'
+      }]
+    }
+  });
+
+  new Chart(symptomsCtx, {
+    type: 'bar',
+    data: {
+      labels: Object.keys(symptomCounts),
+      datasets: [{
+        label: 'Symptom Count',
+        data: Object.values(symptomCounts),
+        backgroundColor: '#ffd3b6'
+      }]
+    }
+  });
+
+  new Chart(moodCtx, {
+    type: 'bar',
+    data: {
+      labels: Object.keys(moodCounts),
+      datasets: [{
+        label: 'Mood Count',
+        data: Object.values(moodCounts),
+        backgroundColor: '#c4d7b2'
+      }]
+    }
+  });
+
+  new Chart(sexCtx, {
+    type: 'bar',
+    data: {
+      labels: dates,
+      datasets: [{
+        label: 'Sex Activity',
+        data: sexValues,
+        backgroundColor: '#f2b3d0'
+      }]
+    }
+  });
+}
+
+
     async function init() {
       const entries = await fetchEntries();
       allEntries = entries;
