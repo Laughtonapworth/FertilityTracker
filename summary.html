@@ -88,6 +88,7 @@
 <span style="background:#f6b1b7;">Period</span>
 <span style="background:#b7d7f6;">Fertile (Flashing)</span>
 <span style="background:#5f9ed1; color:white;">Ovulation (Solid)</span>
+<span style="background:#d15f89; color:white;">Surge</span>
 <span style="background:#c8e6c9;">Post Ovulation</span>
 <span style="background:#fff0f5;">💖 Sex</span>
 <span style="background:#fff0f5;">😖 Cramps</span>
@@ -281,6 +282,7 @@ function renderCalendar(entries, month, year) {
       if (dayEntries.some(e => (e.phase || '').toLowerCase() === 'day1-period')) phaseClass = 'deep-red';
       else if (dayEntries.some(e => (e.phase || '').toLowerCase() === 'period')) phaseClass = 'red';
       else if (dayEntries.some(e => (e.phase || '').toLowerCase() === 'ovulation' || (e.opk || '').toLowerCase() === 'solid face')) phaseClass = 'bold-blue';
+      else if (dayEntries.some(e => (e.phase || '').toLowerCase() === 'ovulation' || (e.opk || '').toLowerCase() === 'surge')) phaseClass = 'bold-pink';
       else if (dayEntries.some(e => (e.opk || '').toLowerCase() === 'flashing face')) phaseClass = 'blue';
       else if (dayEntries.some(e => (e.phase || '').toLowerCase() === 'post-ovulation')) phaseClass = 'green';
 
