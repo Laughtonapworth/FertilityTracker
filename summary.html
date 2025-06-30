@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Cycle Summary</title>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Cycle Summary</title>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
     body { font-family: 'Segoe UI', sans-serif; background: #fffafc; padding: 1em; }
     h1, h2, h3 { text-align: center; }
     .nav-button {
@@ -68,52 +68,51 @@
     th {
       background: #eeb7c2; color: white;
     }
-  </style>
+</style>
 </head>
 <body>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyByvnVx2aZEldUfqS2c6VNC6UJRIOPvGws",
-      authDomain: "fertility-tracker-c35ff.firebaseapp.com",
-      projectId: "fertility-tracker-c35ff",
-      storageBucket: "fertility-tracker-c35ff.appspot.com",
-      messagingSenderId: "775022478214",
-      appId: "1:775022478214:web:107ba4f9e0043bee75a207"
-    };
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyByvnVx2aZEldUfqS2c6VNC6UJRIOPvGws",
+  authDomain: "fertility-tracker-c35ff.firebaseapp.com",
+  projectId: "fertility-tracker-c35ff",
+  storageBucket: "fertility-tracker-c35ff.appspot.com",
+  messagingSenderId: "775022478214",
+  appId: "1:775022478214:web:107ba4f9e0043bee75a207"
+};
 
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
 
-    let currentUserUID = null;
-    let currentCycle = [];
-    let avgCycleLength = null;
-    let avgLutealLength = null;
-    let avgPeriodLength = null;
+let currentUserUID = null;
+let currentCycle = [];
+let avgCycleLength = null;
+let avgLutealLength = null;
+let avgPeriodLength = null;
 
-    auth.onAuthStateChanged(user => {
-      if (!user) {
-        window.location.href = "index.html";
-      } else {
-        currentUserUID = user.uid;
-        run();
-      }
-    });
+auth.onAuthStateChanged(user => {
+  if (!user) {
+    window.location.href = "index.html";
+  } else {
+    currentUserUID = user.uid;
+    run();
+  }
+});
 
-    async function loadEntries() {
-      const snapshot = await db.collection("users").doc(currentUserUID).collection("entries").orderBy("entryDate").get();
-      return snapshot.docs.map(doc => doc.data());
-    }
+async function loadEntries() {
+  const legacySnapshot = await db.collection("entries").where("uid", "==", currentUserUID).orderBy("entryDate").get();
+  const userScopedSnapshot = await db.collection("users").doc(currentUserUID).collection("entries").orderBy("entryDate").get();
 
-    async function run() {
-      const entries = await loadEntries();
-      console.log("Loaded entries:", entries);
-      // TODO: render calendar, charts, tables etc using `entries`
-    }
-  </script>
+  const legacyEntries = legacySnapshot.docs.map(doc => doc.data());
+  const scopedEntries = userScopedSnapshot.docs.map(doc => doc.data());
+
+  return [...legacyEntries, ...scopedEntries];
+}
+</script>
 <h1>Cycle Summary</h1>
 <a class="nav-button" href="index.html">← Back to Home</a>
 <h2>Today's Summary</h2>
