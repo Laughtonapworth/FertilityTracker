@@ -194,14 +194,6 @@ async function run() {
 <canvas id="sexChart"></canvas>
 </div>
 <script>
-const firebaseConfig = {
-  apiKey: "AIzaSyByvnVx2aZEldUfqS2c6VNC6UJRIOPvGws",
-  authDomain: "fertility-tracker-c35ff.firebaseapp.com",
-  projectId: "fertility-tracker-c35ff"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-
 function formatDate(date) {
   const d = new Date(date);
   const year = d.getFullYear();
