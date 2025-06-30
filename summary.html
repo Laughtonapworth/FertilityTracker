@@ -75,6 +75,30 @@
 </style>
 </head>
 <body>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script>
+ const firebaseConfig = {
+    apiKey: "AIzaSyByvnVx2aZEldUfqS2c6VNC6UJRIOPvGws",
+    authDomain: "fertility-tracker-c35ff.firebaseapp.com",
+    projectId: "fertility-tracker-c35ff",
+    storageBucket: "fertility-tracker-c35ff.firebasestorage.app",
+    messagingSenderId: "775022478214",
+    appId: "1:775022478214:web:107ba4f9e0043bee75a207",
+      appId: "REPLACE_WITH_YOUR_APP_ID"
+
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+
+  auth.onAuthStateChanged(user => {
+    if (!user) {
+      window.location.href = "index.html"; // redirect to login
+    }
+  });
+</script>
+    
 <h1>Cycle Summary</h1>
 <a class="nav-button" href="index.html">← Back to Home</a>
 <h2>Today's Summary</h2>
