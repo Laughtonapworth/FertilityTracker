@@ -106,6 +106,32 @@ async function loadEntries() {
 
   return [...legacyEntries, ...scopedEntries];
 }
+
+async function run() {
+  try {
+    const entries = await loadEntries();
+    if (!entries.length) {
+      document.body.insertAdjacentHTML('beforeend', '<p style="text-align:center;">No entries found.</p>');
+      return;
+    }
+
+    // Store to global if needed
+    currentCycle = entries;
+
+    // TEMP: Just confirm entries were loaded
+    document.body.insertAdjacentHTML('beforeend', `<p style="text-align:center;">Loaded ${entries.length} entries.</p>`);
+
+    // TODO: Add rendering functions here
+    // renderCalendar(entries);
+    // renderCharts(entries);
+    // updateSummary(entries);
+
+    console.log("Loaded entries:", entries);
+  } catch (err) {
+    console.error("Error in run():", err);
+    document.body.insertAdjacentHTML('beforeend', `<p style="text-align:center; color:red;">Failed to load entries.</p>`);
+  }
+}
 </script>
 </body>
 </html>
