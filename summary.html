@@ -94,12 +94,13 @@ auth.onAuthStateChanged(user => {
 });
 
 async function loadEntries() {
-  console.log("Loading entries for UID:", currentUserUID);
+  console.log("Loading entries for user UID:", currentUserUID);
 
   const legacySnapshot = await db.collection("entries")
     .where("uid", "==", currentUserUID)
     .orderBy("entryDate")
     .get();
+
   console.log("Legacy entries count:", legacySnapshot.size);
 
   const userScopedSnapshot = await db.collection("users")
@@ -107,7 +108,8 @@ async function loadEntries() {
     .collection("entries")
     .orderBy("entryDate")
     .get();
-  console.log("Scoped entries count:", userScopedSnapshot.size);
+
+  console.log("User-scoped entries count:", userScopedSnapshot.size);
 
   const legacyEntries = legacySnapshot.docs.map(doc => doc.data());
   const scopedEntries = userScopedSnapshot.docs.map(doc => doc.data());
@@ -116,6 +118,7 @@ async function loadEntries() {
   mergedEntries.sort((a, b) => new Date(a.entryDate) - new Date(b.entryDate));
   return mergedEntries;
 }
+
 
 // rest of your code as is ...
 
