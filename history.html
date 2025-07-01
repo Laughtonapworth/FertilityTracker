@@ -68,16 +68,6 @@
     opacity: 0.8;
     line-height: 1;
   }
-  .bbt-nav-buttons {
-    text-align: center;
-    margin: 1em 0;
-  }
-  .bbt-nav-buttons button {
-    margin: 0 0.5em;
-    padding: 0.5em 1em;
-    font-size: 1em;
-    cursor: pointer;
-  }
 </style>
 </head>
 <body>
@@ -131,10 +121,6 @@
 
 <div class="chart-container">
   <h2>BBT Chart</h2>
-  <div class="bbt-nav-buttons">
-    <button id="prevCycleBtn">← Previous Cycle</button>
-    <button id="nextCycleBtn">Next Cycle →</button>
-  </div>
   <canvas id="bbtChart"></canvas>
 </div>
 <div class="chart-container">
@@ -169,11 +155,6 @@ let avgOvulationDay = null;
 let avgCycleLength = null;
 let avgPeriodLength = null;
 
-let cycles = [];
-let currentCycleIndex = 0;
-
-let bbtChartInstance;
-
 auth.onAuthStateChanged(async (user) => {
   if (!user) {
     window.location.href = "index.html";
@@ -182,7 +163,6 @@ auth.onAuthStateChanged(async (user) => {
   await run();
 });
 
-// Merge legacy and new user-scoped entries
 async function loadEntries() {
   const legacySnapshot = await db.collection("entries")
     .where("uid", "==", auth.currentUser.uid)
@@ -201,15 +181,6 @@ async function loadEntries() {
   const merged = [...legacyEntries, ...scopedEntries];
   merged.sort((a, b) => new Date(a.entryDate) - new Date(b.entryDate));
   return merged;
-}
-
-function uniqueDays(entries) {
-  const days = new Set();
-  entries.forEach(e => {
-    const day = new Date(e.entryDate).toISOString().slice(0,10);
-    days.add(day);
-  });
-  return Array.from(days);
 }
 
 function groupCycles(entries) {
@@ -245,7 +216,7 @@ function calculateAverages(cyclesLocal) {
   const sexCounts = [];
 
   for (const cycle of cyclesLocal) {
-    const uniqueCycleDays = uniqueDays(cycle);
+    const uniqueCycleDays = [...new Set(cycle.map(e => new Date(e.entryDate).toISOString().slice(0,10)))];
     if (uniqueCycleDays.length < 10) continue; // skip short cycles
 
     const ovIndex = cycle.findIndex(e => (e.opk || '').toLowerCase() === 'solid face');
@@ -392,34 +363,48 @@ function renderCalendar(month, year) {
         if (e.mood) iconFlags.mood = true;
       });
 
-      if (iconFlags.sex) box.appendChild(Object.assign(document.createElement('span'), {
-        textContent: '💖',
-        style: emojiStyle
-      }));
-      if (iconFlags.cramps) box.appendChild(Object.assign(document.createElement('span'), {
-        textContent: '😖',
-        style: emojiStyle
-      }));
-      if (iconFlags.spotting) box.appendChild(Object.assign(document.createElement('span'), {
-        textContent: '🔻',
-        style: emojiStyle
-      }));
-      if (iconFlags.mood) box.appendChild(Object.assign(document.createElement('span'), {
-        textContent: '🧠',
-        style: emojiStyle
-      }));
-      if (iconFlags.breastChanges) box.appendChild(Object.assign(document.createElement('span'), {
-        textContent: '🫶',
-        style: emojiStyle
-      }));
-      if (iconFlags.digestive) box.appendChild(Object.assign(document.createElement('span'), {
-        textContent: '🫃',
-        style: emojiStyle
-      }));
-      if (iconFlags.bbt) box.appendChild(Object.assign(document.createElement('span'), {
-        textContent: '🌡️',
-        style: emojiStyle
-      }));
+      if (iconFlags.sex) {
+        box.appendChild(Object.assign(document.createElement('span'), {
+          textContent: '💖',
+          style: emojiStyle
+        }));
+      }
+      if (iconFlags.cramps) {
+        box.appendChild(Object.assign(document.createElement('span'), {
+          textContent: '😖',
+          style: emojiStyle
+        }));
+      }
+      if (iconFlags.spotting) {
+        box.appendChild(Object.assign(document.createElement('span'), {
+          textContent: '🔻',
+          style: emojiStyle
+        }));
+      }
+      if (iconFlags.mood) {
+        box.appendChild(Object.assign(document.createElement('span'), {
+          textContent: '🧠',
+          style: emojiStyle
+        }));
+      }
+      if (iconFlags.breastChanges) {
+        box.appendChild(Object.assign(document.createElement('span'), {
+          textContent: '🫶',
+          style: emojiStyle
+        }));
+      }
+      if (iconFlags.digestive) {
+        box.appendChild(Object.assign(document.createElement('span'), {
+          textContent: '🫃',
+          style: emojiStyle
+        }));
+      }
+      if (iconFlags.bbt) {
+        box.appendChild(Object.assign(document.createElement('span'), {
+          textContent: '🌡️',
+          style: emojiStyle
+        }));
+      }
 
       box.title = dayEntries.map(e => {
         let parts = [];
@@ -449,69 +434,75 @@ function renderCalendar(month, year) {
   document.getElementById("monthLabel").textContent = new Date(year, month).toLocaleString('default', { month: 'long', year: 'numeric' });
 }
 
-function renderBBTChart(cycle) {
+let bbtChartInstance = null;
+
+function renderBBTChart(month, year) {
   if (bbtChartInstance) {
     bbtChartInstance.destroy();
   }
 
-  if (!cycle || cycle.length === 0) {
-    document.getElementById('bbtChart').getContext('2d').clearRect(0, 0, 900, 400);
-    return;
-  }
+  // Filter entries for given month & year with valid BBT
+  const filtered = allEntries.filter(e => {
+    const d = new Date(e.entryDate);
+    return d.getMonth() === month && d.getFullYear() === year && e.bbt && !isNaN(parseFloat(e.bbt));
+  });
 
-  // Extract unique dates sorted ascending
-  const uniqueDates = [...new Set(cycle.map(e => new Date(e.entryDate).toISOString().slice(0,10)))].sort();
+  // Sort by date ascending
+  filtered.sort((a,b) => new Date(a.entryDate) - new Date(b.entryDate));
 
-  // For each date get first valid BBT entry
+  const uniqueDates = [...new Set(filtered.map(e => new Date(e.entryDate).toISOString().slice(0,10)))];
+
+  // For each date pick first BBT entry
   const bbtValues = uniqueDates.map(date => {
-    const entry = cycle.find(e => new Date(e.entryDate).toISOString().slice(0,10) === date && e.bbt && !isNaN(parseFloat(e.bbt)));
+    const entry = filtered.find(e => new Date(e.entryDate).toISOString().slice(0,10) === date);
     return entry ? parseFloat(entry.bbt) : null;
   });
 
-  // X axis labels are date strings, formatted 'dd MMM' (e.g. '01 Jul')
   const labels = uniqueDates.map(d => {
     const dt = new Date(d);
     return dt.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
   });
 
-  // Find Period Day 1 index (first day with phase day1-period)
-  const periodDayIndex = uniqueDates.findIndex(date => cycle.some(e => {
-    return (e.phase || '').toLowerCase() === 'day1-period' && new Date(e.entryDate).toISOString().slice(0,10) === date;
-  }));
+  // Period day 1 and ovulation markers within month
+  const periodDayIndices = [];
+  const ovulationDayIndices = [];
 
-  // Find Ovulation Day index (day with opk 'solid face')
-  const ovulationDayIndex = uniqueDates.findIndex(date => cycle.some(e => {
-    return (e.opk || '').toLowerCase() === 'solid face' && new Date(e.entryDate).toISOString().slice(0,10) === date;
-  }));
+  uniqueDates.forEach((date, idx) => {
+    if (allEntries.some(e => (e.phase || '').toLowerCase() === 'day1-period' && new Date(e.entryDate).toISOString().slice(0,10) === date)) {
+      periodDayIndices.push(idx);
+    }
+    if (allEntries.some(e => (e.opk || '').toLowerCase() === 'solid face' && new Date(e.entryDate).toISOString().slice(0,10) === date)) {
+      ovulationDayIndices.push(idx);
+    }
+  });
 
-  // Prepare vertical lines plugin for period and ovulation markers
   const verticalLinesPlugin = {
     id: 'verticalLines',
-    afterDatasetsDraw(chart, args, options) {
+    afterDatasetsDraw(chart) {
       const ctx = chart.ctx;
-      const xAxis = chart.scales['x'];
-      const yAxis = chart.scales['y'];
+      const xAxis = chart.scales.x;
+      const yAxis = chart.scales.y;
 
       ctx.save();
       ctx.lineWidth = 2;
 
-      if (periodDayIndex !== -1) {
-        const x = xAxis.getPixelForValue(periodDayIndex);
-        ctx.strokeStyle = '#F44336'; // Red line for period day 1
+      periodDayIndices.forEach(idx => {
+        const x = xAxis.getPixelForValue(idx);
+        ctx.strokeStyle = '#F44336';
         ctx.beginPath();
         ctx.moveTo(x, yAxis.top);
         ctx.lineTo(x, yAxis.bottom);
         ctx.stroke();
-      }
+      });
 
-      if (ovulationDayIndex !== -1) {
-        const x = xAxis.getPixelForValue(ovulationDayIndex);
-        ctx.strokeStyle = '#FFC107'; // Yellow line for ovulation
+      ovulationDayIndices.forEach(idx => {
+        const x = xAxis.getPixelForValue(idx);
+        ctx.strokeStyle = '#FFC107';
         ctx.beginPath();
         ctx.moveTo(x, yAxis.top);
         ctx.lineTo(x, yAxis.bottom);
         ctx.stroke();
-      }
+      });
 
       ctx.restore();
     }
@@ -529,7 +520,7 @@ function renderBBTChart(cycle) {
         tension: 0.1,
         spanGaps: true,
         pointRadius: 4,
-        pointHoverRadius: 6,
+        pointHoverRadius: 6
       }]
     },
     options: {
@@ -538,7 +529,7 @@ function renderBBTChart(cycle) {
         y: {
           title: { display: true, text: 'Temperature (°C)' },
           min: Math.min(...bbtValues.filter(v => v !== null)) - 0.3,
-          max: Math.max(...bbtValues.filter(v => v !== null)) + 0.3,
+          max: Math.max(...bbtValues.filter(v => v !== null)) + 0.3
         },
         x: {
           title: { display: true, text: 'Date' },
@@ -557,51 +548,30 @@ function renderBBTChart(cycle) {
   });
 }
 
-function renderCharts(cyclesLocal) {
-  // Implement your other charts rendering logic here (CM, Symptoms, Mood etc.)
-  // For brevity, not included here; keep your existing code
+function renderCharts() {
+  // Placeholder: implement your other charts rendering (CM, symptoms, mood)
 }
 
-function run() {
-  loadEntries().then(mergedEntries => {
-    allEntries = mergedEntries;
-    cycles = groupCycles(allEntries);
-    calculateAverages(cycles);
+function changeMonth(offset) {
+  const newDate = new Date(viewYear, viewMonth + offset);
+  viewMonth = newDate.getMonth();
+  viewYear = newDate.getFullYear();
 
-    // Start with most recent completed cycle
-    currentCycleIndex = cycles.length - 1;
-
-    const today = new Date();
-    viewMonth = today.getMonth();
-    viewYear = today.getFullYear();
-
-    renderCalendar(viewMonth, viewYear);
-    renderBBTChart(cycles[currentCycleIndex]);
-    renderCharts(cycles);
-    updateButtons();
-  });
+  renderCalendar(viewMonth, viewYear);
+  renderBBTChart(viewMonth, viewYear);
+  renderCharts();
 }
 
-function updateButtons() {
-  document.getElementById('prevCycleBtn').disabled = currentCycleIndex <= 0;
-  document.getElementById('nextCycleBtn').disabled = currentCycleIndex >= cycles.length - 1;
+async function run() {
+  allEntries = await loadEntries();
+  calculateAverages(groupCycles(allEntries));
+  renderCalendar(viewMonth, viewYear);
+  renderBBTChart(viewMonth, viewYear);
+  renderCharts();
 }
 
-document.getElementById('prevCycleBtn').addEventListener('click', () => {
-  if (currentCycleIndex > 0) {
-    currentCycleIndex--;
-    renderBBTChart(cycles[currentCycleIndex]);
-    updateButtons();
-  }
-});
+run();
 
-document.getElementById('nextCycleBtn').addEventListener('click', () => {
-  if (currentCycleIndex < cycles.length - 1) {
-    currentCycleIndex++;
-    renderBBTChart(cycles[currentCycleIndex]);
-    updateButtons();
-  }
-});
 </script>
 </body>
 </html>
