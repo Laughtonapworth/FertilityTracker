@@ -255,18 +255,6 @@ function getCurrentCycle(entries) {
   return cycleEntries;
 }
 
-
-    
-function getCurrentCycle(entries) {
-  console.log('All entries:', entries);
-  const lastDay1Index = entries.map(e => (e.phase || '').toLowerCase()).lastIndexOf('day1-period');
-  console.log('Last day1-period index:', lastDay1Index);
-  if (lastDay1Index === -1) return [];
-  const currentCycle = entries.slice(lastDay1Index);
-  console.log('Current cycle entries:', currentCycle);
-  return currentCycle;
-}
-
 function groupCycles(entries) {
   const cycles = [];
   let currentCycle = [];
