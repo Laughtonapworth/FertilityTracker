@@ -106,6 +106,9 @@ async function loadEntries() {
 
   const mergedEntries = [...legacyEntries, ...scopedEntries];
   mergedEntries.sort((a, b) => new Date(a.entryDate) - new Date(b.entryDate));
+  console.log("Legacy entries:", legacyEntries);
+  console.log("Scoped entries:", scopedEntries);
+  console.log("Merged entries:", mergedEntries);
   return mergedEntries;
 }
 
