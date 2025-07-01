@@ -104,11 +104,17 @@ async function loadEntries() {
   const legacyEntries = legacySnapshot.docs.map(doc => doc.data());
   const scopedEntries = userScopedSnapshot.docs.map(doc => doc.data());
 
+  console.log("Legacy entries count:", legacyEntries.length);
+  console.log("Scoped entries count:", scopedEntries.length);
+
+  scopedEntries.forEach(e => {
+    if (e.entryDate && e.entryDate.includes('2025-07-01')) {
+      console.log("Found new entry for 2025-07-01:", e);
+    }
+  });
+
   const mergedEntries = [...legacyEntries, ...scopedEntries];
   mergedEntries.sort((a, b) => new Date(a.entryDate) - new Date(b.entryDate));
-  console.log("Legacy entries:", legacyEntries);
-  console.log("Scoped entries:", scopedEntries);
-  console.log("Merged entries:", mergedEntries);
   return mergedEntries;
 }
 
