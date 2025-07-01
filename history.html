@@ -4,10 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Cycle History</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.1.0"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body { font-family: 'Segoe UI', sans-serif; background: #fffafc; padding: 1em; }
     h1, h2, h3 { text-align: center; }
@@ -71,556 +72,685 @@
   </style>
 </head>
 <body>
+  <h1>Cycle History</h1>
+  <a class="nav-button" href="index.html">← Back to Home</a>
 
-<h1>Cycle History</h1>
-<a class="nav-button" href="index.html">← Back to Home</a>
+  <h2>Cycle Averages</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Avg. Cycle Length</th>
+        <th>Avg. Luteal Phase</th>
+        <th>Avg. Period Length</th>
+        <th>Avg. Sex Entries / Cycle</th>
+      </tr>
+    </thead>
+    <tbody><tr id="averagesRow"><td>–</td><td>–</td><td>–</td><td>–</td></tr></tbody>
+  </table>
 
-<h2>Cycle Averages</h2>
-<table>
-  <thead>
-    <tr>
-      <th>Avg. Cycle Length</th>
-      <th>Avg. Luteal Phase</th>
-      <th>Avg. Period Length</th>
-      <th>Avg. Ovulation Day</th>
-      <th>Avg. Sex Entries / Cycle</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr id="averagesRow"><td>–</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
-  </tbody>
-</table>
+  <div class="legend">
+    <span style="background:#e76f8a; color:white;">Day 1 Period</span>
+    <span style="background:#f6b1b7;">Period</span>
+    <span style="background:#b7d7f6;">Fertile (Flashing)</span>
+    <span style="background:#5f9ed1; color:white;">Ovulation (Solid)</span>
+    <span style="background:#c8e6c9;">Post Ovulation</span>
+    <span style="background:#fff0f5;">💖 Sex</span>
+    <span style="background:#fff0f5;">😖 Cramps</span>
+    <span style="background:#fff0f5;">🔻 Spotting</span>
+    <span style="background:#fff0f5;">🧠 Mood</span>
+    <span style="background:#fff0f5;">🌡️ BBT</span>
+    <span style="background:#fff0f5;">🫶 Breast Changes</span>
+    <span style="background:#fff0f5;">🫃 Digestive</span>
+  </div>
 
-<div class="legend">
-  <span style="background:#e76f8a; color:white;">Day 1 Period</span>
-  <span style="background:#f6b1b7;">Period</span>
-  <span style="background:#b7d7f6;">Fertile (Flashing)</span>
-  <span style="background:#5f9ed1; color:white;">Ovulation (Solid)</span>
-  <span style="background:#c8e6c9;">Post Ovulation</span>
-  <span style="background:#fff0f5;">💖 Sex</span>
-  <span style="background:#fff0f5;">😖 Cramps</span>
-  <span style="background:#fff0f5;">🔻 Spotting</span>
-  <span style="background:#fff0f5;">🧠 Mood</span>
-  <span style="background:#fff0f5;">🌡️ BBT</span>
-  <span style="background:#fff0f5;">🫶 Breast Changes</span>
-  <span style="background:#fff0f5;">🫃 Digestive</span>
-</div>
+  <div id="predictionBanner" style="text-align:center; margin-bottom: 1em; font-weight: bold;"></div>
 
-<div id="predictionBanner" style="text-align:center; margin-bottom: 1em; font-weight: bold;"></div>
+  <div class="calendar-nav">
+    <button onclick="changeMonth(-1)">◀</button>
+    <span id="monthLabel"></span>
+    <button onclick="changeMonth(1)">▶</button>
+  </div>
 
-<div class="calendar-nav">
-  <button onclick="changeMonth(-1)">◀</button>
-  <span id="monthLabel"></span>
-  <button onclick="changeMonth(1)">▶</button>
-</div>
+  <div style="text-align:center; margin-bottom:1em; font-weight:bold;">
+    <span>Predictions: </span>
+    <span style="color:#F44336;">🔴 Period Days</span>
+    <span style="color:#4CAF50;">🟢 Fertile Window</span> | 
+    <span style="color:#FFC107;">🟡 Ovulation Day</span> | 
+  </div>
 
-<div style="text-align:center; margin-bottom:1em; font-weight:bold;">
-  <span>Predictions: </span>
-  <span style="color:#F44336;">🔴 Period Days</span>
-  <span style="color:#4CAF50;">🟢 Fertile Window</span> | 
-  <span style="color:#FFC107;">🟡 Ovulation Day</span> | 
-</div>
+  <div class="calendar-grid" id="calendarWeekdays"></div>
+  <div class="calendar-grid" id="calendarGrid"></div>
 
-<div class="calendar-grid" id="calendarWeekdays"></div>
-<div class="calendar-grid" id="calendarGrid"></div>
+  <div class="chart-container">
+    <h2>BBT Chart</h2>
+    <canvas id="bbtChart"></canvas>
+  </div>
+  <div class="chart-container">
+    <h2>CM Pattern</h2>
+    <canvas id="cmChart"></canvas>
+  </div>
+  <div class="chart-container">
+    <h2>Average Symptoms</h2>
+    <canvas id="symptomsChart"></canvas>
+  </div>
+  <div class="chart-container">
+    <h2>Mood Timeline</h2>
+    <canvas id="moodChart"></canvas>
+  </div>
 
-<div class="chart-container">
-  <h2>BBT Chart</h2>
-  <canvas id="bbtChart"></canvas>
-</div>
-<div class="chart-container">
-  <h2>CM Pattern</h2>
-  <canvas id="cmChart"></canvas>
-</div>
-<div class="chart-container">
-  <h2>Average Symptoms</h2>
-  <canvas id="symptomsChart"></canvas>
-</div>
-<div class="chart-container">
-  <h2>Mood Frequency</h2>
-  <canvas id="moodChart"></canvas>
-</div>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyByvnVx2aZEldUfqS2c6VNC6UJRIOPvGws",
+      authDomain: "fertility-tracker-c35ff.firebaseapp.com",
+      projectId: "fertility-tracker-c35ff"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
 
-<script>
-  // Firebase config & init
-  const firebaseConfig = {
-    apiKey: "AIzaSyByvnVx2aZEldUfqS2c6VNC6UJRIOPvGws",
-    authDomain: "fertility-tracker-c35ff.firebaseapp.com",
-    projectId: "fertility-tracker-c35ff",
-    storageBucket: "fertility-tracker-c35ff.appspot.com",
-    messagingSenderId: "775022478214",
-    appId: "1:775022478214:web:107ba4f9e0043bee75a207"
-  };
+    let allEntries = [];
+    let viewMonth = new Date().getMonth();
+    let viewYear = new Date().getFullYear();
 
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-  const db = firebase.firestore();
+    let avgLutealLength = null;
+    let avgOvulationDay = null;
+    let avgCycleLength = null;
+    let avgPeriodLength = null;
 
-  let allEntries = [];
-  let viewMonth = new Date().getMonth();
-  let viewYear = new Date().getFullYear();
-
-  // Parse YYYY-MM-DD string as local date object (midnight local)
-  function parseLocalDate(dateStr) {
-    const [y,m,d] = dateStr.split('-').map(Number);
-    return new Date(y, m-1, d);
-  }
-
-  // Format Date object as YYYY-MM-DD string
-  function formatLocalDate(dateObj) {
-    return `${dateObj.getFullYear()}-${String(dateObj.getMonth()+1).padStart(2,'0')}-${String(dateObj.getDate()).padStart(2,'0')}`;
-  }
-
-  // Group entries by local date string, but only one entry per date — last entry overrides
-  function groupEntriesOnePerDay(entries) {
-    const map = {};
-    entries.forEach(e => {
-      const dayKey = formatLocalDate(parseLocalDate(e.entryDate));
-      map[dayKey] = e; // overwrite duplicates, keeping last one per day
-    });
-    return Object.values(map);
-  }
-
-  // Group all complete cycles only (day1-period to next day1-period), exclude last if incomplete
-  function groupCycles(entries) {
-    const cycles = [];
-    let currentCycle = [];
-
-    for (const e of entries) {
-      if ((e.phase || '').toLowerCase() === 'day1-period') {
-        if (currentCycle.length) cycles.push([...currentCycle]);
-        currentCycle = [];
+    // Wait for auth and get current user UID
+    let currentUserUID = null;
+    auth.onAuthStateChanged(user => {
+      if (!user) {
+        window.location.href = "index.html";
+        return;
       }
-      currentCycle.push(e);
-    }
-    // Exclude last cycle if incomplete: needs solid face and last entry older than 4 days
-    const lastCycle = [...currentCycle];
-    const hasSolidFace = lastCycle.some(e => (e.opk || '').toLowerCase() === 'solid face');
-    const lastDate = parseLocalDate(lastCycle.at(-1)?.entryDate || '1970-01-01');
-    const daysSinceLastEntry = (new Date() - lastDate) / 86400000;
-
-    if (lastCycle.length > 3 && hasSolidFace && daysSinceLastEntry > 4) {
-      cycles.push(lastCycle);
-    }
-    return cycles;
-  }
-
-  // Calculate averages from completed cycles only, with one entry per day
-  function calculateAverages(cycles) {
-    const cycleLengths = [];
-    const lutealPhases = [];
-    const periodLengths = [];
-    const ovulationDays = [];
-    const sexFreqPerCycle = [];
-
-    cycles.forEach(cycle => {
-      const cycleOnePerDay = groupEntriesOnePerDay(cycle).sort((a,b) => parseLocalDate(a.entryDate) - parseLocalDate(b.entryDate));
-      if(cycleOnePerDay.length < 10) return; // skip too short
-
-      const start = parseLocalDate(cycleOnePerDay[0].entryDate);
-      const end = parseLocalDate(cycleOnePerDay[cycleOnePerDay.length-1].entryDate);
-      const duration = (end - start) / 86400000 + 1;
-
-      const ovIndex = cycleOnePerDay.findIndex(e => (e.opk || '').toLowerCase() === 'solid face');
-      if(ovIndex === -1) return;
-
-      cycleLengths.push(duration);
-      lutealPhases.push(cycleOnePerDay.length - ovIndex - 1);
-      const periodCount = cycleOnePerDay.filter(e => ['day1-period','period'].includes((e.phase || '').toLowerCase())).length;
-      periodLengths.push(periodCount);
-      ovulationDays.push(ovIndex + 1);
-      const sexCount = cycleOnePerDay.filter(e => (e.sex || '').trim().toLowerCase() === 'yes').length;
-      sexFreqPerCycle.push(sexCount);
+      currentUserUID = user.uid;
+      run();
     });
 
-    const avg = arr => arr.length ? Math.round(arr.reduce((a,b) => a+b,0) / arr.length) : '–';
-
-    avgCycleLength = avg(cycleLengths);
-    avgLutealLength = avg(lutealPhases);
-    avgPeriodLength = avg(periodLengths);
-    avgOvulationDay = avg(ovulationDays);
-    const avgSexFreq = avg(sexFreqPerCycle);
-
-    const row = document.getElementById('averagesRow');
-    row.innerHTML = `
-      <td>${avgCycleLength}</td>
-      <td>${avgLutealLength}</td>
-      <td>${avgPeriodLength}</td>
-      <td>${avgOvulationDay}</td>
-      <td>${avgSexFreq}</td>
-    `;
-  }
-
-  // Group entries by local date string, all entries included
-  function groupEntriesByDate(entries) {
-    const grouped = {};
-    entries.forEach(e => {
-      const dateKey = formatLocalDate(parseLocalDate(e.entryDate));
-      if (!grouped[dateKey]) grouped[dateKey] = [];
-      grouped[dateKey].push(e);
-    });
-    return grouped;
-  }
-
-  // Generate prediction days from averages & last day1-period start
-  function generatePredictionDays() {
-    const predictionDays = {};
-    const lastDay1Entry = [...allEntries].reverse().find(e => (e.phase || '').toLowerCase() === 'day1-period');
-
-    if (!lastDay1Entry || !avgCycleLength || !avgLutealLength) return predictionDays;
-
-    const cycleStart = parseLocalDate(lastDay1Entry.entryDate);
-
-    for(let i=1; i<=3; i++) {
-      const predictedPeriod = new Date(cycleStart);
-      predictedPeriod.setDate(predictedPeriod.getDate() + avgCycleLength * i);
-
-      const ovulationDay = new Date(predictedPeriod);
-      ovulationDay.setDate(ovulationDay.getDate() - avgLutealLength);
-
-      const fertileStart = new Date(ovulationDay);
-      fertileStart.setDate(fertileStart.getDate() - 5);
-
-      // Fertile window: 5 days before ovulation
-      for(let d=0; d<5; d++) {
-        const fertileDay = new Date(fertileStart);
-        fertileDay.setDate(fertileDay.getDate() + d);
-        predictionDays[formatLocalDate(fertileDay)] = '🟢';
-      }
-      // Ovulation day
-      predictionDays[formatLocalDate(ovulationDay)] = '🟡';
-
-      // Period days (avgPeriodLength days from predicted period start)
-      for(let d=0; d<avgPeriodLength; d++) {
-        const periodDay = new Date(predictedPeriod);
-        periodDay.setDate(periodDay.getDate() + d);
-        predictionDays[formatLocalDate(periodDay)] = '🔴';
-      }
-    }
-    return predictionDays;
-  }
-
-  // Render calendar grid for month/year
-  function renderCalendar(month, year) {
-    const container = document.getElementById('calendarGrid');
-    container.innerHTML = '';
-
-    document.getElementById('calendarWeekdays').innerHTML = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']
-      .map(d => `<div class="weekday">${d}</div>`).join('');
-
-    const entriesByDate = groupEntriesByDate(allEntries);
-    const predictionDays = generatePredictionDays();
-
-    const start = new Date(year, month, 1);
-    const end = new Date(year, month + 1, 0);
-
-    const offset = (start.getDay() + 6) % 7; // Monday = 0
-
-    for(let i=0; i<offset; i++) {
-      container.appendChild(document.createElement('div'));
+    async function loadEntries() {
+      const userEntriesSnapshot = await db.collection("users")
+        .doc(currentUserUID)
+        .collection("entries")
+        .orderBy("entryDate")
+        .get();
+      return userEntriesSnapshot.docs.map(doc => doc.data());
     }
 
-    for(let day=1; day<=end.getDate(); day++) {
-      const dateObj = new Date(year, month, day);
-      const dateStr = formatLocalDate(dateObj);
-      const dayEntries = entriesByDate[dateStr] || [];
+    function groupCycles(entries) {
+      const cycles = [];
+      let currentCycle = [];
 
-      const box = document.createElement('div');
-      box.className = 'day-box';
-      box.textContent = day;
-
-      if(dayEntries.length > 0) {
-        let phaseClass = null;
-        if(dayEntries.some(e => (e.phase || '').toLowerCase() === 'day1-period')) phaseClass = 'deep-red';
-        else if(dayEntries.some(e => (e.phase || '').toLowerCase() === 'period')) phaseClass = 'red';
-        else if(dayEntries.some(e => (e.phase || '').toLowerCase() === 'ovulation' || (e.opk || '').toLowerCase() === 'solid face')) phaseClass = 'bold-blue';
-        else if(dayEntries.some(e => (e.opk || '').toLowerCase() === 'flashing face')) phaseClass = 'blue';
-        else if(dayEntries.some(e => (e.phase || '').toLowerCase() === 'post-ovulation')) phaseClass = 'green';
-
-        if(phaseClass) box.classList.add(phaseClass);
-
-        const emojiStyle = 'font-size: 0.9em; display: block;';
-
-        const iconFlags = { sex:false, breastChanges:false, digestive:false, bbt:false, cramps:false, spotting:false, mood:false };
-
-        dayEntries.forEach(e => {
-          if((e.sex || '').toLowerCase() === 'yes') iconFlags.sex = true;
-          if(e.breastChanges && e.breastChanges.toLowerCase() !== 'none') iconFlags.breastChanges = true;
-          if(e.digestive && e.digestive.toLowerCase() !== 'none') iconFlags.digestive = true;
-          if(e.bbt && !isNaN(parseFloat(e.bbt))) iconFlags.bbt = true;
-          if(e.cramps && e.cramps.toLowerCase() !== 'none') iconFlags.cramps = true;
-          if(e.spotting && e.spotting.toLowerCase() !== 'none') iconFlags.spotting = true;
-          if(e.mood) iconFlags.mood = true;
-        });
-
-        if(iconFlags.sex) box.appendChild(Object.assign(document.createElement('span'), {textContent:'💖', style:emojiStyle}));
-        if(iconFlags.cramps) box.appendChild(Object.assign(document.createElement('span'), {textContent:'😖', style:emojiStyle}));
-        if(iconFlags.spotting) box.appendChild(Object.assign(document.createElement('span'), {textContent:'🔻', style:emojiStyle}));
-        if(iconFlags.mood) box.appendChild(Object.assign(document.createElement('span'), {textContent:'🧠', style:emojiStyle}));
-        if(iconFlags.breastChanges) box.appendChild(Object.assign(document.createElement('span'), {textContent:'🫶', style:emojiStyle}));
-        if(iconFlags.digestive) box.appendChild(Object.assign(document.createElement('span'), {textContent:'🫃', style:emojiStyle}));
-        if(iconFlags.bbt) box.appendChild(Object.assign(document.createElement('span'), {textContent:'🌡️', style:emojiStyle}));
-
-        box.title = dayEntries.map(e => {
-          let parts = [];
-          if(e.mood) parts.push(`Mood: ${e.mood}`);
-          if(e.cramps && e.cramps.toLowerCase() !== 'none') parts.push(`Cramps: ${e.cramps}`);
-          if(e.spotting && e.spotting.toLowerCase() !== 'none') parts.push(`Spotting: ${e.spotting}`);
-          if(e.sex && e.sex.toLowerCase() === 'yes') parts.push(`Sex: Yes`);
-          if(e.bbt) parts.push(`BBT: ${e.bbt}`);
-          if(e.breastChanges && e.breastChanges.toLowerCase() !== 'none') parts.push(`Breast Changes`);
-          if(e.digestive && e.digestive.toLowerCase() !== 'none') parts.push(`Digestive Symptoms`);
-          return parts.join('\n');
-        }).join('\n\n');
-      } else if(predictionDays[dateStr]) {
-        box.appendChild(Object.assign(document.createElement('span'), {
-          textContent: predictionDays[dateStr],
-          style: 'font-size: 0.9em; display: block; opacity: 0.6;'
-        }));
+      for (const e of entries) {
+        if ((e.phase || '').toLowerCase() === 'day1-period') {
+          if (currentCycle.length) cycles.push([...currentCycle]);
+          currentCycle = [];
+        }
+        currentCycle.push(e);
       }
 
-      container.appendChild(box);
-    }
+      // Include last cycle only if completed (has solid face and last entry > 4 days ago)
+      const lastCycle = [...currentCycle];
+      const hasSolidFace = lastCycle.some(e => (e.opk || '').toLowerCase() === 'solid face');
+      const lastDate = new Date(lastCycle.at(-1)?.entryDate || 0);
+      const daysSinceLastEntry = (new Date() - lastDate) / 86400000;
 
-    viewMonth = month;
-    viewYear = year;
-
-    document.getElementById('monthLabel').textContent = new Date(year, month).toLocaleString('default', { month: 'long', year: 'numeric' });
-  }
-
-  // Change month for calendar & update charts
-  function changeMonth(offset) {
-    const newDate = new Date(viewYear, viewMonth + offset);
-    viewMonth = newDate.getMonth();
-    viewYear = newDate.getFullYear();
-
-    renderCalendar(viewMonth, viewYear);
-    renderCharts(groupCycles(allEntries));
-  }
-
-  // Group all cycles including incomplete last
-  function groupAllCycles(entries) {
-    const cycles = [];
-    let currentCycle = [];
-
-    for(const e of entries) {
-      if((e.phase || '').toLowerCase() === 'day1-period') {
-        if(currentCycle.length) cycles.push([...currentCycle]);
-        currentCycle = [];
+      if (lastCycle.length > 3 && hasSolidFace && daysSinceLastEntry > 4) {
+        cycles.push(lastCycle);
       }
-      currentCycle.push(e);
+
+      return cycles;
     }
-    if(currentCycle.length) cycles.push(currentCycle);
-    return cycles;
-  }
 
-  // Render all charts
-  function renderCharts(cycles) {
-    // BBT chart: show historical data for visible month
-    const bbtEntries = allEntries
-      .filter(e => {
-        const d = parseLocalDate(e.entryDate);
-        return d.getMonth() === viewMonth && d.getFullYear() === viewYear && !isNaN(parseFloat(e.bbt));
-      })
-      .sort((a,b) => parseLocalDate(a.entryDate) - parseLocalDate(b.entryDate));
+    function groupEntriesByDate(entries) {
+      return entries.reduce((acc, e) => {
+        const dateKey = new Date(e.entryDate).toLocaleDateString('en-CA');
+        if (!acc[dateKey]) acc[dateKey] = [];
+        acc[dateKey].push(e);
+        return acc;
+      }, {});
+    }
 
-    const bbtData = bbtEntries.map(e => parseFloat(e.bbt));
-    const bbtLabels = bbtEntries.map(e => {
-      const d = parseLocalDate(e.entryDate);
-      return d.toLocaleDateString('en-GB', { day:'numeric', month:'short' });
-    });
+    function calculateAverages(cycles) {
+      const cycleLengths = [];
+      const lutealPhases = [];
+      const periodLengths = [];
 
-    if(window.bbtChartInstance) window.bbtChartInstance.destroy();
-    window.bbtChartInstance = new Chart(document.getElementById('bbtChart'), {
-      type: 'line',
-      data: {
-        labels: bbtLabels.length ? bbtLabels : ['No Data'],
-        datasets: [{
-          label: "BBT",
-          data: bbtData.length ? bbtData : [null],
-          borderColor: 'purple',
-          fill: false,
-          tension: 0.1
-        }]
-      },
-      options: {
-        responsive: true,
-        scales: {
-          y: { title: { display: true, text: 'Temperature (°C)' } },
-          x: { title: { display: true, text: 'Date' } }
+      for (const cycle of cycles) {
+        const start = new Date(cycle[0].entryDate);
+        const end = new Date(cycle[cycle.length - 1].entryDate);
+        const duration = (end - start) / 86400000 + 1;
+
+        if (duration < 10) continue;
+
+        const ovIndex = cycle.findIndex(e => (e.opk || '').toLowerCase() === 'solid face');
+        if (ovIndex === -1) continue;
+
+        cycleLengths.push(duration);
+        lutealPhases.push(cycle.length - ovIndex - 1);
+
+        const periodCount = cycle.filter(e => ['day1-period', 'period'].includes((e.phase || '').toLowerCase())).length;
+        periodLengths.push(periodCount);
+      }
+
+      avgCycleLength = cycleLengths.length ? cycleLengths.reduce((a, b) => a + b, 0) / cycleLengths.length : null;
+      avgLutealLength = lutealPhases.length ? Math.round(lutealPhases.reduce((a, b) => a + b, 0) / lutealPhases.length) : null;
+      avgPeriodLength = periodLengths.length ? (periodLengths.reduce((a, b) => a + b, 0) / periodLengths.length) : null;
+
+      const ovulationDays = cycles
+        .map(cycle => cycle.findIndex(e => (e.opk || '').toLowerCase() === 'solid face'))
+        .filter(index => index !== -1)
+        .map(index => index + 1);
+
+      avgOvulationDay = ovulationDays.length
+        ? Math.round(ovulationDays.reduce((a, b) => a + b, 0) / ovulationDays.length)
+        : null;
+
+      const sexFreqPerCycle = [];
+
+      cycles.forEach(cycle => {
+        const sexCount = cycle.filter(e => (e.sex || '').trim().toLowerCase() === 'yes').length;
+        sexFreqPerCycle.push(sexCount);
+      });
+
+      const avgSexFreq = sexFreqPerCycle.length
+        ? Math.round(sexFreqPerCycle.reduce((a, b) => a + b, 0) / sexFreqPerCycle.length)
+        : 0;
+
+      const avg = arr => arr.length ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : '–';
+
+      document.getElementById("averagesRow").innerHTML = `
+        <td>${avg(cycleLengths)}</td>
+        <td>${avg(lutealPhases)}</td>
+        <td>${avg(periodLengths)}</td>
+        <td>${avgSexFreq}</td>
+      `;
+    }
+
+    function generatePredictionDays() {
+      let predictionDays = {};
+      const lastDay1 = [...allEntries].reverse().find(e => (e.phase || '').toLowerCase() === 'day1-period');
+
+      if (!lastDay1 || !avgCycleLength || !avgLutealLength) return predictionDays;
+
+      const cycleStart = new Date(lastDay1.entryDate);
+
+      for (let cycleNum = 1; cycleNum <= 3; cycleNum++) {
+        const predictedPeriodDate = new Date(cycleStart);
+        predictedPeriodDate.setDate(predictedPeriodDate.getDate() + Math.round(avgCycleLength) * cycleNum);
+
+        const ovDate = new Date(predictedPeriodDate);
+        ovDate.setDate(ovDate.getDate() - avgLutealLength);
+
+        const fertileStart = new Date(ovDate);
+        fertileStart.setDate(fertileStart.getDate() - 5);
+
+        for (let i = 0; i <= 4; i++) {
+          const d = new Date(fertileStart);
+          d.setDate(d.getDate() + i);
+          const key = d.toLocaleDateString('en-CA');
+          predictionDays[key] = '🟢';
+        }
+
+        const ovKey = ovDate.toLocaleDateString('en-CA');
+        predictionDays[ovKey] = '🟡';
+
+        const periodLength = Math.round(avgPeriodLength) || 5;
+        for (let i = 0; i < periodLength; i++) {
+          const periodDay = new Date(predictedPeriodDate);
+          periodDay.setDate(periodDay.getDate() + i);
+          const key = periodDay.toLocaleDateString('en-CA');
+          predictionDays[key] = '🔴';
         }
       }
-    });
+      return predictionDays;
+    }
 
-    // CM pattern average per cycle
-    const cmTypes = ['dry', 'sticky', 'creamy', 'watery', 'egg white'];
-    const cmTypeCounts = { dry: 0, sticky: 0, creamy: 0, watery: 0, 'egg white': 0 };
-    let totalCycles = 0;
+    function renderCalendar(month, year) {
+      const container = document.getElementById("calendarGrid");
+      container.innerHTML = "";
 
-    cycles.forEach(cycle => {
-      const typesSeen = new Set();
-      cycle.forEach(e => {
-        const cm = (e.cm || '').toLowerCase();
-        if(cmTypes.includes(cm)) {
-          typesSeen.add(cm);
+      document.getElementById("calendarWeekdays").innerHTML = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']
+        .map(d => `<div class="weekday">${d}</div>`).join('');
+
+      const map = groupEntriesByDate(allEntries);
+      const predictionDays = generatePredictionDays();
+
+      const start = new Date(year, month, 1);
+      const end = new Date(year, month + 1, 0);
+      const offset = (start.getDay() + 6) % 7;
+
+      for (let j = 0; j < offset; j++) {
+        container.appendChild(document.createElement("div"));
+      }
+
+      for (let d = 1; d <= end.getDate(); d++) {
+        const date = new Date(year, month, d);
+        const key = date.toLocaleDateString('en-CA');
+        const dayEntries = map[key] || [];
+
+        const box = document.createElement("div");
+        box.className = "day-box";
+        box.textContent = d;
+
+        if (dayEntries.length > 0) {
+          const emojiStyle = 'font-size: 0.9em; display: block;';
+
+          let phaseClass = null;
+          if (dayEntries.some(e => (e.phase || '').toLowerCase() === 'day1-period')) phaseClass = 'deep-red';
+          else if (dayEntries.some(e => (e.phase || '').toLowerCase() === 'period')) phaseClass = 'red';
+          else if (dayEntries.some(e => (e.phase || '').toLowerCase() === 'ovulation' || (e.opk || '').toLowerCase() === 'solid face')) phaseClass = 'bold-blue';
+          else if (dayEntries.some(e => (e.opk || '').toLowerCase() === 'flashing face')) phaseClass = 'blue';
+          else if (dayEntries.some(e => (e.phase || '').toLowerCase() === 'post-ovulation')) phaseClass = 'green';
+
+          if (phaseClass) box.classList.add(phaseClass);
+
+          const iconFlags = {
+            sex: false,
+            breastChanges: false,
+            digestive: false,
+            bbt: false,
+            cramps: false,
+            spotting: false,
+            mood: false
+          };
+
+          dayEntries.forEach(e => {
+            if ((e.sex || '').toLowerCase() === 'yes') iconFlags.sex = true;
+            if (e.breastChanges && e.breastChanges.toLowerCase() !== 'none') iconFlags.breastChanges = true;
+            if (e.digestive && e.digestive.toLowerCase() !== 'none') iconFlags.digestive = true;
+            if (e.bbt && !isNaN(parseFloat(e.bbt))) iconFlags.bbt = true;
+            if (e.cramps && e.cramps.toLowerCase() !== 'none') iconFlags.cramps = true;
+            if (e.spotting && e.spotting.toLowerCase() !== 'none') iconFlags.spotting = true;
+            if (e.mood) iconFlags.mood = true;
+          });
+
+          if (iconFlags.sex) {
+            box.appendChild(Object.assign(document.createElement('span'), {
+              textContent: '💖',
+              style: emojiStyle
+            }));
+          }
+          if (iconFlags.cramps) {
+            box.appendChild(Object.assign(document.createElement('span'), {
+              textContent: '😖',
+              style: emojiStyle
+            }));
+          }
+          if (iconFlags.spotting) {
+            box.appendChild(Object.assign(document.createElement('span'), {
+              textContent: '🔻',
+              style: emojiStyle
+            }));
+          }
+          if (iconFlags.mood) {
+            box.appendChild(Object.assign(document.createElement('span'), {
+              textContent: '🧠',
+              style: emojiStyle
+            }));
+          }
+          if (iconFlags.breastChanges) {
+            box.appendChild(Object.assign(document.createElement('span'), {
+              textContent: '🫶',
+              style: emojiStyle
+            }));
+          }
+          if (iconFlags.digestive) {
+            box.appendChild(Object.assign(document.createElement('span'), {
+              textContent: '🫃',
+              style: emojiStyle
+            }));
+          }
+          if (iconFlags.bbt) {
+            box.appendChild(Object.assign(document.createElement('span'), {
+              textContent: '🌡️',
+              style: emojiStyle
+            }));
+          }
+
+          box.title = dayEntries.map(e => {
+            let parts = [];
+            if (e.mood) parts.push(`Mood: ${e.mood}`);
+            if (e.cramps && e.cramps.toLowerCase() !== 'none') parts.push(`Cramps: ${e.cramps}`);
+            if (e.spotting && e.spotting.toLowerCase() !== 'none') parts.push(`Spotting: ${e.spotting}`);
+            if (e.sex && e.sex.toLowerCase() === 'yes') parts.push(`Sex: Yes`);
+            if (e.bbt) parts.push(`BBT: ${e.bbt}`);
+            if (e.breastChanges && e.breastChanges.toLowerCase() !== 'none') parts.push(`Breast Changes`);
+            if (e.digestive && e.digestive.toLowerCase() !== 'none') parts.push(`Digestive Symptoms`);
+            return parts.join('\n');
+          }).join('\n\n');
+
+        } else if (predictionDays[key]) {
+          box.appendChild(Object.assign(document.createElement('span'), {
+            textContent: predictionDays[key],
+            style: 'font-size: 0.9em; display: block; opacity: 0.6;'
+          }));
+        }
+
+        container.appendChild(box);
+      }
+
+      viewMonth = month;
+      viewYear = year;
+
+      document.getElementById("monthLabel").textContent = new Date(year, month).toLocaleString('default', { month: 'long', year: 'numeric' });
+    }
+
+    function changeMonth(offset) {
+      const newDate = new Date(viewYear, viewMonth + offset);
+      viewMonth = newDate.getMonth();
+      viewYear = newDate.getFullYear();
+
+      renderCalendar(viewMonth, viewYear);
+      renderCharts(groupCycles(allEntries));
+    }
+
+    function groupAllCycles(entries) {
+      // Similar to groupCycles but returns all cycles including incomplete
+      const cycles = [];
+      let currentCycle = [];
+
+      for (const e of entries) {
+        if ((e.phase || '').toLowerCase() === 'day1-period') {
+          if (currentCycle.length) cycles.push([...currentCycle]);
+          currentCycle = [];
+        }
+        currentCycle.push(e);
+      }
+      if (currentCycle.length) cycles.push(currentCycle);
+      return cycles;
+    }
+
+    function renderCharts(cycles) {
+      console.log("Cycles passed to renderCharts:", cycles);
+
+      const bbtEntries = allEntries
+        .filter(e => {
+          const d = new Date(e.entryDate);
+          return d.getMonth() === viewMonth && d.getFullYear() === viewYear && !isNaN(parseFloat(e.bbt));
+        })
+        .sort((a, b) => new Date(a.entryDate) - new Date(b.entryDate));
+
+      console.log("Filtered BBT entries:", bbtEntries);
+
+      const bbtData = bbtEntries.map(e => parseFloat(e.bbt));
+      const bbtLabels = bbtEntries.map(e => {
+        const d = new Date(e.entryDate);
+        return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+      });
+
+      if (bbtData.length === 0) {
+        console.warn("No BBT data available for chart.");
+      }
+
+      const cmTypes = ['dry', 'sticky', 'creamy', 'watery', 'egg white'];
+      const cmAvgPerCycle = [];
+      const symptomsAvg = { cramps: 0, spotting: 0, breast: 0, digestive: 0 };
+      const moodLabels = [];
+      const moodValues = [];
+
+      if (!cycles || cycles.length === 0) {
+        console.warn("No cycles data available for charts.");
+      } else {
+        cycles.forEach((cycle) => {
+          const cmValues = cycle
+            .map(e => cmTypes.indexOf((e.cm || '').toLowerCase()))
+            .filter(v => v >= 0);
+          cmAvgPerCycle.push(cmValues.length ? cmValues.reduce((a,b) => a+b, 0) / cmValues.length : null);
+
+          symptomsAvg.cramps += cycle.filter(e => (e.cramps || '').toLowerCase() !== 'none').length / cycle.length;
+          symptomsAvg.spotting += cycle.filter(e => (e.spotting || '').toLowerCase() !== 'none').length / cycle.length;
+          symptomsAvg.breast += cycle.filter(e => (e.breastChanges || '').toLowerCase() !== 'none').length / cycle.length;
+          symptomsAvg.digestive += cycle.filter(e => (e.digestive || '').toLowerCase() !== 'none').length / cycle.length;
+
+          cycle.forEach(e => {
+            if (e.mood) {
+              moodLabels.push(e.entryDate);
+              moodValues.push(e.mood);
+            }
+          });
+        });
+      }
+
+      const allCycles = groupAllCycles(allEntries);
+      const sexFreqPerCycle = [];
+      if (!allCycles || allCycles.length === 0) {
+        console.warn("No allCycles data available for sex frequency.");
+      } else {
+        allCycles.forEach(cycle => {
+          const sexCount = cycle.filter(e => (e.sex || '').trim().toLowerCase() === 'yes').length;
+          sexFreqPerCycle.push(sexCount);
+        });
+      }
+
+      const cycleCount = cycles.length || 1;
+      Object.keys(symptomsAvg).forEach(key => {
+        symptomsAvg[key] /= cycleCount;
+      });
+
+      const validCmValues = cmAvgPerCycle.filter(v => v !== null);
+      const avgCm = validCmValues.length
+        ? validCmValues.reduce((a,b) => a+b, 0) / validCmValues.length
+        : 0;
+
+      const avgSexFreq = sexFreqPerCycle.length
+        ? sexFreqPerCycle.reduce((a,b) => a+b, 0) / sexFreqPerCycle.length
+        : 0;
+
+      console.log('Sex counts per cycle:', sexFreqPerCycle);
+      console.log('Average sex frequency:', avgSexFreq);
+      console.log('Mood labels:', moodLabels);
+      console.log('Mood values:', moodValues);
+
+      const moodColors = { Happy: '#ffd700', Calm: '#87cefa', Low: '#ff6b6b', Irritable: '#ffa07a' };
+
+      if(window.moodChartInstance) window.moodChartInstance.destroy();
+      if(window.sexChartInstance) window.sexChartInstance.destroy();
+      if(window.bbtChartInstance) window.bbtChartInstance.destroy();
+      if(window.cmChartInstance) window.cmChartInstance.destroy();
+      if(window.symptomsChartInstance) window.symptomsChartInstance.destroy();
+
+      // Predefine known moods with 0 counts
+      const knownMoods = ['Calm', 'Happy', 'Irritable', 'Low'];
+      const moodFreq = {};
+      knownMoods.forEach(m => moodFreq[m] = 0);
+
+      // Count actual mood data
+      allEntries.forEach(e => {
+        const mood = (e.mood || '').trim();
+        if (knownMoods.includes(mood)) {
+          moodFreq[mood]++;
         }
       });
-      typesSeen.forEach(cm => cmTypeCounts[cm]++);
-      totalCycles++;
-    });
 
-    const cmChartLabels = ['Dry', 'Sticky', 'Creamy', 'Watery', 'Egg White'];
-    const cmChartData = cmChartLabels.map(label => {
-      const key = label.toLowerCase();
-      return totalCycles ? (cmTypeCounts[key] / totalCycles).toFixed(2) : 0;
-    });
+      const moodChartLabels = knownMoods;
+      const moodChartData = moodChartLabels.map(m => moodFreq[m]);
+      const moodBarColors = moodChartLabels.map(m => moodColors[m] || '#ccc');
 
-    if(window.cmChartInstance) window.cmChartInstance.destroy();
-    window.cmChartInstance = new Chart(document.getElementById('cmChart'), {
-      type: 'bar',
-      data: {
-        labels: cmChartLabels,
-        datasets: [{
-          label: 'Average CM Occurrence per Cycle',
-          data: cmChartData,
-          backgroundColor: ['#fde2e4', '#fad2e1', '#dfe7fd', '#cdeac0', '#b5ead7']
-        }]
-      },
-      options: {
-        responsive: true,
-        scales: {
-          y: {
-            beginAtZero: true,
-            title: { display: true, text: 'Avg Occurrence per Cycle' }
+      window.moodChartInstance = new Chart(document.getElementById("moodChart"), {
+        type: 'bar',
+        data: {
+          labels: moodChartLabels,
+          datasets: [{
+            label: 'Mood Frequency (All Time)',
+            data: moodChartData,
+            backgroundColor: moodBarColors
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: { display: true, text: 'Number of Entries' }
+            },
+            x: {
+              title: { display: true, text: 'Mood Type' }
+            }
           }
         }
-      }
-    });
+      });
 
-    // Average symptoms per cycle
-    const symptomsAvg = { cramps: 0, spotting: 0, breast: 0, digestive: 0 };
-    const cycleCount = cycles.length || 1;
+      // Add annotations for Period Day 1 and Ovulation Day to BBT chart
+      // Find indexes for those days on the bbtLabels array
+      let periodDay1Index = null;
+      let ovulationDayIndex = null;
 
-    cycles.forEach(cycle => {
-      const onePerDay = groupEntriesOnePerDay(cycle);
-      symptomsAvg.cramps += onePerDay.filter(e => (e.cramps || '').toLowerCase() !== 'none').length / onePerDay.length;
-      symptomsAvg.spotting += onePerDay.filter(e => (e.spotting || '').toLowerCase() !== 'none').length / onePerDay.length;
-      symptomsAvg.breast += onePerDay.filter(e => (e.breastChanges || '').toLowerCase() !== 'none').length / onePerDay.length;
-      symptomsAvg.digestive += onePerDay.filter(e => (e.digestive || '').toLowerCase() !== 'none').length / onePerDay.length;
-    });
+      if (cycles.length > 0) {
+        const latestCycle = cycles[cycles.length - 1];
+        const day1Entry = latestCycle.find(e => (e.phase || '').toLowerCase() === 'day1-period');
+        const ovEntry = latestCycle.find(e => (e.opk || '').toLowerCase() === 'solid face');
 
-    symptomsAvg.cramps /= cycleCount;
-    symptomsAvg.spotting /= cycleCount;
-    symptomsAvg.breast /= cycleCount;
-    symptomsAvg.digestive /= cycleCount;
-
-    if(window.symptomsChartInstance) window.symptomsChartInstance.destroy();
-    window.symptomsChartInstance = new Chart(document.getElementById('symptomsChart'), {
-      type: 'bar',
-      data: {
-        labels: ['Cramps', 'Spotting', 'Breast Changes', 'Digestive'],
-        datasets: [{
-          label: 'Average Occurrence',
-          data: [
-            symptomsAvg.cramps || 0,
-            symptomsAvg.spotting || 0,
-            symptomsAvg.breast || 0,
-            symptomsAvg.digestive || 0
-          ],
-          backgroundColor: ['#f28e8e', '#f2c28e', '#a8d0e6', '#c3aed6']
-        }]
-      },
-      options: { responsive: true }
-    });
-
-    // Mood frequency (all time)
-    const knownMoods = ['Calm', 'Happy', 'Irritable', 'Low'];
-    const moodColors = { Calm:'#87cefa', Happy:'#ffd700', Irritable:'#ffa07a', Low:'#ff6b6b' };
-    const moodFreq = {};
-    knownMoods.forEach(m => moodFreq[m] = 0);
-
-    allEntries.forEach(e => {
-      const mood = (e.mood || '').trim();
-      if(knownMoods.includes(mood)) moodFreq[mood]++;
-    });
-
-    const moodLabels = knownMoods;
-    const moodData = moodLabels.map(m => moodFreq[m]);
-    const moodColorsArr = moodLabels.map(m => moodColors[m] || '#ccc');
-
-    if(window.moodChartInstance) window.moodChartInstance.destroy();
-    window.moodChartInstance = new Chart(document.getElementById('moodChart'), {
-      type: 'bar',
-      data: {
-        labels: moodLabels,
-        datasets: [{
-          label: 'Mood Frequency (All Time)',
-          data: moodData,
-          backgroundColor: moodColorsArr
-        }]
-      },
-      options: {
-        responsive: true,
-        scales: {
-          y: { beginAtZero: true, title: { display: true, text: 'Number of Entries' }},
-          x: { title: { display: true, text: 'Mood Type' }}
+        if (day1Entry) {
+          const day1DateStr = new Date(day1Entry.entryDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+          periodDay1Index = bbtLabels.indexOf(day1DateStr);
+        }
+        if (ovEntry) {
+          const ovDateStr = new Date(ovEntry.entryDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+          ovulationDayIndex = bbtLabels.indexOf(ovDateStr);
         }
       }
-    });
-  }
 
-  // Load all entries for logged-in user, including legacy and new paths
-  async function loadEntries() {
-    const user = auth.currentUser;
-    if (!user) {
-      window.location.href = 'index.html';
-      return [];
+      // Create annotation plugin config
+      const annotationPluginConfig = {
+        annotations: {}
+      };
+      if (periodDay1Index !== null && periodDay1Index !== -1) {
+        annotationPluginConfig.annotations.periodLine = {
+          type: 'line',
+          xMin: periodDay1Index,
+          xMax: periodDay1Index,
+          borderColor: 'red',
+          borderWidth: 2,
+          label: {
+            content: 'Period Day 1',
+            enabled: true,
+            position: 'start',
+            backgroundColor: 'red',
+            color: 'white',
+            font: { weight: 'bold' }
+          }
+        };
+      }
+      if (ovulationDayIndex !== null && ovulationDayIndex !== -1) {
+        annotationPluginConfig.annotations.ovulationLine = {
+          type: 'line',
+          xMin: ovulationDayIndex,
+          xMax: ovulationDayIndex,
+          borderColor: 'yellow',
+          borderWidth: 2,
+          label: {
+            content: 'Ovulation',
+            enabled: true,
+            position: 'start',
+            backgroundColor: 'yellow',
+            color: 'black',
+            font: { weight: 'bold' }
+          }
+        };
+      }
+
+      window.bbtChartInstance = new Chart(document.getElementById("bbtChart"), {
+        type: 'line',
+        data: {
+          labels: bbtLabels.length ? bbtLabels : ['No Data'],
+          datasets: [{
+            label: "BBT",
+            data: bbtData.length ? bbtData : [null],
+            borderColor: 'purple',
+            fill: false,
+            tension: 0.1
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            annotation: annotationPluginConfig
+          },
+          scales: {
+            y: { title: { display: true, text: 'Temperature (°C)' } },
+            x: { title: { display: true, text: 'Date' } }
+          }
+        }
+      });
+
+      // Continue rendering the other charts (CM, symptoms, mood) unchanged
+
+      // Count occurrences of each CM type
+      const cmTypeCounts = { dry: 0, sticky: 0, creamy: 0, watery: 0, 'egg white': 0 };
+      let totalCycles = 0;
+
+      cycles.forEach(cycle => {
+        const typesSeen = new Set();
+        cycle.forEach(e => {
+          const cm = (e.cm || '').toLowerCase();
+          if (cmTypes.includes(cm)) {
+            typesSeen.add(cm);
+          }
+        });
+        typesSeen.forEach(cm => cmTypeCounts[cm]++);
+        totalCycles++;
+      });
+
+      const cmChartLabels = ['Dry', 'Sticky', 'Creamy', 'Watery', 'Egg White'];
+      const cmChartData = cmChartLabels.map(label => {
+        const key = label.toLowerCase();
+        return totalCycles ? (cmTypeCounts[key] / totalCycles).toFixed(2) : 0;
+      });
+
+      window.cmChartInstance = new Chart(document.getElementById("cmChart"), {
+        type: 'bar',
+        data: {
+          labels: cmChartLabels,
+          datasets: [{
+            label: 'Average CM Occurrence per Cycle',
+            data: cmChartData,
+            backgroundColor: ['#fde2e4', '#fad2e1', '#dfe7fd', '#cdeac0', '#b5ead7']
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: { display: true, text: 'Avg Occurrence per Cycle' }
+            }
+          }
+        }
+      });
+
+      window.symptomsChartInstance = new Chart(document.getElementById("symptomsChart"), {
+        type: 'bar',
+        data: {
+          labels: ['Cramps', 'Spotting', 'Breast Changes', 'Digestive'],
+          datasets: [{
+            label: 'Average Occurrence',
+            data: [
+              symptomsAvg.cramps || 0,
+              symptomsAvg.spotting || 0,
+              symptomsAvg.breast || 0,
+              symptomsAvg.digestive || 0
+            ],
+            backgroundColor: ['#f28e8e', '#f2c28e', '#a8d0e6', '#c3aed6']
+          }]
+        },
+        options: { responsive: true }
+      });
+
+      const sexFreqPerCycleRounded = Math.round(avgSexFreq) || 0;
+      // Render sex frequency as a separate bar chart or show in averages table as you prefer
+
     }
-    const uid = user.uid;
 
-    // Load legacy entries (uid in document)
-    const legacySnap = await db.collection('entries')
-      .where('uid', '==', uid)
-      .orderBy('entryDate')
-      .get();
-
-    // Load user-scoped entries
-    const userSnap = await db.collection('users')
-      .doc(uid)
-      .collection('entries')
-      .orderBy('entryDate')
-      .get();
-
-    const legacyEntries = legacySnap.docs.map(doc => doc.data());
-    const userEntries = userSnap.docs.map(doc => doc.data());
-
-    const combined = [...legacyEntries, ...userEntries];
-    combined.sort((a,b) => parseLocalDate(a.entryDate) - parseLocalDate(b.entryDate));
-
-    return combined;
-  }
-
-  // Auth listener and main run function
-  auth.onAuthStateChanged(user => {
-    if (!user) {
-      window.location.href = 'index.html';
-      return;
-    }
-    run();
-  });
-
-  async function run() {
-    allEntries = await loadEntries();
-    if(!allEntries.length) {
-      document.getElementById('averagesRow').innerHTML = '<td colspan="5" style="text-align:center;">No entries found</td>';
-      return;
+    async function run() {
+      allEntries = await loadEntries();
+      const cycles = groupCycles(allEntries);
+      calculateAverages(cycles);
+      const today = new Date();
+      renderCalendar(today.getMonth(), today.getFullYear());
+      renderCharts(cycles);
     }
 
-    const completedCycles = groupCycles(allEntries);
-    calculateAverages(completedCycles);
-    renderCalendar(viewMonth, viewYear);
-    renderCharts(completedCycles);
-  }
-</script>
+  </script>
 </body>
 </html>
