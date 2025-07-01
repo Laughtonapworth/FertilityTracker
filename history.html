@@ -173,6 +173,7 @@ function uniquePerDay(entries) {
   const map = {};
   entries.forEach(e => {
     const d = new Date(e.entryDate).toISOString().slice(0,10);
+    // store latest timestamped entry per day
     if (!map[d] || new Date(e.timestamp?.toDate?.() || e.timestamp) > new Date(map[d].timestamp?.toDate?.() || map[d].timestamp)) {
       map[d] = e;
     }
@@ -371,6 +372,7 @@ function renderCalendar(month, year) {
 
   viewMonth = month;
   viewYear = year;
+
   document.getElementById("monthLabel").textContent = new Date(year, month).toLocaleString('default', {month:'long', year:'numeric'});
 }
 
@@ -407,7 +409,6 @@ function renderCharts(cycles) {
 
   if(window.bbtChartInstance) window.bbtChartInstance.destroy();
 
-  // Vertical line plugin for BBT chart
   const verticalLinePlugin = {
     id: 'verticalLinePlugin',
     afterDatasetsDraw(chart) {
@@ -426,23 +427,23 @@ function renderCharts(cycles) {
         ctx.beginPath();
         ctx.moveTo(x, yAxis.top);
         ctx.lineTo(x, yAxis.bottom);
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 3;
         ctx.strokeStyle = color;
         ctx.stroke();
         ctx.restore();
       }
 
-      periodMarkers.forEach(d => drawLine(d, '#f44336')); // red line
-      ovulationMarkers.forEach(d => drawLine(d, '#ffca28')); // amber line
+      periodMarkers.forEach(d => drawLine(d, '#f44336')); // red line for period day 1
+      ovulationMarkers.forEach(d => drawLine(d, '#ffca28')); // amber line for ovulation day
     }
   };
 
-  window.bbtChartInstance = new Chart(document.getElementById('bbtChart'), {
+  window.bbtChartInstance = new Chart(document.getElementById("bbtChart"), {
     type: 'line',
     data: {
       labels: labels.length ? labels : ['No Data'],
       datasets: [{
-        label: 'BBT',
+        label: "BBT",
         data: dataPoints.length ? dataPoints : [null],
         borderColor: 'purple',
         fill: false,
@@ -467,14 +468,19 @@ function renderCharts(cycles) {
     plugins: [verticalLinePlugin]
   });
 
-  // Existing charts code for CM, symptoms, mood, etc. can be here (unchanged)
+  // Other charts rendering code should remain unchanged (not shown here for brevity)
+  // render CM, Symptoms, Mood charts etc.
+
+  // Assuming these charts are rendered similarly as before, just not included here.
 }
 
 function changeMonth(offset) {
   const newDate = new Date(viewYear, viewMonth + offset);
   viewMonth = newDate.getMonth();
   viewYear = newDate.getFullYear();
+
   renderCalendar(viewMonth, viewYear);
+
   const cycles = groupCycles(allEntries);
   renderCharts(cycles);
 }
