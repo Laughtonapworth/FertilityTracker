@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta content="width=device-width, initial-scale=1.0" name="viewport" />
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>Cycle Summary</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -10,73 +10,72 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="js/firebase-config.js"></script>
 <style>
-  body { font-family: 'Segoe UI', sans-serif; background: #fffafc; padding: 1em; }
-  h1, h2, h3 { text-align: center; }
-  .nav-button {
-    display: block; margin: 1em auto; background: #c4d7b2;
-    color: white; padding: 0.6em 1.2em; border-radius: 20px;
-    text-align: center; text-decoration: none; max-width: 250px;
-  }
-  .legend {
-    display: flex; flex-wrap: wrap; gap: 0.5em;
-    justify-content: center; margin-bottom: 1em;
-  }
-  .legend span {
-    display: inline-block; padding: 0.4em 0.8em;
-    border-radius: 5px; font-size: 0.75em;
-  }
-  .calendar-nav {
-    display: flex; justify-content: center; gap: 1em; margin: 0.5em 0;
-  }
-  .calendar-grid {
-    display: grid; grid-template-columns: repeat(7, 1fr);
-    gap: 5px; margin-bottom: 1.5em;
-  }
-  .weekday { font-weight: bold; text-align: center; }
-  .day-box {
-    padding: 0.6em 0;
-    border-radius: 6px;
-    background: #f0f0f0;
-    text-align: center;
-    font-size: 0.85em;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2px;
-    min-height: 3.5em;
-    position: relative;
-  }
-  .deep-red { background: #e76f8a !important; color: white !important; }
-  .red { background: #f6b1b7 !important; }
-  .blue { background: #b7d7f6 !important; }
-  .bold-blue { background: #5f9ed1 !important; color: white !important; }
-  .green { background: #c8e6c9 !important; }
-  .bold-pink { background: #d15fa7 !important; color: white !important; }
-  .day-box span {
-    font-size: 0.9em;
-    display: block;
-    opacity: 0.7;
-    line-height: 1;
-  }
-  .chart-container {
-    margin: 2em auto; max-width: 900px;
-  }
-  table {
-    width: 100%; border-collapse: collapse; margin: 1em 0; font-size: 0.95em;
-  }
-  th, td {
-    padding: 0.5em; border: 1px solid #ccc; text-align: center;
-  }
-  th {
-    background: #eeb7c2; color: white;
-  }
+    body { font-family: 'Segoe UI', sans-serif; background: #fffafc; padding: 1em; }
+    h1, h2, h3 { text-align: center; }
+    .nav-button {
+      display: block; margin: 1em auto; background: #c4d7b2;
+      color: white; padding: 0.6em 1.2em; border-radius: 20px;
+      text-align: center; text-decoration: none; max-width: 250px;
+    }
+    .legend {
+      display: flex; flex-wrap: wrap; gap: 0.5em;
+      justify-content: center; margin-bottom: 1em;
+    }
+    .legend span {
+      display: inline-block; padding: 0.4em 0.8em;
+      border-radius: 5px; font-size: 0.75em;
+    }
+    .calendar-nav {
+      display: flex; justify-content: center; gap: 1em; margin: 0.5em 0;
+    }
+    .calendar-grid {
+      display: grid; grid-template-columns: repeat(7, 1fr);
+      gap: 5px; margin-bottom: 1.5em;
+    }
+    .weekday { font-weight: bold; text-align: center; }
+    .day-box {
+      padding: 0.6em 0;
+      border-radius: 6px;
+      background: #f0f0f0;
+      text-align: center;
+      font-size: 0.85em;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      min-height: 3.5em;
+      position: relative;
+    }
+    .deep-red { background: #e76f8a !important; color: white !important; }
+    .red { background: #f6b1b7 !important; }
+    .blue { background: #b7d7f6 !important; }
+    .bold-blue { background: #5f9ed1 !important; color: white !important; }
+    .green { background: #c8e6c9 !important; }
+    .bold-pink { background: #d15fa7 !important; color: white !important; }
+    .day-box span {
+      font-size: 0.9em;
+      display: block;
+      opacity: 0.7;
+      line-height: 1;
+    }
+    .chart-container {
+      margin: 2em auto; max-width: 900px;
+    }
+    table {
+      width: 100%; border-collapse: collapse; margin: 1em 0; font-size: 0.95em;
+    }
+    th, td {
+      padding: 0.5em; border: 1px solid #ccc; text-align: center;
+    }
+    th {
+      background: #eeb7c2; color: white;
+    }
 </style>
 </head>
 <body>
 
 <h1>Cycle Summary</h1>
 <a class="nav-button" href="index.html">← Back to Home</a>
-
 <h2>Today's Summary</h2>
 <table id="summaryTable">
 <thead>
@@ -86,19 +85,19 @@
 </table>
 
 <div class="legend">
-  <span style="background:#e76f8a; color:white;">Day 1 Period</span>
-  <span style="background:#f6b1b7;">Period</span>
-  <span style="background:#b7d7f6;">Fertile (Flashing)</span>
-  <span style="background:#5f9ed1; color:white;">Ovulation (Solid)</span>
-  <span style="background:#d15fa7; color:white;">Surge</span>
-  <span style="background:#c8e6c9;">Post Ovulation</span>
-  <span style="background:#fff0f5;">💖 Sex</span>
-  <span style="background:#fff0f5;">😖 Cramps</span>
-  <span style="background:#fff0f5;">🔻 Spotting</span>
-  <span style="background:#fff0f5;">🧠 Mood</span>
-  <span style="background:#fff0f5;">🌡️ BBT</span>
-  <span style="background:#fff0f5;">🫶 Breast Changes</span>
-  <span style="background:#fff0f5;">🫃 Digestive</span>
+<span style="background:#e76f8a; color:white;">Day 1 Period</span>
+<span style="background:#f6b1b7;">Period</span>
+<span style="background:#b7d7f6;">Fertile (Flashing)</span>
+<span style="background:#5f9ed1; color:white;">Ovulation (Solid)</span>
+<span style="background:#d15fa7; color:white;">Surge</span>
+<span style="background:#c8e6c9;">Post Ovulation</span>
+<span style="background:#fff0f5;">💖 Sex</span>
+<span style="background:#fff0f5;">😖 Cramps</span>
+<span style="background:#fff0f5;">🔻 Spotting</span>
+<span style="background:#fff0f5;">🧠 Mood</span>
+<span style="background:#fff0f5;">🌡️ BBT</span>
+<span style="background:#fff0f5;">🫶 Breast Changes</span>
+<span style="background:#fff0f5;">🫃 Digestive</span>
 </div>
 
 <div style="text-align:center; margin-bottom:1em; font-weight:bold;">
@@ -113,7 +112,6 @@
   <span id="monthLabel"></span>
   <button onclick="changeMonth(1)">▶</button>
 </div>
-
 <div class="calendar-grid" id="calendarWeekdays"></div>
 <div class="calendar-grid" id="calendarGrid"></div>
 
@@ -145,17 +143,13 @@ let avgCycleLength = null;
 let avgLutealLength = null;
 let avgPeriodLength = null;
 
-auth.onAuthStateChanged(user => {
-  if (user) {
-    console.log("User authenticated:", user);
-    console.log("User UID:", user.uid);
-    currentUserUID = user.uid;
-    run();
-  } else {
-    console.log("User not authenticated");
-    window.location.href = "index.html";
-  }
-});
+function formatDate(date) {
+  const d = new Date(date);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
 
 async function loadEntries() {
   console.log("Loading entries for user UID:", currentUserUID);
@@ -181,14 +175,6 @@ async function loadEntries() {
   const mergedEntries = [...legacyEntries, ...scopedEntries];
   mergedEntries.sort((a, b) => new Date(a.entryDate) - new Date(b.entryDate));
   return mergedEntries;
-}
-
-function formatDate(date) {
-  const d = new Date(date);
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
 }
 
 function getCurrentCycle(entries) {
@@ -355,6 +341,7 @@ function renderCalendar(entries, month, year) {
       else if (dayEntries.some(e => (e.opk || '').toLowerCase() === 'surge')) phaseClass = 'bold-pink';
       else if (dayEntries.some(e => (e.opk || '').toLowerCase() === 'solid face')) phaseClass = 'bold-blue';
       else if (dayEntries.some(e => (e.phase || '').toLowerCase() === 'ovulation')) phaseClass = 'bold-blue';
+
       else if (dayEntries.some(e => (e.opk || '').toLowerCase() === 'flashing face')) phaseClass = 'blue';
       else if (dayEntries.some(e => (e.phase || '').toLowerCase() === 'post-ovulation')) phaseClass = 'green';
 
@@ -621,6 +608,40 @@ function changeMonth(offset) {
   viewYear = newDate.getFullYear();
   renderCalendar(currentCycle, viewMonth, viewYear);
 }
+
+async function run() {
+  try {
+    const entries = await loadEntries();
+
+    console.log("All entries count:", entries.length);
+
+    currentCycle = getCurrentCycle(entries);
+    const cycles = groupCycles(entries);
+    calculateAverages(cycles);
+    renderCalendar(currentCycle, viewMonth, viewYear);
+    renderTable(currentCycle);
+    renderCharts(currentCycle);
+    setTimeout(() => {
+      window.parent.postMessage({ renderReady: true }, '*');
+    }, 500);
+  } catch (err) {
+    console.error("Error in run():", err);
+    document.body.insertAdjacentHTML('beforeend', `<p style="text-align:center; color:red;">Failed to load entries.</p>`);
+  }
+}
+
+// Run after user authenticated
+auth.onAuthStateChanged(user => {
+  if (user) {
+    console.log("User authenticated:", user);
+    console.log("User UID:", user.uid);
+    currentUserUID = user.uid;
+    run();
+  } else {
+    console.log("User not authenticated");
+    window.location.href = "index.html";
+  }
+});
 </script>
 
 </body>
