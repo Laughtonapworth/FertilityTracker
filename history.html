@@ -182,23 +182,26 @@
       return;
     }
     try {
-      const snapshot = await db.collection("users")
+      // Load legacy entries from 'entries' collection filtered by uid
+      const legacySnapshot = await db.collection("entries")
+        .where("uid", "==", user.uid)
+        .orderBy("entryDate")
+        .get();
+      const legacyEntries = legacySnapshot.docs.map(doc => doc.data());
+
+      // Load new entries from user scoped subcollection
+      const userSnapshot = await db.collection("users")
         .doc(user.uid)
         .collection("entries")
         .orderBy("entryDate")
         .get();
-      allEntries = snapshot.docs.map(doc => doc.data());
+      const userEntries = userSnapshot.docs.map(doc => doc.data());
 
-      // Also load legacy entries if needed here (uncomment and adapt if needed)
-      // const legacySnapshot = await db.collection("entries")
-      //   .where("uid", "==", user.uid)
-      //   .orderBy("entryDate")
-      //   .get();
-      // const legacyEntries = legacySnapshot.docs.map(doc => doc.data());
-      // allEntries = [...legacyEntries, ...allEntries];
-      // allEntries.sort((a,b) => new Date(a.entryDate) - new Date(b.entryDate));
+      // Merge and sort all entries by entryDate ascending
+      allEntries = [...legacyEntries, ...userEntries];
+      allEntries.sort((a,b) => new Date(a.entryDate) - new Date(b.entryDate));
 
-      console.log("Loaded entries:", allEntries);
+      console.log("Loaded combined entries:", allEntries);
 
       runLogic();
 
@@ -445,7 +448,7 @@
 
   // Render charts including BBT with period and ovulation markers
   function renderCharts(cycles) {
-    // Filter BBT entries for selected month & year, one per day
+    // Filter BBT entries for selected month & year, unique per day
     const filteredEntries = uniquePerDay(allEntries).filter(e => {
       const d = new Date(e.entryDate);
       return d.getMonth() === viewMonth && d.getFullYear() === viewYear && !isNaN(parseFloat(e.bbt));
@@ -455,21 +458,15 @@
     const bbtLabels = filteredEntries.map(e => new Date(e.entryDate).toLocaleDateString('en-GB', { day:'numeric', month:'short' }));
 
     // Find period and ovulation day indexes for markers on BBT graph
-    const cyclesForMonth = cycles.filter(cycle => {
-      const startDate = new Date(cycle[0].entryDate);
-      return startDate.getMonth() === viewMonth && startDate.getFullYear() === viewYear;
-    });
-
-    // Collect period day 1 and ovulation day positions for current view month
     let periodMarkers = [];
     let ovulationMarkers = [];
 
-    cyclesForMonth.forEach(cycle => {
+    cycles.forEach(cycle => {
       const uniqueEntries = uniquePerDay(cycle);
       const day1Entry = uniqueEntries.find(e => (e.phase || '').toLowerCase() === 'day1-period');
       const ovEntryIndex = uniqueEntries.findIndex(e => (e.opk || '').toLowerCase() === 'solid face');
+
       if (day1Entry) {
-        // Find index of day1Entry in filteredEntries for marker
         const idx = filteredEntries.findIndex(fe => fe.entryDate === day1Entry.entryDate);
         if (idx >= 0) periodMarkers.push(idx);
       }
@@ -480,7 +477,6 @@
       }
     });
 
-    // Prepare Chart.js datasets with markers
     const datasets = [{
       label: "BBT",
       data: bbtData.length ? bbtData : [null],
@@ -491,7 +487,6 @@
       pointHoverRadius: 5,
     }];
 
-    // Add markers as points with different colors
     periodMarkers.forEach(i => {
       if (datasets[0].data[i] != null) {
         datasets.push({
@@ -527,10 +522,7 @@
       options: {
         responsive: true,
         plugins: {
-          tooltip: {
-            mode: 'index',
-            intersect: false,
-          }
+          tooltip: { mode: 'index', intersect: false }
         },
         scales: {
           y: { title: { display: true, text: 'Temperature (°C)' }, beginAtZero: false },
@@ -539,7 +531,7 @@
       }
     });
 
-    // CM Pattern Chart (average occurrence per cycle)
+    // CM Chart
     const cmTypes = ['dry', 'sticky', 'creamy', 'watery', 'egg white'];
     const cmTypeCounts = { dry: 0, sticky: 0, creamy: 0, watery: 0, 'egg white': 0 };
     let cycleCount = 0;
@@ -577,7 +569,7 @@
       }
     });
 
-    // Average Symptoms Chart
+    // Symptoms Chart
     const symptomTypes = ['cramps', 'spotting', 'breastChanges', 'digestive'];
     const symptomCounts = { cramps: 0, spotting: 0, breastChanges: 0, digestive: 0 };
 
@@ -608,7 +600,7 @@
       options: { responsive: true }
     });
 
-    // Mood Timeline Chart (aggregate all entries moods)
+    // Mood Chart
     const knownMoods = ['Calm', 'Happy', 'Irritable', 'Low'];
     const moodColors = { Calm: '#87cefa', Happy: '#ffd700', Irritable: '#ffa07a', Low: '#ff6b6b' };
     const moodCounts = {};
@@ -616,7 +608,7 @@
 
     allEntries.forEach(e => {
       const mood = (e.mood || '').trim();
-      if (knownMoods.includes(mood)) moodCounts[mood]++;
+      if (knownMoods.includes(mood)) moodCounts[m]++;
     });
 
     const moodLabels = knownMoods;
@@ -643,6 +635,7 @@
       }
     });
   }
+
 </script>
 
 </body>
