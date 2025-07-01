@@ -296,15 +296,22 @@ function calculateAverages(cycles) {
   avgLutealLength = lutealPhases.length ? Math.round(lutealPhases.reduce((a,b) => a + b, 0) / lutealPhases.length) : null;
   avgPeriodLength = periodLengths.length ? (periodLengths.reduce((a,b) => a + b, 0) / periodLengths.length) : null;
 }
-
 function groupEntriesByDate(entries) {
-  return entries.reduce((acc, e) => {
+  const grouped = entries.reduce((acc, e) => {
     const dateKey = new Date(e.entryDate).toLocaleDateString('en-CA');
     if (!acc[dateKey]) acc[dateKey] = [];
     acc[dateKey].push(e);
     return acc;
   }, {});
+  
+  // Debug today's grouped entries
+  const todayKey = new Date().toLocaleDateString('en-CA');
+  console.log("Entries grouped by date:", grouped);
+  console.log("Entries for today:", grouped[todayKey] || []);
+  
+  return grouped;
 }
+
 
 function generatePredictionDays() {
   let predictionDays = {};
