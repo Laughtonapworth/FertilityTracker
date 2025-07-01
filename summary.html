@@ -210,9 +210,9 @@ async function loadEntries() {
 }
 
 function getCurrentCycle(entries) {
-  const reversed = [...entries].reverse();
-  const start = reversed.findIndex(e => (e.phase || '').toLowerCase() === 'day1-period');
-  return start !== -1 ? reversed.slice(0, start + 1).reverse() : [];
+  const lastDay1Index = entries.map(e => (e.phase || '').toLowerCase()).lastIndexOf('day1-period');
+  if (lastDay1Index === -1) return [];
+  return entries.slice(lastDay1Index);
 }
 
 function groupCycles(entries) {
