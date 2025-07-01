@@ -104,6 +104,11 @@ async function loadEntries() {
   const legacyEntries = legacySnapshot.docs.map(doc => doc.data());
   const scopedEntries = userScopedSnapshot.docs.map(doc => doc.data());
 
+const mergedEntries = [...legacyEntries, ...scopedEntries];
+   mergedEntries.sort((a, b) => new Date(a.entryDate) - new Date(b.entryDate));
+   return mergedEntries;
+
+
   return [...legacyEntries, ...scopedEntries];
 }
 
