@@ -115,11 +115,13 @@ async function run() {
 
     console.log("All entries count:", entries.length);
 
-    const todayString = new Date().toLocaleDateString('en-CA');
-    const todaysEntries = entries.filter(e => {
-      const date = e.entryDate && e.entryDate.toDate ? e.entryDate.toDate() : new Date(e.entryDate);
-      return date.toLocaleDateString('en-CA') === todayString;
-    });
+    // Get today’s date string in local timezone, formatted YYYY-MM-DD
+    const now = new Date();
+    const todayString = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+    // Filter entries where entryDate matches todayString exactly
+    const todaysEntries = entries.filter(e => e.entryDate === todayString);
+
     console.log("Entries with today's date:", todaysEntries);
 
     if (!entries.length) {
@@ -144,7 +146,6 @@ async function run() {
     document.body.insertAdjacentHTML('beforeend', `<p style="text-align:center; color:red;">Failed to load entries.</p>`);
   }
 }
-
 
 </script>
 </body>
