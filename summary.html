@@ -114,12 +114,17 @@ async function run() {
     const entries = await loadEntries();
 
     console.log("All entries count:", entries.length);
-    console.log("Entries with today's date:", entries.filter(e => new Date(e.entryDate).toLocaleDateString('en-CA') === new Date().toLocaleDateString('en-CA')));
+    console.log("Entries with today's date:", entries.filter(e => {
+      const date = e.entryDate.toDate ? e.entryDate.toDate() : new Date(e.entryDate);
+      return date.toLocaleDateString('en-CA') === new Date().toLocaleDateString('en-CA');
+    }));
 
     if (!entries.length) {
       document.body.insertAdjacentHTML('beforeend', '<p style="text-align:center;">No entries found.</p>');
       return;
     }
+    // ...rest of your run function
+
 
     // Store to global if needed
     currentCycle = entries;
