@@ -112,6 +112,10 @@ async function loadEntries() {
 async function run() {
   try {
     const entries = await loadEntries();
+
+    console.log("All entries count:", entries.length);
+    console.log("Entries with today's date:", entries.filter(e => new Date(e.entryDate).toLocaleDateString('en-CA') === new Date().toLocaleDateString('en-CA')));
+
     if (!entries.length) {
       document.body.insertAdjacentHTML('beforeend', '<p style="text-align:center;">No entries found.</p>');
       return;
@@ -134,6 +138,7 @@ async function run() {
     document.body.insertAdjacentHTML('beforeend', `<p style="text-align:center; color:red;">Failed to load entries.</p>`);
   }
 }
+
 </script>
 </body>
 </html>
