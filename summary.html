@@ -80,43 +80,60 @@ let avgCycleLength = null;
 let avgLutealLength = null;
 let avgPeriodLength = null;
 
+// Auth state logging added here
 auth.onAuthStateChanged(user => {
-  if (!user) {
-    window.location.href = "index.html";
-  } else {
+  if (user) {
+    console.log("User authenticated:", user);
+    console.log("User UID:", user.uid);
     currentUserUID = user.uid;
     run();
+  } else {
+    console.log("User not authenticated");
+    window.location.href = "index.html";
   }
 });
 
 async function loadEntries() {
+  console.log("Loading entries for UID:", currentUserUID);
+
   const legacySnapshot = await db.collection("entries")
     .where("uid", "==", currentUserUID)
     .orderBy("entryDate")
     .get();
+  console.log("Legacy entries count:", legacySnapshot.size);
 
   const userScopedSnapshot = await db.collection("users")
     .doc(currentUserUID)
     .collection("entries")
     .orderBy("entryDate")
     .get();
+  console.log("Scoped entries count:", userScopedSnapshot.size);
 
   const legacyEntries = legacySnapshot.docs.map(doc => doc.data());
   const scopedEntries = userScopedSnapshot.docs.map(doc => doc.data());
-
-  console.log("Legacy entries count:", legacyEntries.length);
-  console.log("Scoped entries count:", scopedEntries.length);
-
-  scopedEntries.forEach(e => {
-    if (e.entryDate && e.entryDate.includes('2025-07-01')) {
-      console.log("Found new entry for 2025-07-01:", e);
-    }
-  });
 
   const mergedEntries = [...legacyEntries, ...scopedEntries];
   mergedEntries.sort((a, b) => new Date(a.entryDate) - new Date(b.entryDate));
   return mergedEntries;
 }
+
+// rest of your code as is ...
+
+async function run() {
+  try {
+    const entries = await loadEntries();
+
+    console.log("All entries count:", entries.length);
+
+    // your existing run() logic here...
+
+  } catch (err) {
+    console.error("Error in run():", err);
+    document.body.insertAdjacentHTML('beforeend', `<p style="text-align:center; color:red;">Failed to load entries.</p>`);
+  }
+}
+</script>
+
 
 async function run() {
   try {
