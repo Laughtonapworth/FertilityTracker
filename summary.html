@@ -210,10 +210,31 @@ async function loadEntries() {
 }
 
 function getCurrentCycle(entries) {
-  const lastDay1Index = entries.map(e => (e.phase || '').toLowerCase()).lastIndexOf('day1-period');
-  if (lastDay1Index === -1) return [];
-  return entries.slice(lastDay1Index);
+  const reversed = [...entries].reverse();
+  const lastDay1IndexReversed = reversed.findIndex(e => (e.phase || '').toLowerCase() === 'day1-period');
+
+  if (lastDay1IndexReversed === -1) return [];
+
+  // The last day1-period entry reversed index is lastDay1IndexReversed
+  // Get its entryDate (we want to include all entries on that date)
+  const day1Date = new Date(reversed[lastDay1IndexReversed].entryDate).toISOString().slice(0, 10);
+
+  // Find the last index in reversed array that matches day1Date (includes entries same day after day1-period)
+  let lastIndexInclusive = lastDay1IndexReversed;
+  for (let i = lastDay1IndexReversed + 1; i < reversed.length; i++) {
+    const entryDate = new Date(reversed[i].entryDate).toISOString().slice(0, 10);
+    if (entryDate === day1Date) {
+      lastIndexInclusive = i;
+    } else {
+      break;
+    }
+  }
+
+  // Slice from 0 to lastIndexInclusive +1 in reversed array, then reverse back
+  const cycleEntries = reversed.slice(0, lastIndexInclusive + 1).reverse();
+  return cycleEntries;
 }
+
     
 function getCurrentCycle(entries) {
   console.log('All entries:', entries);
