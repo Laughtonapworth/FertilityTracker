@@ -138,10 +138,6 @@
     <canvas id="moodChart"></canvas>
   </div>
 
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 const firebaseConfig = {
   apiKey: "AIzaSyByvnVx2aZEldUfqS2c6VNC6UJRIOPvGws",
@@ -174,7 +170,6 @@ auth.onAuthStateChanged(user => {
 });
 
 function uniquePerDay(entries) {
-  // Filter entries so only one per day, latest if multiple
   const map = {};
   entries.forEach(e => {
     const d = new Date(e.entryDate).toISOString().slice(0,10);
@@ -186,7 +181,6 @@ function uniquePerDay(entries) {
 }
 
 async function loadEntries() {
-  // Merge legacy and new user-scoped entries, sorted
   const user = auth.currentUser;
   if (!user) return [];
   const uid = user.uid;
@@ -212,7 +206,6 @@ function groupCycles(entries) {
     }
     currentCycle.push(e);
   }
-  // Only add last cycle if completed (has solid face and last entry >4 days ago)
   const lastCycle = [...currentCycle];
   const hasSolidFace = lastCycle.some(e => (e.opk || '').toLowerCase() === 'solid face');
   const lastDate = new Date(lastCycle.at(-1)?.entryDate || 0);
@@ -238,9 +231,8 @@ function calculateAverages(cycles) {
   const sexCounts = [];
 
   cycles.forEach(cycle => {
-    // Use unique entries per day only for averages
     const uniqueCycle = uniquePerDay(cycle);
-    if (uniqueCycle.length < 10) return; // skip short cycles
+    if (uniqueCycle.length < 10) return;
 
     const start = new Date(uniqueCycle[0].entryDate);
     const end = new Date(uniqueCycle[uniqueCycle.length-1].entryDate);
@@ -319,13 +311,7 @@ function renderCalendar(month, year) {
   document.getElementById("calendarWeekdays").innerHTML = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']
     .map(d => `<div class="weekday">${d}</div>`).join('');
 
-  // Filter entries only for this month/year for calendar
-  const filteredEntries = allEntries.filter(e => {
-    const dt = new Date(e.entryDate);
-    return dt.getMonth() === month && dt.getFullYear() === year;
-  });
-
-  const entriesByDate = groupEntriesByDate(filteredEntries);
+  const entriesByDate = groupEntriesByDate(allEntries);
   const predictionDays = generatePredictionDays();
 
   const start = new Date(year, month, 1);
@@ -373,8 +359,7 @@ function renderCalendar(month, year) {
       if(icons.breastChanges) box.appendChild(Object.assign(document.createElement('span'), {textContent:'🫶', style:emojiStyle}));
       if(icons.digestive) box.appendChild(Object.assign(document.createElement('span'), {textContent:'🫃', style:emojiStyle}));
       if(icons.bbt) box.appendChild(Object.assign(document.createElement('span'), {textContent:'🌡️', style:emojiStyle}));
-    }
-    else if(predictionDays[key]) {
+    } else if(predictionDays[key]) {
       box.appendChild(Object.assign(document.createElement('span'), {
         textContent: predictionDays[key],
         style: 'font-size: 0.9em; display: block; opacity: 0.6;'
@@ -482,9 +467,7 @@ function renderCharts(cycles) {
     plugins: [verticalLinePlugin]
   });
 
-  // Other charts can follow same logic as before (symptoms, mood, CM) ...
-
-  // ... You can implement these below or keep your existing code for them
+  // Existing charts code for CM, symptoms, mood, etc. can be here (unchanged)
 }
 
 function changeMonth(offset) {
