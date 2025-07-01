@@ -1,145 +1,146 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Cycle History</title>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    body { font-family: 'Segoe UI', sans-serif; background: #fffafc; padding: 1em; }
-    h1, h2, h3 { text-align: center; }
-    .nav-button {
-      display: block; margin: 1em auto; background: #c4d7b2;
-      color: white; padding: 0.6em 1.2em; border-radius: 20px;
-      text-align: center; text-decoration: none; max-width: 250px;
-    }
-    .legend {
-      display: flex; flex-wrap: wrap; gap: 0.5em;
-      justify-content: center; margin-bottom: 1em;
-    }
-    .legend span {
-      display: inline-block; padding: 0.4em 0.8em;
-      border-radius: 5px; font-size: 0.75em;
-    }
-    .calendar-nav {
-      display: flex; justify-content: center; gap: 1em; margin: 0.5em 0;
-    }
-    .calendar-grid {
-      display: grid; grid-template-columns: repeat(7, 1fr);
-      gap: 5px; margin-bottom: 1.5em;
-    }
-    .weekday { font-weight: bold; text-align: center; }
-    .day-box {
-      padding: 0.6em 0;
-      border-radius: 6px;
-      background: #f0f0f0;
-      text-align: center;
-      font-size: 0.85em;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 2px;
-      min-height: 3.5em;
-      position: relative;
-    }
-    .deep-red { background: #e76f8a !important; color: white !important; }
-    .red { background: #f6b1b7 !important; }
-    .blue { background: #b7d7f6 !important; }
-    .bold-blue { background: #5f9ed1 !important; color: white !important; }
-    .green { background: #c8e6c9 !important; }
-    .chart-container {
-      margin: 2em auto; max-width: 900px;
-    }
-    table {
-      width: 100%; border-collapse: collapse; margin: 1em 0; font-size: 0.95em;
-    }
-    th, td {
-      padding: 0.5em; border: 1px solid #ccc; text-align: center;
-    }
-    th {
-      background: #eeb7c2; color: white;
-    }
-    .day-box span {
-      font-size: 1.1em;
-      display: block;
-      opacity: 0.8;
-      line-height: 1;
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Cycle History</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  body { font-family: 'Segoe UI', sans-serif; background: #fffafc; padding: 1em; }
+  h1, h2, h3 { text-align: center; }
+  .nav-button {
+    display: block; margin: 1em auto; background: #c4d7b2;
+    color: white; padding: 0.6em 1.2em; border-radius: 20px;
+    text-align: center; text-decoration: none; max-width: 250px;
+  }
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 0.5em;
+    justify-content: center; margin-bottom: 1em;
+  }
+  .legend span {
+    display: inline-block; padding: 0.4em 0.8em;
+    border-radius: 5px; font-size: 0.75em;
+  }
+  .calendar-nav {
+    display: flex; justify-content: center; gap: 1em; margin: 0.5em 0;
+  }
+  .calendar-grid {
+    display: grid; grid-template-columns: repeat(7, 1fr);
+    gap: 5px; margin-bottom: 1.5em;
+  }
+  .weekday { font-weight: bold; text-align: center; }
+  .day-box {
+    padding: 0.6em 0;
+    border-radius: 6px;
+    background: #f0f0f0;
+    text-align: center;
+    font-size: 0.85em;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    min-height: 3.5em;
+    position: relative;
+  }
+  .deep-red { background: #e76f8a !important; color: white !important; }
+  .red { background: #f6b1b7 !important; }
+  .blue { background: #b7d7f6 !important; }
+  .bold-blue { background: #5f9ed1 !important; color: white !important; }
+  .green { background: #c8e6c9 !important; }
+  .chart-container {
+    margin: 2em auto; max-width: 900px;
+  }
+  table {
+    width: 100%; border-collapse: collapse; margin: 1em 0; font-size: 0.95em;
+  }
+  th, td {
+    padding: 0.5em; border: 1px solid #ccc; text-align: center;
+  }
+  th {
+    background: #eeb7c2; color: white;
+  }
+  .day-box span {
+    font-size: 1.1em;
+    display: block;
+    opacity: 0.8;
+    line-height: 1;
+  }
+</style>
 </head>
 <body>
-  <h1>Cycle History</h1>
-  <a class="nav-button" href="index.html">← Back to Home</a>
 
-  <h2>Cycle Averages</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>Avg. Cycle Length</th>
-        <th>Avg. Luteal Phase</th>
-        <th>Avg. Period Length</th>
-        <th>Avg. Sex Entries / Cycle</th>
-      </tr>
-    </thead>
-    <tbody><tr id="averagesRow"><td>–</td><td>–</td><td>–</td><td>–</td></tr></tbody>
-  </table>
+<h1>Cycle History</h1>
+<a class="nav-button" href="index.html">← Back to Home</a>
 
-  <div class="legend">
-    <span style="background:#e76f8a; color:white;">Day 1 Period</span>
-    <span style="background:#f6b1b7;">Period</span>
-    <span style="background:#b7d7f6;">Fertile (Flashing)</span>
-    <span style="background:#5f9ed1; color:white;">Ovulation (Solid)</span>
-    <span style="background:#c8e6c9;">Post Ovulation</span>
-    <span style="background:#fff0f5;">💖 Sex</span>
-    <span style="background:#fff0f5;">😖 Cramps</span>
-    <span style="background:#fff0f5;">🔻 Spotting</span>
-    <span style="background:#fff0f5;">🧠 Mood</span>
-    <span style="background:#fff0f5;">🌡️ BBT</span>
-    <span style="background:#fff0f5;">🫶 Breast Changes</span>
-    <span style="background:#fff0f5;">🫃 Digestive</span>
-  </div>
+<h2>Cycle Averages</h2>
+<table>
+<thead>
+  <tr>
+    <th>Avg. Cycle Length</th>
+    <th>Avg. Luteal Phase</th>
+    <th>Avg. Period Length</th>
+    <th>Avg. Sex Entries / Cycle</th>
+  </tr>
+</thead>
+<tbody><tr id="averagesRow"><td>–</td><td>–</td><td>–</td><td>–</td></tr></tbody>
+</table>
 
-  <div id="predictionBanner" style="text-align:center; margin-bottom: 1em; font-weight: bold;"></div>
+<div class="legend">
+  <span style="background:#e76f8a; color:white;">Day 1 Period</span>
+  <span style="background:#f6b1b7;">Period</span>
+  <span style="background:#b7d7f6;">Fertile (Flashing)</span>
+  <span style="background:#5f9ed1; color:white;">Ovulation (Solid)</span>
+  <span style="background:#c8e6c9;">Post Ovulation</span>
+  <span style="background:#fff0f5;">💖 Sex</span>
+  <span style="background:#fff0f5;">😖 Cramps</span>
+  <span style="background:#fff0f5;">🔻 Spotting</span>
+  <span style="background:#fff0f5;">🧠 Mood</span>
+  <span style="background:#fff0f5;">🌡️ BBT</span>
+  <span style="background:#fff0f5;">🫶 Breast Changes</span>
+  <span style="background:#fff0f5;">🫃 Digestive</span>
+</div>
 
-  <div class="calendar-nav">
-    <button onclick="changeMonth(-1)">◀</button>
-    <span id="monthLabel"></span>
-    <button onclick="changeMonth(1)">▶</button>
-  </div>
+<div id="predictionBanner" style="text-align:center; margin-bottom: 1em; font-weight: bold;"></div>
 
-  <div style="text-align:center; margin-bottom:1em; font-weight:bold;">
-    <span>Predictions: </span>
-    <span style="color:#F44336;">🔴 Period Days</span>
-    <span style="color:#4CAF50;">🟢 Fertile Window</span> | 
-    <span style="color:#FFC107;">🟡 Ovulation Day</span> | 
-  </div>
+<div class="calendar-nav">
+  <button onclick="changeMonth(-1)">◀</button>
+  <span id="monthLabel"></span>
+  <button onclick="changeMonth(1)">▶</button>
+</div>
 
-  <div class="calendar-grid" id="calendarWeekdays"></div>
-  <div class="calendar-grid" id="calendarGrid"></div>
+<div style="text-align:center; margin-bottom:1em; font-weight:bold;">
+  <span>Predictions: </span>
+  <span style="color:#F44336;">🔴 Period Days</span>
+  <span style="color:#4CAF50;">🟢 Fertile Window</span> | 
+  <span style="color:#FFC107;">🟡 Ovulation Day</span> | 
+</div>
 
-  <div class="chart-container">
-    <h2>BBT Chart</h2>
-    <canvas id="bbtChart"></canvas>
-  </div>
-  <div class="chart-container">
-    <h2>CM Pattern</h2>
-    <canvas id="cmChart"></canvas>
-  </div>
-  <div class="chart-container">
-    <h2>Average Symptoms</h2>
-    <canvas id="symptomsChart"></canvas>
-  </div>
-  <div class="chart-container">
-    <h2>Mood Timeline</h2>
-    <canvas id="moodChart"></canvas>
-  </div>
-  <div class="chart-container">
-    <h2>Sex Frequency</h2>
-    <canvas id="sexChart"></canvas>
-  </div>
+<div class="calendar-grid" id="calendarWeekdays"></div>
+<div class="calendar-grid" id="calendarGrid"></div>
+
+<div class="chart-container">
+  <h2>BBT Chart</h2>
+  <canvas id="bbtChart"></canvas>
+</div>
+<div class="chart-container">
+  <h2>CM Pattern</h2>
+  <canvas id="cmChart"></canvas>
+</div>
+<div class="chart-container">
+  <h2>Average Symptoms</h2>
+  <canvas id="symptomsChart"></canvas>
+</div>
+<div class="chart-container">
+  <h2>Mood Timeline</h2>
+  <canvas id="moodChart"></canvas>
+</div>
+<div class="chart-container">
+  <h2>Sex Frequency</h2>
+  <canvas id="sexChart"></canvas>
+</div>
 
 <script>
   const firebaseConfig = {
@@ -168,7 +169,7 @@
 
   auth.onAuthStateChanged(async (user) => {
     if (!user) {
-      window.location.href = "index.html"; // redirect to login
+      window.location.href = "index.html";
       return;
     }
     await run();
@@ -234,7 +235,6 @@
     const periodLengths = [];
 
     for (const cycle of cycles) {
-      // Take only one entry per day for calculations
       const uniqueDays = [...new Set(cycle.map(e => e.entryDate))];
 
       const start = new Date(uniqueDays[0]);
@@ -393,34 +393,13 @@
           if (e.mood) iconFlags.mood = true;
         });
 
-        if (iconFlags.sex) box.appendChild(Object.assign(document.createElement('span'), {
-          textContent: '💖',
-          style: emojiStyle
-        }));
-        if (iconFlags.cramps) box.appendChild(Object.assign(document.createElement('span'), {
-          textContent: '😖',
-          style: emojiStyle
-        }));
-        if (iconFlags.spotting) box.appendChild(Object.assign(document.createElement('span'), {
-          textContent: '🔻',
-          style: emojiStyle
-        }));
-        if (iconFlags.mood) box.appendChild(Object.assign(document.createElement('span'), {
-          textContent: '🧠',
-          style: emojiStyle
-        }));
-        if (iconFlags.breastChanges) box.appendChild(Object.assign(document.createElement('span'), {
-          textContent: '🫶',
-          style: emojiStyle
-        }));
-        if (iconFlags.digestive) box.appendChild(Object.assign(document.createElement('span'), {
-          textContent: '🫃',
-          style: emojiStyle
-        }));
-        if (iconFlags.bbt) box.appendChild(Object.assign(document.createElement('span'), {
-          textContent: '🌡️',
-          style: emojiStyle
-        }));
+        if (iconFlags.sex) box.appendChild(Object.assign(document.createElement('span'), { textContent: '💖', style: emojiStyle }));
+        if (iconFlags.cramps) box.appendChild(Object.assign(document.createElement('span'), { textContent: '😖', style: emojiStyle }));
+        if (iconFlags.spotting) box.appendChild(Object.assign(document.createElement('span'), { textContent: '🔻', style: emojiStyle }));
+        if (iconFlags.mood) box.appendChild(Object.assign(document.createElement('span'), { textContent: '🧠', style: emojiStyle }));
+        if (iconFlags.breastChanges) box.appendChild(Object.assign(document.createElement('span'), { textContent: '🫶', style: emojiStyle }));
+        if (iconFlags.digestive) box.appendChild(Object.assign(document.createElement('span'), { textContent: '🫃', style: emojiStyle }));
+        if (iconFlags.bbt) box.appendChild(Object.assign(document.createElement('span'), { textContent: '🌡️', style: emojiStyle }));
 
         box.title = dayEntries.map(e => {
           let parts = [];
@@ -462,7 +441,6 @@
   }
 
   function renderCharts(cycles) {
-    const cmTypes = ['dry', 'sticky', 'creamy', 'watery', 'egg white'];
     const symptomsAvg = { cramps: 0, spotting: 0, breast: 0, digestive: 0 };
 
     // Filter BBT entries for currently viewed month & year
@@ -479,7 +457,7 @@
       return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
     });
 
-    // Find period day 1 and ovulation for current month for markers
+    // Markers for period day 1 and ovulation day
     const periodEntry = allEntries.find(e =>
       (e.phase || '').toLowerCase() === 'day1-period' &&
       new Date(e.entryDate).getMonth() === viewMonth &&
@@ -739,14 +717,6 @@
     renderCalendar(viewMonth, viewYear);
     renderCharts(cycles);
   }
-</script>
-
-<script>
-  // Run after auth confirmed
-  auth.onAuthStateChanged(user => {
-    if (user) run();
-    else window.location.href = 'index.html';
-  });
 </script>
 
 </body>
