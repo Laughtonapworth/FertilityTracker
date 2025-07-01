@@ -232,8 +232,21 @@ function getCurrentCycle(entries) {
 
   // Slice from 0 to lastIndexInclusive +1 in reversed array, then reverse back
   const cycleEntries = reversed.slice(0, lastIndexInclusive + 1).reverse();
+
+  // Debug: Log all dates included in the current cycle slice
+  console.log(`Current cycle entries count: ${cycleEntries.length}`);
+  cycleEntries.forEach((entry, index) => {
+    console.log(`Entry ${index}: entryDate=${entry.entryDate}, phase=${entry.phase}`);
+  });
+
+  // Also check if today's date is included for extra visibility
+  const todayISO = new Date().toISOString().slice(0, 10);
+  const hasToday = cycleEntries.some(e => new Date(e.entryDate).toISOString().slice(0, 10) === todayISO);
+  console.log(`Includes today's date (${todayISO}): ${hasToday}`);
+
   return cycleEntries;
 }
+
 
     
 function getCurrentCycle(entries) {
