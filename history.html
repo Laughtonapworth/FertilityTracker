@@ -141,11 +141,6 @@
     <canvas id="sexChart"></canvas>
   </div>
 
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
 <script>
   const firebaseConfig = {
     apiKey: "AIzaSyByvnVx2aZEldUfqS2c6VNC6UJRIOPvGws",
@@ -168,6 +163,8 @@
   let avgOvulationDay = null;
   let avgCycleLength = null;
   let avgPeriodLength = null;
+
+  const cmTypes = ['dry', 'sticky', 'creamy', 'watery', 'egg white'];
 
   auth.onAuthStateChanged(async (user) => {
     if (!user) {
@@ -464,25 +461,11 @@
     renderCharts(cycles);
   }
 
-  function groupAllCycles(entries) {
-    const cycles = [];
-    let currentCycle = [];
-
-    for (const e of entries) {
-      if ((e.phase || '').toLowerCase() === 'day1-period') {
-        if (currentCycle.length) cycles.push([...currentCycle]);
-        currentCycle = [];
-      }
-      currentCycle.push(e);
-    }
-    if (currentCycle.length) cycles.push(currentCycle);
-    return cycles;
-  }
-
   function renderCharts(cycles) {
     const cmTypes = ['dry', 'sticky', 'creamy', 'watery', 'egg white'];
     const symptomsAvg = { cramps: 0, spotting: 0, breast: 0, digestive: 0 };
 
+    // Filter BBT entries for currently viewed month & year
     const bbtEntries = allEntries
       .filter(e => {
         const d = new Date(e.entryDate);
@@ -496,13 +479,20 @@
       return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
     });
 
-    const periodEntry = allEntries.find(e => (e.phase || '').toLowerCase() === 'day1-period');
-    const ovulationEntry = allEntries.find(e => (e.opk || '').toLowerCase() === 'solid face');
+    // Find period day 1 and ovulation for current month for markers
+    const periodEntry = allEntries.find(e =>
+      (e.phase || '').toLowerCase() === 'day1-period' &&
+      new Date(e.entryDate).getMonth() === viewMonth &&
+      new Date(e.entryDate).getFullYear() === viewYear);
 
-    // Draw vertical lines for period day 1 and ovulation day on BBT chart
+    const ovulationEntry = allEntries.find(e =>
+      (e.opk || '').toLowerCase() === 'solid face' &&
+      new Date(e.entryDate).getMonth() === viewMonth &&
+      new Date(e.entryDate).getFullYear() === viewYear);
+
     const verticalLinesPlugin = {
       id: 'verticalLines',
-      afterDatasetsDraw(chart, args, options) {
+      afterDatasetsDraw(chart) {
         const ctx = chart.ctx;
         const xAxis = chart.scales.x;
         const yAxis = chart.scales.y;
@@ -511,8 +501,8 @@
 
         // Period line - red
         if (periodEntry) {
-          const periodDate = new Date(periodEntry.entryDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
-          const periodIndex = bbtLabels.indexOf(periodDate);
+          const periodDateStr = new Date(periodEntry.entryDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+          const periodIndex = bbtLabels.indexOf(periodDateStr);
           if (periodIndex !== -1) {
             const x = xAxis.getPixelForValue(periodIndex);
             ctx.strokeStyle = 'red';
@@ -524,10 +514,10 @@
           }
         }
 
-        // Ovulation line - yellow
+        // Ovulation line - orange
         if (ovulationEntry) {
-          const ovDate = new Date(ovulationEntry.entryDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
-          const ovIndex = bbtLabels.indexOf(ovDate);
+          const ovDateStr = new Date(ovulationEntry.entryDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+          const ovIndex = bbtLabels.indexOf(ovDateStr);
           if (ovIndex !== -1) {
             const x = xAxis.getPixelForValue(ovIndex);
             ctx.strokeStyle = 'orange';
@@ -543,12 +533,10 @@
       }
     };
 
-    // Register the plugin only once
     if (!Chart.registry.getPlugin('verticalLines')) {
       Chart.register(verticalLinesPlugin);
     }
 
-    // BBT Chart
     if (window.bbtChartInstance) window.bbtChartInstance.destroy();
     window.bbtChartInstance = new Chart(document.getElementById('bbtChart').getContext('2d'), {
       type: 'line',
@@ -716,10 +704,6 @@
       sexFreqPerCycle.push(sexCount);
     });
 
-    const avgSexFreq = sexFreqPerCycle.length
-      ? sexFreqPerCycle.reduce((a, b) => a + b, 0) / sexFreqPerCycle.length
-      : 0;
-
     const sexLabels = cycles.map((_, i) => `Cycle ${i + 1}`);
 
     if (window.sexChartInstance) window.sexChartInstance.destroy();
@@ -758,11 +742,12 @@
 </script>
 
 <script>
-  // Initial call once auth confirmed
+  // Run after auth confirmed
   auth.onAuthStateChanged(user => {
     if (user) run();
     else window.location.href = 'index.html';
   });
 </script>
+
 </body>
 </html>
