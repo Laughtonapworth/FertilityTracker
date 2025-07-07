@@ -79,7 +79,7 @@
 <h2>Today's Summary</h2>
 <table id="summaryTable">
 <thead>
-<tr><th>Date</th><th>CD</th><th>BBT</th><th>Phase</th><th>DPO</th></tr>
+<tr><th>Date</th><th>CD</th><th>BBT</th><th>LH</th><th>Phase</th><th>DPO</th></tr>
 </thead>
 <tbody></tbody>
 </table>
@@ -415,49 +415,67 @@ let moodChartInstance, sexChartInstance, bbtChartInstance, cmChartInstance, symp
 function renderTable(cycle) {
   const tbody = document.querySelector("#summaryTable tbody");
   tbody.innerHTML = "";
-  const today = formatDate(new Date());
-  const todayEntry = cycle.find(e => formatDate(e.entryDate) === today);
-  if (!todayEntry) return;
 
-  const cd = Math.floor((new Date(todayEntry.entryDate) - new Date(cycle[0].entryDate)) / 86400000) + 1;
+const today = new Date().toDateString();
+const todayEntries = cycle.filter(e => {
+  const entryDate = new Date(e.entryDate).toDateString();
+  return entryDate === today;
+});
+if (!todayEntries.length) return;
 
+
+
+  // Get first entry with a phase or fallback
+  const todayEntry = todayEntries.find(e => e.phase) || todayEntries[0];
+
+  // CD = days since start of cycle
+  const cd = Math.floor(
+    (new Date(todayEntry.entryDate) - new Date(cycle[0].entryDate)) / 86400000
+  ) + 1;
+
+  // First valid BBT
+  const bbtEntry = todayEntries.find(e => !isNaN(parseFloat(e.bbt)));
+  const bbtVal = bbtEntry ? parseFloat(bbtEntry.bbt) : NaN;
+  const bbt = !isNaN(bbtVal) ? bbtVal.toFixed(2) : "-";
+
+  // Max LH from today
+ const opkValues = todayEntries
+  .map(e => parseFloat(e.opk))
+  .filter(val => !isNaN(val));
+
+const lhMax = opkValues.length > 0 ? Math.max(...opkValues) : NaN;
+  const lh = !isNaN(lhMax) ? lhMax.toFixed(2) : "-";
+
+  // LH surge logic (legacy — you can remove later)
   const surgeEntry = cycle.find(e => (e.opk || '').toLowerCase() === 'surge');
   let dpo = "-";
   if (surgeEntry) {
     const surgeDate = new Date(surgeEntry.entryDate);
     const todayDate = new Date(todayEntry.entryDate);
     const diffDays = Math.floor((todayDate - surgeDate) / 86400000);
-
-    if (diffDays >= 2) {
-      dpo = diffDays - 1;
-    } else {
-      dpo = "0";
-    }
+    dpo = diffDays >= 2 ? diffDays - 1 : "0";
   }
 
-  const bbt = todayEntry.bbt && !isNaN(parseFloat(todayEntry.bbt)) ? parseFloat(todayEntry.bbt).toFixed(2) : "-";
+  // Phase
   let phaseDisplay = todayEntry.phase || '-';
-
-  if ((todayEntry.phase || '').toLowerCase() === 'post-ovulation') {
+  if (phaseDisplay.toLowerCase() === 'post-ovulation') {
     if (surgeEntry) {
-      const surgeDate = new Date(surgeEntry.entryDate);
-      const ovulationDate = new Date(surgeDate);
+      const ovulationDate = new Date(surgeEntry.entryDate);
       ovulationDate.setDate(ovulationDate.getDate() + 1);
-
       const todayDate = new Date(todayEntry.entryDate);
-
-      if (todayDate <= ovulationDate) {
-        phaseDisplay = 'Ovulation';
-      } else {
-        phaseDisplay = 'Luteal';
-      }
-    } else {
-      phaseDisplay = 'Post-Ovulation';
+      phaseDisplay = todayDate <= ovulationDate ? 'Ovulation' : 'Luteal';
     }
   }
 
   const row = document.createElement("tr");
-  row.innerHTML = `<td>${todayEntry.entryDate}</td><td>${cd}</td><td>${bbt}</td><td>${phaseDisplay}</td><td>${dpo}</td>`;
+  row.innerHTML = `
+    <td>${todayEntry.entryDate}</td>
+    <td>${cd}</td>
+    <td>${bbt}</td>
+    <td>${lh}</td>
+    <td>${phaseDisplay}</td>
+    <td>${dpo}</td>
+  `;
   tbody.appendChild(row);
 }
 
