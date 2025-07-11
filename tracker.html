@@ -9,7 +9,6 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-  <!-- Your Firebase config & initialization -->
   <script src="js/firebase-config.js"></script>
 
   <style>
@@ -33,29 +32,28 @@
       display: none;
       align-items: center;
       justify-content: center;
+      padding: 1em;
     }
     .modal {
       background: white;
       padding: 1em;
       border-radius: 8px;
-      width: 90%;
-      max-width: 350px;
+      width: calc(100% - 2em);
+      max-width: 300px;
       box-shadow: 0 2px 10px rgba(0,0,0,0.2);
     }
     .modal h3 { margin-top: 0; font-size: 1.2em; }
     .modal .actions { text-align: right; margin-top: 1em; }
     .modal .actions button { margin-left: 0.5em; padding: 0.5em 0.8em; border-radius: 4px; border: none; cursor: pointer; background: #c4d7c2; }
 
-    /* Grid lists for two-column, top-to-bottom flow */
+    /* Grid lists with two columns, vertical-first order */
     .symptom-list,
     .cm-list,
     .spot-list {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      grid-auto-flow: column;
-      row-gap: 0.3em;
-      column-gap: 0.5em;
-      margin-top: 0.5em;
+      grid-auto-flow: row;
+      gap: 0.5em;
     }
     .symptom-list label,
     .cm-list label,
@@ -63,12 +61,21 @@
       display: flex;
       align-items: center;
       font-size: 0.95em;
+      word-break: break-word;
     }
     .symptom-list input,
     .cm-list input,
     .spot-list input {
       margin-right: 0.3em;
-      transform: none;
+    }
+
+    /* Stack on narrow screens */
+    @media (max-width: 360px) {
+      .symptom-list,
+      .cm-list,
+      .spot-list {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
@@ -157,15 +164,14 @@
       const db = firebase.firestore();
 
       const dateInput   = document.getElementById('date');
-      // default to today's date
       dateInput.value = new Date().toISOString().split('T')[0];
-      const btnPeriod    = document.getElementById('btnPeriod');
-      const btnBBT       = document.getElementById('btnBBT');
-      const btnLH        = document.getElementById('btnLH');
-      const btnCM        = document.getElementById('btnCM');
-      const btnSymptoms  = document.getElementById('btnSymptoms');
-      const btnSpotting  = document.getElementById('btnSpotting');
-      const btnSex       = document.getElementById('btnSex');
+      const btnPeriod   = document.getElementById('btnPeriod');
+      const btnBBT      = document.getElementById('btnBBT');
+      const btnLH       = document.getElementById('btnLH');
+      const btnCM       = document.getElementById('btnCM');
+      const btnSymptoms = document.getElementById('btnSymptoms');
+      const btnSpotting = document.getElementById('btnSpotting');
+      const btnSex      = document.getElementById('btnSex');
       const symBackdrop  = document.getElementById('symBackdrop');
       const cmBackdrop   = document.getElementById('cmBackdrop');
       const spotBackdrop = document.getElementById('spotBackdrop');
@@ -173,9 +179,10 @@
       const symCancel    = document.getElementById('symCancel');
       const cmSave       = document.getElementById('cmSave');
       const cmCancel     = document.getElementById('cmCancel');
-      
+      const spotSave     = document.getElementById('spotSave');
+      const spotCancel   = document.getElementById('spotCancel');
 
-function upsertEntry(dateStr, data) {
+      function upsertEntry(dateStr, data) {
         const col = db.collection('users').doc(uid).collection('entries');
         col.where('entryDate','==',dateStr).get()
           .then(q => q.empty
@@ -194,21 +201,18 @@ function upsertEntry(dateStr, data) {
         if (confirm(`Confirm start of period for ${dateInput.value}?`))
           upsertEntry(dateInput.value, { phase: 'day1-period' });
       });
-
       btnBBT.addEventListener('click', () => {
         if (!requireDate()) return;
         const val = prompt(`Enter BBT (e.g. 36.44) for ${dateInput.value}:`);
         if (val !== null && /^\d{2}\.\d{1,2}$/.test(val))
           upsertEntry(dateInput.value, { bbt: val });
       });
-
       btnLH.addEventListener('click', () => {
         if (!requireDate()) return;
         const val = prompt(`Enter LH/OPK (e.g. 0.85 or 1.12) for ${dateInput.value}:`);
         if (val !== null && /^\d{1,2}(?:\.\d+)?$/.test(val))
           upsertEntry(dateInput.value, { opk: val });
       });
-
       btnSymptoms.addEventListener('click', () => {
         if (!requireDate()) return;
         ['Cramps','Bloating','Nausea','NipplePain','BreastPain','BreastIncrease']
@@ -222,7 +226,6 @@ function upsertEntry(dateStr, data) {
         symBackdrop.style.display = 'none';
       });
       symCancel.addEventListener('click', () => symBackdrop.style.display = 'none');
-
       btnCM.addEventListener('click', () => {
         if (!requireDate()) return;
         ['dry','sticky','watery','creamy','lotion_like','egg_white','increased','decreased']
@@ -236,7 +239,6 @@ function upsertEntry(dateStr, data) {
         cmBackdrop.style.display = 'none';
       });
       cmCancel.addEventListener('click', () => cmBackdrop.style.display = 'none');
-
       btnSpotting.addEventListener('click', () => {
         if (!requireDate()) return;
         ['Pink','Brown','Red','Internal','External','Minimal','Moderate','Heavy']
@@ -250,18 +252,16 @@ function upsertEntry(dateStr, data) {
         spotBackdrop.style.display = 'none';
       });
       spotCancel.addEventListener('click', () => spotBackdrop.style.display = 'none');
-
       btnSex.addEventListener('click', () => {
         if (!requireDate()) return;
         if (confirm(`Log sex occurred for ${dateInput.value}?`))
           upsertEntry(dateInput.value, { sex: 'Yes' });
       });
-
       auth.onAuthStateChanged(user => {
-        if (!user) window.location.href = 'index.html';
-        else uid = user.uid;
+        if (!user) window.location.href = 'index.html'; else uid = user.uid;
       });
     });
   </script>
 </body>
 </html>
+
