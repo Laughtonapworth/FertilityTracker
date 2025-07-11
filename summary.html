@@ -60,7 +60,7 @@
     <tbody></tbody>
   </table>
 
-  <div style="margin:1em 0;">
+  <div style="margin:1em 0; text-align:center;">
     <label for="cycleSelect">Show cycle starting:</label>
     <select id="cycleSelect"></select>
   </div>
@@ -68,35 +68,35 @@
   <div class="legends-container">
     <div class="legend-wrapper">
       <div>Confirmed States</div>
-      <span style="background:#e76f8a;color:white;padding:0.2em;border-radius:4px;">Day 1</span>
+      <span style="background:#e76f8a;color:white;padding:0.2em;border-radius:4px;">Day 1</span>
       <span style="background:#f6b1b7;padding:0.2em;border-radius:4px;">Period</span>
       <span style="background:#8ecae6;padding:0.2em;border-radius:4px;">Fertile</span>
       <span style="background:#d15fa7;color:white;padding:0.2em;border-radius:4px;">Surge</span>
-      <span style="background:#3f51b5;color:white;padding:0.2em;border-radius:4px;">Ovulation</span>
-      <span style="background:#c8e6c9;padding:0.2em;border-radius:4px;">Luteal</span>
+      <span style="background:#3f51b5;color:white;padding:0.2em;">Ovulation</span>
+      <span style="background:#c8e6c9;padding:0.2em;">Luteal</span>
     </div>
     <div class="legend-wrapper">
       <div>Predicted States</div>
-      <span>🩸 Period</span>
-      <span>🔵 Fertile</span>
-      <span>🔷 Ovulation</span>
-      <span>♦ Luteal</span>
+      <span>🩸 Period</span>
+      <span>🔵 Fertile</span>
+      <span>🔷 Ovulation</span>
+      <span>♦ Luteal</span>
     </div>
     <div class="legend-wrapper">
       <div>Chart Legends</div>
       <span>BBT</span>
-      <span>🚩 Spotting</span>
-      <span>🤕 Cramps</span>
-      <span>🤱 Breasts</span>
-      <span>🤢 Digestive</span>
-      <span>❤️ Sex</span>
+      <span>🚩 Spotting</span>
+      <span>🤕 Cramps</span>
+      <span>🤱 Breasts</span>
+      <span>🤢 Digestive</span>
+      <span>❤️ Sex</span>
     </div>
   </div>
 
-  <div class="calendar-nav">
-    <button onclick="changeMonth(-1)">&larr; Prev</button>
+  <div class="calendar-controls">
+    <button onclick="changeCycle(-1)">← Prev Cycle</button>
     <span id="monthLabel"></span>
-    <button onclick="changeMonth(1)">Next &rarr;</button>
+    <button onclick="changeCycle(1)">Next Cycle →</button>
   </div>
 
   <div class="calendar-grid" id="calendarGrid">
@@ -111,148 +111,266 @@
   <div class="chart-container"><h2>Sex</h2><canvas id="sexChart"></canvas></div>
 
   <script>
-    let currentUserUID = null;
-    let allCycles = [], bbtChart, cmChart, symptomsChart, moodChart, sexChart;
+let currentUserUID = null;
+let allCycles = [];
+let bbtChart, cmChart, symptomsChart, moodChart, sexChart;
 
-    function formatDate(d) {
-      const dt = new Date(d);
-      return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
-    }
+function formatDate(d) {
+  const dt = new Date(d);
+  return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+}
+
 
     async function loadEntries() {
       const L = await db.collection('entries').where('uid','==',currentUserUID).orderBy('entryDate').get();
       const S = await db.collection('users').doc(currentUserUID).collection('entries').orderBy('entryDate').get();
-      return [...L.docs, ...S.docs].map(d=>d.data())
-        .sort((a,b)=>new Date(a.entryDate)-new Date(b.entryDate));
+      return [...L.docs, ...S.docs].map(d=>d.data()).sort((a,b)=>new Date(a.entryDate)-new Date(b.entryDate));
     }
 
     function buildCycles(entries) {
-      const starts = entries
-        .filter(e => (e.phase||'').toLowerCase()==='day1-period')
-        .map(e => new Date(e.entryDate))
-        .sort((a,b)=>a-b);
+      const starts = entries.filter(e=>(e.phase||'').toLowerCase()==='day1-period')
+        .map(e=>new Date(e.entryDate)).sort((a,b)=>a-b);
       return starts.map((sd,i)=>{
-        const ed = starts[i+1]||null;
+        const ed = starts[i+1] || null;
         const ce = entries.filter(e=>{
           const d = new Date(e.entryDate);
-          return d>=sd && (!ed||d<ed);
+          return d >= sd && (!ed || d < ed);
         });
         return { start: formatDate(sd), entries: ce };
       });
     }
 
+    function buildCycleBoundaries(entries) {
+      const day1Dates = entries
+        .filter(e => (e.phase || '').toLowerCase() === 'day1-period')
+        .map(e => new Date(e.entryDate))
+        .sort((a,b) => a - b);
+
+      let boundaries = [];
+      for(let i=0; i < day1Dates.length; i++) {
+        const start = day1Dates[i];
+        let end;
+        if (i+1 < day1Dates.length) {
+          end = new Date(day1Dates[i+1]);
+          end.setDate(end.getDate() - 1);
+        } else {
+          end = new Date();
+        }
+        if (end < start) end = new Date(start);
+        boundaries.push({start, end});
+      }
+      return boundaries;
+    }
+
     function renderTable(cycle) {
-      const tbody = document.querySelector('#summaryTable tbody');
+      const tbody = document.querySelector('#summaryTable tbody'); 
       tbody.innerHTML = '';
       const todayISO = formatDate(new Date());
       const todays = cycle.filter(e=>formatDate(e.entryDate)===todayISO);
       if (!todays.length) return;
       const t = todays.find(e=>e.phase) || todays[0];
-      const cd = Math.floor((new Date(t.entryDate) - new Date(cycle[0].entryDate))/86400000)+1;
-      const bbtE = todays.find(e=>{ const v=parseFloat(e.bbt); return !isNaN(v)&&v>0; });
-      const bbt  = bbtE? parseFloat(bbtE.bbt).toFixed(2): '-';
-      const lhVals = todays.map(e=>parseFloat(e.opk)).filter(v=>!isNaN(v)&&v>0);
-      const lh   = lhVals.length? Math.max(...lhVals).toFixed(2): '-';
-      let dpo='-', surge=cycle.find(e=>{ const v=parseFloat(e.opk); return !isNaN(v)&&v>=1; });
-      if(surge) {
-        const diff = Math.floor((new Date(t.entryDate)-new Date(surge.entryDate))/86400000);
-        dpo = diff>=2? diff-1: 0;
+      const cd = Math.floor((new Date(t.entryDate) - new Date(cycle[0].entryDate))/86400000) + 1;
+      const bbtE = todays.find(e=>{ const v=parseFloat(e.bbt); return !isNaN(v) && v>0; });
+      const bbt = bbtE ? parseFloat(bbtE.bbt).toFixed(2) : '-';
+      const lhVals = todays.map(e=>parseFloat(e.opk)).filter(v=>!isNaN(v) && v>0);
+      const lh = lhVals.length ? Math.max(...lhVals).toFixed(2) : '-';
+      let dpo = '-', surge = cycle.find(e=>{ const v=parseFloat(e.opk); return !isNaN(v) && v>=1; });
+      if (surge) {
+        const diff = Math.floor((new Date(t.entryDate) - new Date(surge.entryDate))/86400000);
+        dpo = diff >= 2 ? diff - 1 : 0;
       }
-      let phase = t.phase||'-';
-      if(phase.toLowerCase()==='post-ovulation'&&surge){
-        const ov = new Date(surge.entryDate); ov.setDate(ov.getDate()+1);
-        phase = new Date(t.entryDate)<=ov? 'Ovulation': 'Luteal';
+      let phase = t.phase || '-';
+      if (phase.toLowerCase()==='post-ovulation' && surge) {
+        const ov = new Date(surge.entryDate); ov.setDate(ov.getDate() + 1);
+        phase = new Date(t.entryDate) <= ov ? 'Ovulation' : 'Luteal';
       }
       const tr = document.createElement('tr');
       tr.innerHTML = `<td>${t.entryDate}</td><td>${cd}</td><td>${bbt}</td><td>${lh}</td><td>${phase}</td><td>${dpo}</td>`;
       tbody.appendChild(tr);
     }
 
-    function renderCharts(cycle) {
-      const bbtData = cycle.filter(e=>{ const v=parseFloat(e.bbt); return !isNaN(v)&&v>0; });
-      const lhData  = cycle.filter(e=>{ const v=parseFloat(e.opk); return !isNaN(v)&&v>0; });
-      const labels  = Array.from(new Set([...bbtData, ...lhData].map(e=>formatDate(e.entryDate)))).sort();
+  function renderCharts(cycle) {
+  // BBT & LH
+  const bbtData = cycle.filter(e => { const v = parseFloat(e.bbt); return !isNaN(v) && v > 0; });
+  const lhData = cycle.filter(e => { const v = parseFloat(e.opk); return !isNaN(v) && v > 0; });
+  const labels = Array.from(new Set([...bbtData, ...lhData].map(e => formatDate(e.entryDate)))).sort();
 
-      // BBT & LH
-      if (bbtChart) bbtChart.destroy();
-      bbtChart = new Chart(document.getElementById('bbtChart'), {
-        type:'line',
-        data:{ labels, datasets:[
-          { label:'BBT', data: labels.map(d=>{ const e=bbtData.find(x=>formatDate(x.entryDate)===d); return e?+e.bbt:null; }), borderColor:'purple', spanGaps:true, yAxisID:'y' },
-          { label:'LH',  data: labels.map(d=>{ const e=lhData.find(x=>formatDate(x.entryDate)===d); return e?+e.opk:null; }),  borderColor:'yellow', spanGaps:true, yAxisID:'y1' }
-        ]},
-        options:{ responsive:true, interaction:{mode:'index',intersect:false}, scales:{
-          y:{ type:'linear', position:'left',  title:{display:true,text:'BBT (°C)'} },
-          y1:{type:'linear',position:'right',title:{display:true,text:'LH (OPK)'},grid:{drawOnChartArea:false}}
-        }}
-      });
+  if (bbtChart) bbtChart.destroy();
+  bbtChart = new Chart(document.getElementById('bbtChart'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label: 'BBT', data: labels.map(d => { const e = bbtData.find(x => formatDate(x.entryDate) === d); return e ? +e.bbt : null; }), borderColor: 'purple', spanGaps: true, yAxisID: 'y' },
+        { label: 'LH', data: labels.map(d => { const e = lhData.find(x => formatDate(x.entryDate) === d); return e ? +e.opk : null; }), borderColor: 'yellow', spanGaps: true, yAxisID: 'y1' }
+      ]
+    }, options: {
+      responsive: true, interaction: { mode: 'index', intersect: false },
+      scales: {
+        y: { type: 'linear', position: 'left', title: { display: true, text: 'BBT (°C)' } },
+        y1: { type: 'linear', position: 'right', title: { display: true, text: 'LH (OPK)' }, grid: { drawOnChartArea: false } }
+      }
+    }
+  });
 
-      // Cervical Mucus
-      const cmTypes=['dry','sticky','creamy','watery','egg white'];
-      const cmCounts=cmTypes.reduce((a,t)=>({...a,[t]:0}),{});
-      cycle.forEach(e=>{ const cm=(e.cm||'').toLowerCase(); if(cmTypes.includes(cm)) cmCounts[cm]++; });
-      if (cmChart) cmChart.destroy();
-      cmChart = new Chart(document.getElementById('cmChart'),{ type:'bar',
-        data:{ labels:cmTypes, datasets:[{ label:'CM Entries', data:cmTypes.map(t=>cmCounts[t]) }] },
-        options:{ responsive:true, scales:{ y:{beginAtZero:true} } }
-      });
+  // Cervical Mucus — Updated for multi-select array
+  const cmTypes = ['Dry', 'Creamy', 'Sticky', 'Watery', 'Egg White', 'Lotion Like', 'Increased', 'Decreased'];
+  const cmCounts = cmTypes.reduce((acc, type) => {
+    acc[type] = 0;
+    return acc;
+  }, {});
 
-      // Symptoms
-      const symMap={ Spotting:'#f2c28e', Cramps:'#f28e8e', Breasts:'#c3aed6', Digestive:'#a0d9b4' };
-      const symCounts={Spotting:0,Cramps:0,Breasts:0,Digestive:0};
-      cycle.forEach(e=>{
-        if(e.spotting&&e.spotting!=='none') symCounts.Spotting++;
-        if(e.cramps  &&e.cramps!=='none')   symCounts.Cramps++;
-        if(e.breastChanges&&e.breastChanges!=='none') symCounts.Breasts++;
-        if(e.digestive&&e.digestive!=='none') symCounts.Digestive++;
-      });
-      if(symptomsChart) symptomsChart.destroy();
-      symptomsChart = new Chart(document.getElementById('symptomsChart'),{ type:'bar',
-        data:{ labels:Object.keys(symCounts), datasets:[{ label:'Symptom Count', data:Object.values(symCounts), backgroundColor:Object.keys(symCounts).map(k=>symMap[k]) }] },
-        options:{ responsive:true, scales:{ y:{beginAtZero:true} } }
-      });
-
-      // Mood
-      const moods=['Calm','Happy','Irritable','Low'];
-      const moodCounts=moods.reduce((a,m)=>({...a,[m]:0}),{});
-      cycle.forEach(e=>{ if(moods.includes(e.mood)) moodCounts[e.mood]++; });
-      if(moodChart) moodChart.destroy();
-      moodChart = new Chart(document.getElementById('moodChart'),{ type:'bar',
-        data:{ labels:moods, datasets:[{ label:'Mood Entries', data:moods.map(m=>moodCounts[m]), backgroundColor:'#ffd166' }] },
-        options:{ responsive:true, scales:{ y:{beginAtZero:true} } }
-      });
-
-      // Sex
-      const sexDays = cycle.filter(e=>e.sex&&e.sex.toLowerCase()==='yes');
-      const sexCounts={};
-      sexDays.forEach(e=>{ const d=formatDate(e.entryDate); sexCounts[d]=(sexCounts[d]||0)+1; });
-      if(sexChart) sexChart.destroy();
-      sexChart = new Chart(document.getElementById('sexChart'),{ type:'bar',
-        data:{ labels:Object.keys(sexCounts), datasets:[{ label:'Sex', data:Object.values(sexCounts), backgroundColor:'#f67280' }] },
-        options:{ responsive:true, scales:{ y:{beginAtZero:true} } }
+  cycle.forEach(entry => {
+    if (Array.isArray(entry.cm)) {
+      entry.cm.forEach(type => {
+        if (cmCounts.hasOwnProperty(type)) {
+          cmCounts[type]++;
+        }
       });
     }
+  });
 
-    async function run(){
-      const entries = await loadEntries();
-      allCycles = buildCycles(entries);
-      const sel = document.getElementById('cycleSelect');
-      sel.innerHTML='';
-      allCycles.forEach((c,i)=> sel.add(new Option(c.start,i)));
-      sel.value = allCycles.length - 1;
-      sel.onchange = ()=> renderCharts(allCycles[sel.value].entries);
-
-      const current = allCycles[allCycles.length-1].entries;
-      renderUnifiedCalendar(entries,new Date().getMonth(),new Date().getFullYear());
-      renderTable(current);
-      renderCharts(current);
+  if (cmChart) cmChart.destroy();
+  cmChart = new Chart(document.getElementById('cmChart'), {
+    type: 'bar',
+    data: {
+      labels: cmTypes,
+      datasets: [{
+        label: 'CM Entries',
+        data: cmTypes.map(type => cmCounts[type]),
+        backgroundColor: '#8ecae6'
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: { y: { beginAtZero: true } }
     }
+  });
 
-    auth.onAuthStateChanged(u=>{
-      if(!u) return window.location.href='index.html';
-      currentUserUID = u.uid;
-      run();
-    });
+  // Symptoms
+  const symMap = { Spotting: '#f2c28e', Cramps: '#f28e8e', Breasts: '#c3aed6', Digestive: '#a0d9b4' };
+  const symCounts = { Spotting: 0, Cramps: 0, Breasts: 0, Digestive: 0 };
+  cycle.forEach(e => {
+    if (e.spotting && e.spotting !== 'none') symCounts.Spotting++;
+    if (e.cramps && e.cramps !== 'none') symCounts.Cramps++;
+    if (e.breastChanges && e.breastChanges !== 'none') symCounts.Breasts++;
+    if (e.digestive && e.digestive !== 'none') symCounts.Digestive++;
+  });
+  if (symptomsChart) symptomsChart.destroy();
+  symptomsChart = new Chart(document.getElementById('symptomsChart'), {
+    type: 'bar',
+    data: {
+      labels: Object.keys(symCounts),
+      datasets: [{
+        label: 'Symptom Count',
+        data: Object.values(symCounts),
+        backgroundColor: Object.keys(symCounts).map(k => symMap[k])
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+
+  // Mood
+  const moods = ['Calm', 'Happy', 'Irritable', 'Low'];
+  const moodCounts = moods.reduce((a, m) => ({ ...a, [m]: 0 }), {});
+  cycle.forEach(e => { if (moods.includes(e.mood)) moodCounts[e.mood]++; });
+  if (moodChart) moodChart.destroy();
+  moodChart = new Chart(document.getElementById('moodChart'), {
+    type: 'bar',
+    data: {
+      labels: moods,
+      datasets: [{ label: 'Mood Entries', data: moods.map(m => moodCounts[m]), backgroundColor: '#ffd166' }]
+    },
+    options: {
+      responsive: true,
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+
+  // Sex
+  const sexDays = cycle.filter(e => e.sex && e.sex.toLowerCase() === 'yes');
+  const sexCounts = {};
+  sexDays.forEach(e => {
+    const d = formatDate(e.entryDate);
+    sexCounts[d] = (sexCounts[d] || 0) + 1;
+  });
+  if (sexChart) sexChart.destroy();
+  sexChart = new Chart(document.getElementById('sexChart'), {
+    type: 'bar',
+    data: {
+      labels: Object.keys(sexCounts),
+      datasets: [{ label: 'Sex', data: Object.values(sexCounts), backgroundColor: '#f67280' }]
+    },
+    options: {
+      responsive: true,
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+}
+
+
+    async function run() {
+ console.log('run() started');
+  const entries = await loadEntries();
+  console.log('Entries loaded:', entries.length);
+  allCycles = buildCycles(entries);
+  console.log('Built allCycles:', allCycles.length);
+  cycleBoundaries = buildCycleBoundaries(entries);
+  console.log('Built cycleBoundaries:', cycleBoundaries.length);
+console.log('Rendering initial cycle data');
+
+  const sel = document.getElementById('cycleSelect');
+  sel.innerHTML = '';
+  allCycles.forEach((c, i) => sel.add(new Option(c.start, i)));
+
+  sel.value = allCycles.length - 1;
+  sel.onchange = () => {
+    const idx = parseInt(sel.value, 10);
+    renderTable(allCycles[idx].entries);
+    renderCharts(allCycles[idx].entries);
+    const { start, end } = cycleBoundaries[idx] || {};
+    if (start && end) {
+      renderCycleCalendar(allCycles[idx].entries, start, end);
+      const label = document.getElementById('monthLabel');
+      if (label) label.textContent = `Cycle ${idx + 1}`;
+      currentCycleIndex = idx;
+    }
+  };
+
+try {
+  const idx = allCycles.length - 1;
+
+  console.log('Calling renderTable');
+  renderTable(allCycles[idx].entries);
+  console.log('renderTable done');
+
+  console.log('Calling renderCharts');
+  renderCharts(allCycles[idx].entries);
+  console.log('renderCharts done');
+
+  const { start, end } = cycleBoundaries[idx] || {};
+  if (start && end) {
+    console.log('Calling renderCycleCalendar for cycle', idx, {start, end});
+    renderCycleCalendar(allCycles[idx].entries, start, end);
+    const label = document.getElementById('monthLabel');
+    if (label) label.textContent = `Cycle ${idx + 1}`;
+    currentCycleIndex = idx;
+  }
+} catch (e) {
+  console.error('Error during initial render:', e);
+}
+
+}
+
+auth.onAuthStateChanged(u => {
+  if (!u) return window.location.href='index.html';
+  currentUserUID = u.uid;
+  console.log('User logged in:', currentUserUID);
+  run();
+});
   </script>
 </body>
 </html>
